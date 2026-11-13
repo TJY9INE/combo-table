@@ -170,6 +170,22 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .seat.actor{background:#e9c46a33;box-shadow:0 0 0 2px var(--gold)}
 .seat .delta{font-size:10px;font-weight:800}
 .small{font-size:12px;color:#a89a7a}
+
+/* X-Poker style ring layout */
+.felt{padding-top:0}
+#top.ring{position:relative;display:block;height:440px;min-height:0;margin:0 -2px}
+.ring .seat:not(.bk){width:100px}
+.ring .seat,.ring .seat.bk{position:absolute;transform:translate(-50%,-50%);width:108px;max-width:none;padding:4px 2px;margin:0!important;background:#0005;border:1px solid #ffffff22;border-radius:16px}
+.ring .seat.bk{background:#2a1a08dd;border:1px solid var(--gold);width:128px}
+.ring .av{width:44px;height:44px;font-size:24px;border-width:3px;margin-top:-26px;background:#0b0f0d;box-shadow:0 2px 6px #000a}
+.ring .nm{font-size:12px;font-weight:700}
+.ring .lab{font-size:11px}
+.ring .sm .cd{width:32px;height:46px;border-radius:5px;font-size:26px}.ring .sm .slot{margin-left:-14px}.ring .sm .slot:first-child{margin-left:0}
+.ring .sm .cd .fc .ix{font-size:13px}
+.ring .hand{min-height:48px}
+.ring .chip{width:22px;height:22px;font-size:8.5px}
+#centre.mid{position:absolute;left:30%;right:30%;top:180px;z-index:1;min-height:0;pointer-events:none}
+#centre.mid .banner{font-size:20px}#centre.mid .banner small{font-size:11px}
 </style>
 </head>
 <body>
@@ -225,8 +241,8 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 <g transform="rotate(-12 20 44)"><rect x="2" y="34" width="30" height="20" rx="3" fill="#fff"/><rect x="4" y="36" width="26" height="16" rx="2" fill="url(#cb)"/></g>
 <path d="M8 34 L8 56 L22 56 L22 40 Z" fill="#2b170a"/><path d="M8 34 L22 40 L22 56" fill="none" stroke="url(#sg)" stroke-width="2"/>
 <rect x="44" y="40" width="30" height="10" rx="2" fill="url(#sg)"/><text x="59" y="48" text-anchor="middle" font-size="7" font-weight="900" fill="#2a1d00" font-family="Georgia,serif">SHOE</text></svg></div>
-    <div class="top" id="top"></div>
-    <div class="centre" id="centre"></div>
+    <div class="top ring" id="top"></div>
+    <div class="centre mid" id="centre"></div>
     <div class="me" id="me"><div class="who"><span class="plq blue" id="mePlq">YOU</span><span id="meBet"></span></div><div id="meZone"><div class="hand lg" id="meHand"></div></div><div class="lab" id="meLab"></div><div class="prompt" id="prompt"></div><div id="btrayWrap"></div></div>
   </div>
   <div class="actions" id="actions"></div>

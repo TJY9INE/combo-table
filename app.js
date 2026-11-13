@@ -1,3 +1,9 @@
+function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),H=Math.max(440,138*k+130);
+ const topY=banker?196:140,botY=H-70,ys=i=>k<=1?Math.round((topY+botY)/2+20):Math.round(botY-(botY-topY)*i/(k-1));
+ const out=[];const L=players.slice(0,k),R=players.slice(k);
+ L.forEach((p,i)=>out.push({p,x:15+(k>2&&i==k-1?3:0),y:ys(i)}));
+ R.forEach((p,j)=>{const i=j;out.push({p,x:85-(k>2&&i==k-1?3:0),y:ys(i)})});
+ if(banker)out.push({p:banker,x:50,y:70});return {out,H}}
 
 /* ================= config ================= */
 const SB_URL='https://zdikuwkuvnonlytaaera.supabase.co';
@@ -121,9 +127,8 @@ function renderTable(){show('table');const v=V,g=v.game,meS=g.seats[ME.pid],isB=
  $('hintBtn').classList.toggle('on',hints);$('muteBtn').textContent=mute?'🔇':'🔊';
  // top seats
  const others=[v.banker,...g.order].filter(pid=>pid!==ME.pid);
- let top='';if(!isB)top+=`<div class="arc">${seatHTML(v.banker,true)}</div>`;
- const pl=others.filter(p=>p!==v.banker),per=pl.length>4?Math.ceil(pl.length/2):pl.length||1;
- for(let j=0;j<pl.length;j+=per){const row=pl.slice(j,j+per);top+=`<div class="arc">${row.map((pid,k)=>{const c=(row.length-1)/2;return seatHTML(pid,false,Math.round((k-c)*(k-c)*8))}).join('')}</div>`}
+ const pl=others.filter(p=>p!==v.banker);const RL=ringLayout(pl,isB?null:v.banker);$('top').style.height=RL.H+'px';$('centre').style.top=Math.round(RL.H*0.42)+'px';
+ let top=RL.out.map(o=>seatHTML(o.p,o.p===v.banker,0,[o.x,o.y])).join('');
  $('top').innerHTML=top;
  // centre
  const cen={bet:['Place your bets',`Bets ${v.settings.min}–${v.settings.max}`],r1:['High Card','Higher card wins · ♦<♣<♥<♠'],r2turn:['Thai Baccarat','Min 4 to stand · players take turns'],r2bank:['Thai Baccarat','Banker decides: draw · open · skip'],r2done:['Showdown',''],r3set:['Sikipi','Bottom ≥ Top · set face down'],r3done:['Sikipi reveal',''],r4peek:['Niu Niu','Peek your 5th card'],r4done:['Niu Niu',''],r5done:['Combo Poker','Best 5 of 7 · min pair'],summary:['Game over','']}[g.phase]||['',''];
@@ -138,10 +143,10 @@ function renderTable(){show('table');const v=V,g=v.game,meS=g.seats[ME.pid],isB=
  doFlips();renderActions()}
 function delta(pid){const s=V.game.seats[pid];if(!s)return 0;if(pid===V.banker)return -V.game.order.reduce((a,q)=>{const t=V.game.seats[q];return a+t.r.reduce((x,y)=>x+y,0)*t.bet},0);return s.r.reduce((a,b)=>a+b,0)*s.bet}
 const chipD=a=>a>=100?100:a>=25?25:a>=10?10:a>=5?5:1;
-function seatHTML(pid,isB,dy=0){const g=V.game,s=g.seats[pid],p=V.players.find(x=>x.pid===pid)||{name:'?'};const d=delta(pid);
+function seatHTML(pid,isB,dy=0,pos=null){const g=V.game,s=g.seats[pid],p=V.players.find(x=>x.pid===pid)||{name:'?'};const d=delta(pid);
  const rib=!isB&&g.round===2&&(g.phase==='r2done'||g.phase==='r3set')&&s.open!=null&&!s.pok?`<div class="ribbon ${s.open?'open':'skip'}">${s.open?'OPEN':'SKIP'}</div>`:s.pok&&g.round===2?'<div class="ribbon open">POK</div>':'';
  const hd=bankHint(pid);
- return `<div class="seat ${isB?'bk':''} ${g.actor===pid?'actor':''} ${bankUI&&!isB&&bankUI.has(pid)?'':''}" data-pid="${pid}" style="margin-top:${dy}px" ${bankTap(pid)}>
+ return `<div class="seat ${isB?'bk':''} ${g.actor===pid?'actor':''} ${bankUI&&!isB&&bankUI.has(pid)?'':''}" data-pid="${pid}" style="${pos?`left:${pos[0]}%;top:${pos[1]}px`:`margin-top:${dy}px`}" ${bankTap(pid)}>
  <div class="av">${p.bot?(p.name.split(' ').pop()):(esc(p.name)[0]||'?').toUpperCase()}</div><div class="nm">${isB?'<span class="plq">BANKER</span> ':''}${esc(p.name.replace(/ \S+$/,p.bot?'':' $&').trim())}${p.online?'':' 💤'}</div>
  <div class="hand sm">${seatHand(pid,s,'sm',false)}</div><div class="lab">${seatLabel(pid,s)}</div>
  ${isB?`<div class="small">${fmtc(p.chips)}</div>`:`<div class="betspot">${s.betDone&&s.bet?`<span class="chip c${chipD(s.bet)}">${s.bet}</span>`:'<span class="small">…</span>'}<span class="delta ${d>0?'pos':d<0?'neg':''}">${d?sgn(d):''}</span></div>`}${rib}${hd}</div>`}
