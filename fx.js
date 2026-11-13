@@ -78,19 +78,4 @@ FX.rules=(round)=>{const d=document.createElement('div');d.className='rules';d.i
  if(round){const t=d.querySelector('#r'+round);if(t)setTimeout(()=>t.scrollIntoView({block:'start'}),50)}};
 })();
 
-/* ---------- fit table to phone screen: ONE fixed scale per table size (no resizing mid-game) ---------- */
-(function(){let raf=0,z=1;const ME_RES=250,ACT_RES=215;
- function fit(){raf=0;const felt=document.getElementById('felt');if(!felt||!felt.offsetParent)return;
-  const hud=document.querySelector('.hud'),bar=document.getElementById('tbar'),me=document.getElementById('me');
-  const top=document.getElementById('top');const ringH=top?parseFloat(top.style.height)||top.offsetHeight/z:400;
-  const nat=ringH+ME_RES+40; /* fixed: only seat count or screen size can change it */
-  const avail=window.innerHeight-(hud?hud.offsetHeight:0)-(bar?bar.offsetHeight:0)-ACT_RES-12;
-  const nz=Math.round(Math.max(.6,Math.min(1,avail/nat))*20)/20; /* snap to 5% steps */
-  if(nz!==z){z=nz;felt.style.zoom=z}}
- const go=()=>{if(!raf)raf=requestAnimationFrame(fit)};
- FX.fit=go;addEventListener('resize',go);addEventListener('orientationchange',()=>setTimeout(go,300));
- function watch(){const f=document.getElementById('felt');if(!f)return setTimeout(watch,300);
-  const top=document.getElementById('top');if(top)new MutationObserver(go).observe(top,{attributes:true,attributeFilter:['style']});
-  const tb=document.getElementById('table');if(tb)new MutationObserver(go).observe(tb,{attributes:true,attributeFilter:['class']});
-  const mo=new MutationObserver(go);mo.observe(f,{childList:true});go()}
- if(document.readyState==='loading')addEventListener('DOMContentLoaded',watch);else watch()})();
+FX.fit=()=>{};

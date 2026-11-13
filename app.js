@@ -1,9 +1,9 @@
-function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),H=Math.max(480,170*k+160);
- const topY=banker?200:218,botY=H-95,ys=i=>k<=1?Math.round((topY+botY)/2+20):Math.round(botY-(botY-topY)*i/(k-1));
+function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),gap=205;
+ const topY=banker?210:128,ys=i=>topY+gap*(k-1-i),H=topY+gap*(k-1)+98;
  const out=[];const L=players.slice(0,k),R=players.slice(k);
- L.forEach((p,i)=>out.push({p,x:15+(k>2&&i==k-1?3:0),y:ys(i)}));
- R.forEach((p,j)=>{const i=j;out.push({p,x:85-(k>2&&i==k-1?3:0),y:ys(i)})});
- if(banker)out.push({p:banker,x:50,y:70});return {out,H}}
+ L.forEach((p,i)=>out.push({p,x:16,y:ys(i)}));R.forEach((p,i)=>out.push({p,x:84,y:ys(i)}));
+ if(banker)out.push({p:banker,x:50,y:72});const f=document.getElementById('felt');if(f)f.classList.toggle('nobk',!banker);
+ return {out,H,cy:banker?Math.max(150,Math.round(H*0.5)-30):Math.round(H/2)-30}}
 
 /* ================= config ================= */
 const SB_URL='https://zdikuwkuvnonlytaaera.supabase.co';
@@ -134,7 +134,7 @@ function renderTable(){show('table');const v=V,g=v.game;if(g&&(g.round+':'+v.gam
  $('hintBtn').classList.toggle('on',hints);$('muteBtn').textContent=mute?'🔇':'🔊';
  // top seats
  const others=[v.banker,...g.order].filter(pid=>pid!==ME.pid);
- const pl=others.filter(p=>p!==v.banker);const RL=ringLayout(pl,isB?null:v.banker);$('top').style.height=RL.H+'px';$('centre').style.top=Math.round(RL.H*0.42)+'px';
+ const pl=others.filter(p=>p!==v.banker);const RL=ringLayout(pl,isB?null:v.banker);$('top').style.height=RL.H+'px';$('centre').style.top=RL.cy+'px';
  let top=RL.out.map(o=>seatHTML(o.p,o.p===v.banker,0,[o.x,o.y])).join('');
  $('top').innerHTML=top;
  // centre

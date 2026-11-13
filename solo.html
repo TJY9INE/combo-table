@@ -253,6 +253,25 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .dbig{font-size:19px!important;padding:11px 0!important}
 .dbig small{font-size:10px;margin-top:2px}
 .actions{padding-top:6px;gap:6px}
+
+/* ===== full-size, less wasted space ===== */
+#felt{zoom:1!important}
+.felt{border-radius:30px 30px 22px 22px!important;margin:0 4px!important;padding-bottom:6px!important}
+.shoe{width:70px!important;height:52px!important;top:4px!important}
+.shoetag{top:14px!important;left:78px!important;font-size:11px!important;padding:4px 8px!important}
+.shoetag:before{left:-10px!important;right:auto!important;bottom:auto!important;top:50%;margin-top:-6px;border:6px solid transparent!important;border-right-color:var(--gold)!important}
+.felt.nobk .shoe{left:50%!important;margin-left:-35px}
+.felt.nobk .shoetag{left:50%!important;top:62px!important;transform:translateX(-50%)}
+.felt.nobk .shoetag:before{left:50%!important;top:auto;bottom:100%!important;margin:0 0 0 -6px;border-right-color:transparent!important;border-bottom-color:var(--gold)!important}
+.ring .seat:not(.bk){width:112px}
+.ring .sm .cd{width:36px;height:52px;font-size:30px}
+.ring .sm .cd .fc .ix{font-size:14px}
+.ring .seat:not(.bk) .sm .slot{margin-left:-24px}
+.ring .seat.bk .sm .slot{margin-left:-19px}
+.ring .nm{font-size:13px}.ring .lab{font-size:12px}
+.btray{zoom:.62;margin-top:2px!important}
+.btot{font-size:13px}
+.me{margin-top:2px!important;padding:6px 6px 8px!important}
 </style>
 </head>
 <body>
@@ -467,12 +486,12 @@ function seatEl(s){const d=document.createElement('div');d.className='seat'+(s.i
  s.root=d;s.handEl=d.querySelector('.hand');s.labEl=d.querySelector('.lab');s.betEl=d.querySelector('.betspot');return d}
 function meEl(s){const d=$('me');d.innerHTML=`<div class="who"><span class="plq ${s.isB?'':'blue'}">${s.isB?'YOU · BANKER':'YOU · PLAYER'}</span><span id="meBet"></span></div><div id="meZone"><div class="hand lg"></div></div><div class="lab"></div><div class="prompt" id="prompt"></div>${s.isB?'<div id="btray" class="btray"></div><div class="btot" id="btot"></div>':''}`;
  s.root=d;s.handEl=d.querySelector('.hand');s.labEl=d.querySelector('.lab');s.betEl=$('meBet')}
-function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),H=Math.max(480,170*k+160);
- const topY=banker?200:218,botY=H-95,ys=i=>k<=1?Math.round((topY+botY)/2+20):Math.round(botY-(botY-topY)*i/(k-1));
+function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),gap=205;
+ const topY=banker?210:128,ys=i=>topY+gap*(k-1-i),H=topY+gap*(k-1)+98;
  const out=[];const L=players.slice(0,k),R=players.slice(k);
- L.forEach((p,i)=>out.push({p,x:15+(k>2&&i==k-1?3:0),y:ys(i)}));
- R.forEach((p,j)=>{const i=j;out.push({p,x:85-(k>2&&i==k-1?3:0),y:ys(i)})});
- if(banker)out.push({p:banker,x:50,y:70});return {out,H}}
+ L.forEach((p,i)=>out.push({p,x:16,y:ys(i)}));R.forEach((p,i)=>out.push({p,x:84,y:ys(i)}));
+ if(banker)out.push({p:banker,x:50,y:72});const f=document.getElementById('felt');if(f)f.classList.toggle('nobk',!banker);
+ return {out,H,cy:banker?Math.max(150,Math.round(H*0.5)-30):Math.round(H/2)-30}}
 function buildSeats(){
  const top=$('top');top.innerHTML='';$('centre').innerHTML='';
  const B={isB:true,hand:[],r:[0,0,0,0,0],els:{}};
@@ -480,7 +499,7 @@ function buildSeats(){
  const P=[];
  if(G.role=='player')P.push({n:'You',e:'🙂',me:true,hand:[],r:[0,0,0,0,0],els:{}});
  G.ai.forEach(a=>P.push(Object.assign(a,{me:false,hand:[],r:[0,0,0,0,0],els:{},open:undefined,drew:false,vis:null,shownB:false,spl:null,si:null})));
- const others=P.filter(p=>!p.me);const RL=ringLayout(others,B.me?null:B);top.style.height=RL.H+'px';$('centre').style.top=Math.round(RL.H*0.42)+'px';
+ const others=P.filter(p=>!p.me);const RL=ringLayout(others,B.me?null:B);top.style.height=RL.H+'px';$('centre').style.top=RL.cy+'px';
  RL.out.forEach(o=>{const el=seatEl(o.p);el.style.left=o.x+'%';el.style.top=o.y+'px';top.appendChild(el)});
  const me=B.me?B:P[0];meEl(me);
  G.B=B;G.P=P;G.me=me;G.comm=[];
