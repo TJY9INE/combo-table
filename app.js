@@ -121,7 +121,7 @@ function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!
  if(g.round===5)return cLab(best7([...h,...g.comm]));return ''}
 const PN=pid=>{const p=V.players.find(x=>x.pid===pid);return p?p.name:'?'};
 const RNM=['Bets','High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
-function renderTable(){show('table');const v=V,g=v.game,meS=g.seats[ME.pid],isB=v.banker===ME.pid;if(g.phase!=='r2bank'){BK=null;bankUI=null}if(g.phase!=='r3set')arranging=null;
+function renderTable(){show('table');const v=V,g=v.game,meS=g.seats[ME.pid],isB=v.banker===ME.pid;if(g.phase!=='r2bank'){BK=null}if(g.phase!=='r3set')arranging=null;
  const meP=v.players.find(p=>p.pid===ME.pid);$('hBank').textContent=fmtc(meP.chips);$('hBank').className='v '+(meP.chips<v.settings.start?'neg':'');
  $('hRound').innerHTML=`<small>${g.round?`ROUND ${g.round}/5`:'ROOM '+v.code}</small>${g.phase==='bet'?'Place bets':RNM[g.round]}`;
  $('hintBtn').classList.toggle('on',hints);$('muteBtn').textContent=mute?'🔇':'🔊';
@@ -144,7 +144,7 @@ function renderTable(){show('table');const v=V,g=v.game,meS=g.seats[ME.pid],isB=
 function delta(pid){const s=V.game.seats[pid];if(!s)return 0;if(pid===V.banker)return -V.game.order.reduce((a,q)=>{const t=V.game.seats[q];return a+t.r.reduce((x,y)=>x+y,0)*t.bet},0);return s.r.reduce((a,b)=>a+b,0)*s.bet}
 const chipD=a=>a>=100?100:a>=25?25:a>=10?10:a>=5?5:1;
 function seatHTML(pid,isB,dy=0,pos=null){const g=V.game,s=g.seats[pid],p=V.players.find(x=>x.pid===pid)||{name:'?'};const d=delta(pid);
- const rib=!isB&&g.round===2&&(g.phase==='r2done'||g.phase==='r3set')&&s.open!=null&&!s.pok?`<div class="ribbon ${s.open?'open':'skip'}">${s.open?'OPEN':'SKIP'}</div>`:s.pok&&g.round===2?'<div class="ribbon open">POK</div>':'';
+ const rib=!isB&&g.round===2&&s.open!=null&&!s.pok?`<div class="ribbon big ${s.open?'open':'skip'}">${s.open?'OPENED':'SKIPPED'}</div>`:s.pok&&g.round===2?'<div class="ribbon open">POK</div>':'';
  const hd=bankHint(pid);
  return `<div class="seat ${isB?'bk':''} ${g.actor===pid?'actor':''} ${bankUI&&!isB&&bankUI.has(pid)?'':''}" data-pid="${pid}" style="${pos?`left:${pos[0]}%;top:${pos[1]}px`:`margin-top:${dy}px`}" ${bankTap(pid)}>
  <div class="av">${p.bot?(p.name.split(' ').pop()):(esc(p.name)[0]||'?').toUpperCase()}</div><div class="nm">${isB?'<span class="plq">BANKER</span> ':''}${esc(p.name.replace(/ \S+$/,p.bot?'':' $&').trim())}${p.online?'':' 💤'}</div>
@@ -173,7 +173,7 @@ function renderActions(){const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.
    shoeOn(()=>doAct('draw'));
    return A(`${hints?`<div class="hint">💡 ${forced?`You have ${p} — must draw`:best?'Draw':'Stand'}${forced?'':` — ${p==4?'always draw on 4':p==5?'on 5 draw only with 2+3 or 7+8':'stand on 6–7'}`}</div>`:''}<div class="arow"><button class="gold drawbtn" onclick="doAct('draw')">🂠 Draw card</button>${forced?'':`<button class="green drawbtn" onclick="doAct('stand')">✋ Stand</button>`}</div>${peekBtn?`<div class="arow">${peekBtn}</div>`:''}`)}
   return A(`<div class="wait">${esc(PN(g.actor))} is deciding…</div>${peekBtn?`<div class="arow">${peekBtn}</div>`:''}`)}
- case 'r2bank':if(isB)return bankerUI();return wait('Banker is deciding who to open…');
+ case 'r2bank':if(isB)return bankerUI();return wait('Banker is opening / skipping players…');
  case 'r2done':return wait('Baccarat settled · next: Sikipi');
  case 'r3set':if(s.si==null&&!s._sent)return arrangeUI();return wait(`Splits set: ${[v.banker,...g.order].filter(p=>g.seats[p].set).length}/${g.order.length+1}`);
  case 'r3done':return wait('Sikipi settled · next: Niu Niu');
@@ -205,21 +205,22 @@ function bkEV(Bh,U,drew){const known=new Set([...Bh,U]);const rem=[...Array(52).
   else{for(const p3 of rest){const pv=b3([...P2,p3]);st_+=-bSettle(pv,B2);let s=0,m=0;for(const d3 of rest){if(d3===p3)continue;s+=-bSettle(pv,b3([...Bh,d3]));m++}dr+=s/m;n++}}}
  return n?{st:st_/n,dr:dr/n}:{st:0,dr:0}}
 let BK=null;
-function bankHint(pid){if(!BK||!BK.ev[pid]||!hints)return '';const e=(BK.draw===null?BK.plan:BK.draw)?BK.ev[pid].dr:BK.ev[pid].st;return `<div class="hintdot">💡${e>0?'OPEN':'SKIP'} ${e>0?'+':''}${Math.round(e*100)}%</div>`}
-function bankTap(pid){return BK&&BK.ev[pid]?`onclick="bkToggle('${pid}')"`:''}
-function bankerUI(){const g=V.game,s=g.seats[ME.pid];const act=g.order.filter(p=>!g.seats[p].pok);
- if(!BK||BK.game!==V.gameNo){const ev={};act.forEach(p=>ev[p]=bkEV(s.hand,g.seats[p].hand[0],g.seats[p].drew));
-  const val=d=>act.reduce((a,p)=>a+g.seats[p].bet*Math.max(0,d?ev[p].dr:ev[p].st),0);const forced=b2(s.hand).p<=3;
-  BK={game:V.gameNo,ev,plan:forced?true:val(true)>val(false),forced,draw:forced?true:null,opens:{}};bankUI=new Set(act);renderTable();return}
- const ready=act.every(p=>BK.opens[p]!==undefined)&&BK.draw!==null;const bp=b2(s.hand).p;
- act.forEach(p=>{const el=document.querySelector(`.seat[data-pid="${p}"]`);if(el){el.classList.toggle('tapme',BK.opens[p]===undefined);let r=el.querySelector('.ribbon');if(BK.opens[p]!==undefined){if(!r){r=document.createElement('div');el.appendChild(r)}r.className='ribbon '+(BK.opens[p]?'open':'skip');r.textContent=BK.opens[p]?'OPEN':'SKIP'}}});
- if(!BK.forced&&BK.draw!==true)shoeOn(()=>{BK.draw=true;renderActions()});
- A(`${hints?`<div class="hint">💡 ${BK.forced?`You have ${bp} — must draw`:`Best: <b>${BK.plan?'DRAW':'STAND'}</b> on ${bp}`} · tap each player to OPEN/SKIP</div>`:'<div class="wait">Tap each player: OPEN or SKIP</div>'}
-  ${BK.forced?'':`<div class="arow"><button class="${BK.draw===true?'gold':'ghost'} drawbtn" onclick="BK.draw=true;renderActions()">🂠 ${BK.draw===true?'Drawing ✓':'Draw card'}</button><button class="${BK.draw===false?'gold':'ghost'} drawbtn" onclick="BK.draw=false;renderActions()">✋ ${BK.draw===false?'Standing ✓':'Stand'}</button></div>`}
-  <div class="arow">${hints?'<button class="ghost" onclick="bkAuto()">Use 💡</button>':''}<button class="gold" ${ready?'':'disabled'} onclick="bkLock()">Lock & reveal</button></div>`)}
-window.bkToggle=pid=>{if(!BK)return;BK.opens[pid]=BK.opens[pid]===undefined?true:!BK.opens[pid];snd('tap');renderActions()};
-window.bkAuto=()=>{if(BK.draw===null)BK.draw=BK.plan;for(const p in BK.ev)BK.opens[p]=(BK.draw?BK.ev[p].dr:BK.ev[p].st)>0;snd('tap');renderActions()};
-window.bkLock=()=>{const o=BK.opens,d=BK.draw;BK=null;bankUI=null;doAct('bank',{draw:d,opens:o})};
+function bkPlanC(){const g=V.game,s=g.seats[ME.pid];const act=g.order.filter(p=>{const t=g.seats[p];return !t.pok&&t.open==null});const forced=b2(s.hand).p<=3;
+ if(!BK||BK.game!==V.gameNo||BK.hk!==s.hand.slice(0,2).join()){const ev={};g.order.filter(p=>!g.seats[p].pok).forEach(p=>ev[p]=bkEV(s.hand.slice(0,2),g.seats[p].hand[0],g.seats[p].drew));BK={game:V.gameNo,hk:s.hand.slice(0,2).join(),ev}}
+ const best=(p,d)=>forced?Math.max(0,BK.ev[p].dr):Math.max(0,BK.ev[p].st,d?BK.ev[p].dr:BK.ev[p].st);
+ const val=d=>act.reduce((x,p)=>x+g.seats[p].bet*best(p,d),0);const dr=forced?true:val(true)>val(false);
+ const acts={};act.forEach(p=>{const e=BK.ev[p],fin=dr?e.dr:e.st;acts[p]=(!forced&&e.st>=fin&&e.st>0)?'open':(fin<=0&&(forced||e.st<=0))?'skip':'rest'});
+ return {draw:dr,acts,forced,act}}
+function bankHint(pid){const g=V.game;if(!(g.phase==='r2bank'&&V.banker===ME.pid))return '';const t=g.seats[pid];if(!t||t.pok||t.open!=null)return '';
+ const pl=bkPlanC();const a=pl.acts[pid];const e=BK.ev[pid];
+ const btns=`<div class="obtns"><button class="obtn op" ${pl.forced?'disabled':''} onclick="event.stopPropagation();bkDo('${pid}','open')">OPEN</button><button class="obtn sk" onclick="event.stopPropagation();bkDo('${pid}','skip')">SKIP</button></div>`;
+ return btns+(hints?`<div class="hintdot">💡${a==='open'?'OPEN':a==='skip'?'SKIP':'WAIT'} ${a==='open'?'+'+Math.round(e.st*100)+'%':a==='rest'?'then '+(pl.draw?'draw':'stand'):''}</div>`:'')}
+function bankTap(pid){return ''}
+window.bkDo=(pid,mode)=>{snd(mode==='open'?'flip':'tap');doAct('bopen',{target:pid,mode})};
+function bankerUI(){const g=V.game,s=g.seats[ME.pid];const pl=bkPlanC();const bp=b2(s.hand).p;const left=pl.act.length;
+ if(!pl.forced)shoeOn(()=>doAct('bfinish',{draw:true}));else shoeOn(()=>doAct('bfinish',{draw:true}));
+ A(`${hints?`<div class="hint">💡 ${pl.forced?`You have ${bp} — must draw before opening anyone`:`You have ${bp}. Open/skip players on their seats, then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest`}</div>`:`<div class="wait">You have ${bp}. OPEN or SKIP players, then draw or stand for the rest</div>`}
+  <div class="arow"><button class="gold drawbtn" onclick="doAct('bfinish',{draw:true})">🂠 Draw${left?` for ${left} left`:''}</button>${pl.forced?'':`<button class="green drawbtn" onclick="doAct('bfinish',{draw:false})">✋ Stand${left?` · settle ${left}`:''}</button>`}</div>`)}
 
 /* ---- sikipi arrange ---- */
 function arrangeUI(){const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.pid;if(s.hand.some(c=>c==null))return;
@@ -256,6 +257,7 @@ function playEvents(evs){let mineTot=0,any=false;
    if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(5,e.m+1));else if(e.m<0)fly(el,bEl,Math.min(5,-e.m+1));floatOn(el,e.m>0?`+${e.m}× ${sgn(e.amt)}`:e.m<0?`${e.m}× ${sgn(e.amt)}`:'Push',e.m>0?'w':e.m<0?'l':'p')}
    if(e.pid===ME.pid)mineTot+=e.amt;if(V.banker===ME.pid)mineTot-=e.amt}
   if(e.t==='act'&&e.pid!==ME.pid){const el=document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el)bubble(el,e.a==='draw'?'Draw':'Stand')}
+  if((e.t==='open'||e.t==='skip')&&V.banker!==ME.pid){const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,(e.t==='open'?'Open ':'Skip ')+PN(e.pid).split(' ')[0]);if(e.pid===ME.pid)toast(e.t==='open'?'Banker OPENED you':'Banker SKIPPED you — push')}
   if(e.t==='bank'&&V.banker!==ME.pid){const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,e.draw?'Banker draws':'Banker stands')}
   if(e.t==='start')toast(`New game · ${PN(e.banker)} is banker`)}
  if(any){if(mineTot>0)snd(mineTot>=3*(V.game.seats[ME.pid].bet||1)?'big':'win');else if(mineTot<0)snd('lose');else snd('chip')}
