@@ -239,6 +239,12 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .ring .seat .gsep{width:3px;flex:none}
 .ring .seat .hand{max-width:100%;overflow:visible}
 .hud{position:sticky;top:0;z-index:60;background:#0b0f0d;padding-top:max(8px,env(safe-area-inset-top))!important;box-shadow:0 4px 10px #000a}
+
+.ring .seat{z-index:3}
+.ring .hintdot{position:static;transform:none;display:block;margin:3px auto 0;width:max-content;max-width:100%;white-space:normal;text-align:center}
+.ring .bubble{top:auto;bottom:calc(100% + 18px);z-index:30}
+.ribbon.big{top:-12px;bottom:auto;left:auto;right:-6px;transform:rotate(8deg);font-size:10px;padding:3px 7px}
+.ring .obtns{margin-top:5px}
 </style>
 </head>
 <body>
@@ -453,8 +459,8 @@ function seatEl(s){const d=document.createElement('div');d.className='seat'+(s.i
  s.root=d;s.handEl=d.querySelector('.hand');s.labEl=d.querySelector('.lab');s.betEl=d.querySelector('.betspot');return d}
 function meEl(s){const d=$('me');d.innerHTML=`<div class="who"><span class="plq ${s.isB?'':'blue'}">${s.isB?'YOU · BANKER':'YOU · PLAYER'}</span><span id="meBet"></span></div><div id="meZone"><div class="hand lg"></div></div><div class="lab"></div><div class="prompt" id="prompt"></div>${s.isB?'<div id="btray" class="btray"></div><div class="btot" id="btot"></div>':''}`;
  s.root=d;s.handEl=d.querySelector('.hand');s.labEl=d.querySelector('.lab');s.betEl=$('meBet')}
-function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),H=Math.max(440,138*k+130);
- const topY=banker?196:140,botY=H-70,ys=i=>k<=1?Math.round((topY+botY)/2+20):Math.round(botY-(botY-topY)*i/(k-1));
+function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),H=Math.max(540,185*k+200);
+ const topY=banker?205:225,botY=H-105,ys=i=>k<=1?Math.round((topY+botY)/2+20):Math.round(botY-(botY-topY)*i/(k-1));
  const out=[];const L=players.slice(0,k),R=players.slice(k);
  L.forEach((p,i)=>out.push({p,x:15+(k>2&&i==k-1?3:0),y:ys(i)}));
  R.forEach((p,j)=>{const i=j;out.push({p,x:85-(k>2&&i==k-1?3:0),y:ys(i)})});

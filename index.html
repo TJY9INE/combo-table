@@ -254,6 +254,13 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .ring .seat .hand{max-width:100%;overflow:visible}
 .hud{position:sticky;top:0;z-index:60;background:#0b0f0d;padding-top:max(8px,env(safe-area-inset-top))!important;box-shadow:0 4px 10px #000a}
 .bd{margin-top:10px;text-align:left}.bdr{border-top:1px solid #ffffff1a;padding:6px 2px}.bdh{display:flex;gap:8px;align-items:baseline}.bd .small{line-height:1.35}
+
+/* keep badges/buttons off the cards */
+.ring .seat{z-index:3}
+.ring .hintdot{position:static;transform:none;display:block;margin:3px auto 0;width:max-content;max-width:100%;white-space:normal;text-align:center}
+.ring .bubble{top:auto;bottom:calc(100% + 18px);z-index:30}
+.ribbon.big{top:-12px;bottom:auto;left:auto;right:-6px;transform:rotate(8deg);font-size:10px;padding:3px 7px}
+.ring .obtns{margin-top:5px}
 </style>
 </head>
 <body>

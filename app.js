@@ -1,5 +1,5 @@
-function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),H=Math.max(440,138*k+130);
- const topY=banker?196:140,botY=H-70,ys=i=>k<=1?Math.round((topY+botY)/2+20):Math.round(botY-(botY-topY)*i/(k-1));
+function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),H=Math.max(540,185*k+200);
+ const topY=banker?205:225,botY=H-105,ys=i=>k<=1?Math.round((topY+botY)/2+20):Math.round(botY-(botY-topY)*i/(k-1));
  const out=[];const L=players.slice(0,k),R=players.slice(k);
  L.forEach((p,i)=>out.push({p,x:15+(k>2&&i==k-1?3:0),y:ys(i)}));
  R.forEach((p,j)=>{const i=j;out.push({p,x:85-(k>2&&i==k-1?3:0),y:ys(i)})});
