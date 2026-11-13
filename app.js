@@ -1,8 +1,18 @@
-function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),gap=205;
+function ringLayout(players,banker){const m=players.length,f=document.getElementById('felt'),tp=document.getElementById('top');
+ if(f)f.classList.toggle('nobk',!banker);
+ if(m>=5){/* big table: compact 3-across grid */
+  if(tp)tp.classList.add('dense');if(f)f.classList.add('densef');
+  const gap=142,y0=banker?180:132,xs=[17,50,83],out=[];
+  players.forEach((p,i)=>{const r=Math.floor(i/3),c=i%3,left=players.length-r*3;
+   const x=left>=3?xs[c]:left==2?[30,70][c]:50;out.push({p,x,y:y0+gap*r})});
+  const rows=Math.ceil(m/3),H=y0+gap*(rows-1)+150;
+  if(banker)out.push({p:banker,x:50,y:62});return {out,H,cy:H-78}}
+ if(tp)tp.classList.remove('dense');if(f)f.classList.remove('densef');
+ const k=Math.max(1,Math.ceil(m/2)),gap=205;
  const topY=banker?210:128,ys=i=>topY+gap*(k-1-i),H=topY+gap*(k-1)+98;
  const out=[];const L=players.slice(0,k),R=players.slice(k);
  L.forEach((p,i)=>out.push({p,x:16,y:ys(i)}));R.forEach((p,i)=>out.push({p,x:84,y:ys(i)}));
- if(banker)out.push({p:banker,x:50,y:72});const f=document.getElementById('felt');if(f)f.classList.toggle('nobk',!banker);
+ if(banker)out.push({p:banker,x:50,y:72});
  return {out,H,cy:banker?Math.max(150,Math.round(H*0.5)-30):Math.round(H/2)-30}}
 
 /* ================= config ================= */
