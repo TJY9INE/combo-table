@@ -58,6 +58,7 @@ const qs=new URLSearchParams(location.search);if(qs.get('room'))$('hCode').value
 $('hCreate').onclick=async()=>{const name=$('hName').value.trim()||'Host';localStorage.setItem('ct.name',name);
  try{ME=null;const j=await api('create',{name,settings:{}});ME={code:j.code,pid:j.pid,token:j.token,name};saveMe();subscribe();apply(j.view)}catch(e){$('hErr').textContent=e.message}};
 $('hJoin').onclick=async()=>{const name=$('hName').value.trim()||'Player';const code=$('hCode').value.trim().toUpperCase();if(code.length!==4){$('hErr').textContent='Enter the 4-letter room code';return}
+ if(ME&&ME.code===code){subscribe();refresh();return}
  localStorage.setItem('ct.name',name);
  try{ME=null;const j=await api('join',{code,name});ME={code:j.code,pid:j.pid,token:j.token,name};saveMe();subscribe();apply(j.view)}catch(e){$('hErr').textContent=e.message}};
 
@@ -73,7 +74,7 @@ async function saveSettings(show_){const s={min:+$('sMin').value,max:+$('sMax').
 $('sStartBtn').onclick=async()=>{try{await saveSettings(false);await api('start',{banker:$('sBanker').value})}catch(e){$('rErr').textContent=e.message}};
 $('tBack').onclick=()=>{if(V.phase!=='game'||V.game.phase==='summary')renderRoom(true);else toast('Game in progress — room menu after this game')};
 let roomOverride=false;
-function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.host===ME.pid;
+function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.host===ME.pid;if(isHost&&window._wasHost===false)toast('You are now the host');window._wasHost=isHost;
  $('rCode').textContent=v.code;$('rCount').textContent=`(${v.players.length}/8)`;
  $('rPlayers').innerHTML=v.players.map(p=>`<div class="prow"><span class="dot ${p.online?'on':''}"></span><span>${esc(p.name)}${p.pid===ME.pid?' <span class="tg">YOU</span>':''}${p.pid===v.host?' <span class="tg">HOST</span>':''}${p.bot?' <span class="tg">BOT</span>':''}${p.pid===v.banker&&v.phase==='game'?' <span class="tg bk">BANKER</span>':''}</span><span class="ch">${fmtc(p.chips)}</span>${isHost&&!p.bot&&p.pid!==ME.pid&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost" style="padding:3px 8px;font-size:11px" onclick="kick('${p.pid}')">✕</button>`:''}</div>`).join('');
  $('rHost').style.display=isHost?'block':'none';$('rGuest').style.display=isHost?'none':'block';
