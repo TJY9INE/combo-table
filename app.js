@@ -107,7 +107,7 @@ function apply(v){v._recv=Date.now();const prev=V;V=v;if(prev&&prev.gameNo!==v.g
  if(v.game&&v.game.phase==='summary'&&prev&&prev.game&&prev.game.phase!=='summary')setTimeout(()=>showSummary(),900)}
 
 /* ================= table rendering ================= */
-let SEEN=new Map();let LOG=[];
+let SEEN=new Map();let LOG=[],LOGR=null;
 function cardFace(c){const red=(st(c)==0||st(c)==2);return `<div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span><span class="ix2">${RN[rk(c)]}<br>${SY[st(c)]}</span></div>`}
 function cardEl(key,c,showFace,slot,tap){const prev=SEEN.get(key);let cls='';
  if(prev===undefined)cls='deal';SEEN.set(key,showFace?c:null);
@@ -128,7 +128,7 @@ function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!
  if(g.round===5)return cLab(best7([...h,...g.comm]));return ''}
 const PN=pid=>{const p=V.players.find(x=>x.pid===pid);return p?p.name:'?'};
 const RNM=['Bets','High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
-function renderTable(){show('table');const v=V,g=v.game,isB=v.banker===ME.pid;const SPEC=!g.seats[ME.pid];const meS=g.seats[ME.pid]||{hand:[],r:[0,0,0,0,0],bet:0,pub:[]};if(autoReveal&&!SPEC)meS.hand.forEach(c=>{if(c!=null)peeked.add(c)});if(g.phase!=='r2bank'){BK=null}if(g.phase!=='r3set')arranging=null;
+function renderTable(){show('table');const v=V,g=v.game;if(g&&(g.round+':'+v.gameNo)!==LOGR){LOGR=g.round+':'+v.gameNo;LOG=[]}clearGhosts();const isB=v.banker===ME.pid;const SPEC=!g.seats[ME.pid];const meS=g.seats[ME.pid]||{hand:[],r:[0,0,0,0,0],bet:0,pub:[]};if(autoReveal&&!SPEC)meS.hand.forEach(c=>{if(c!=null)peeked.add(c)});if(g.phase!=='r2bank'){BK=null}if(g.phase!=='r3set')arranging=null;
  const meP=v.players.find(p=>p.pid===ME.pid);$('hBank').textContent=fmtc(meP.chips);$('hBank').className='v '+(meP.chips<v.settings.start?'neg':'');
  $('hRound').innerHTML=`<small>${g.round?`ROUND ${g.round}/5`:'ROOM '+v.code}</small>${g.phase==='bet'?'Place bets':RNM[g.round]}`;
  $('hintBtn').classList.toggle('on',hints);$('muteBtn').textContent=mute?'🔇':'🔊';
@@ -242,14 +242,14 @@ function bankerUI(){const g=V.game,s=g.seats[ME.pid];
   <div class="dbtns"><button class="dbig draw ${hints&&pl.draw?'best':''}" onclick="doAct('bfinish',{draw:true})">🂠 DRAW<small>${left?`then settle ${left} left`:'take a 3rd card'}</small></button>${pl.forced?'':`<button class="dbig stand ${hints&&!pl.draw?'best':''}" onclick="doAct('bfinish',{draw:false})">✋ STAND<small>${left?`settle ${left} on ${bp}`:`keep ${bp}`}</small></button>`}</div></div>`)}
 
 /* ---- sikipi arrange ---- */
-function arrangeUI(){const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.pid;if(s.hand.some(c=>c==null))return;
+function arrangeUI(){if(window.__drag)return;const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.pid;if(s.hand.some(c=>c==null))return;let first=false;
  if(!arranging||arranging.game!==v.gameNo){const spl=skSplits(s.hand);let ev;
   if(isB){const Ps=g.order.map(q=>{const t=g.seats[q];return {shownB:t.shownB,vis:t.vis||[],bet:t.bet}});ev=skBankerEV({hand:s.hand,spl},Ps,200)}
   else ev=skEV({hand:s.hand,spl},g.seats[v.banker].vis||[]);
-  arranging={game:v.gameNo,spl,ev,bi:skEVBest(ev,spl),pool:[...s.hand],bot:[],top:[]}}
+  arranging={game:v.gameNo,spl,ev,bi:skEVBest(ev,spl),pool:[...s.hand],bot:[],top:[]};first=true}
  const ar=arranging,zone=$('meZone');$('prompt').textContent='Drag cards into Bottom and Top (or tap)';
  const lab=cs=>cs.length==2?skLab(skKey(cs[0],cs[1])):'';const full=ar.bot.length==2&&ar.top.length==2;const best=ar.spl[ar.bi];
- zone.innerHTML=`<div class="pool" data-z="pool">${ar.pool.map(cardBtn).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${ar.bot.map(cardBtn).join('')}</div><div class="zl">${lab(ar.bot)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${ar.top.map(cardBtn).join('')}</div><div class="zl">${lab(ar.top)}</div></div></div>`;$('me').scrollIntoView({block:'end',behavior:'smooth'});
+ zone.innerHTML=`<div class="pool" data-z="pool">${ar.pool.map(cardBtn).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${ar.bot.map(cardBtn).join('')}</div><div class="zl">${lab(ar.bot)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${ar.top.map(cardBtn).join('')}</div><div class="zl">${lab(ar.top)}</div></div></div>`;if(first)$('me').scrollIntoView({block:'end',behavior:'smooth'});
  zone.querySelectorAll('[data-c]').forEach(bindDrag);
  const fmtEV=x=>isB?(x>=0?'+':'')+x.toFixed(2)+' chips':(x>=0?'+':'')+x.toFixed(2)+'×';
  A(`${hints?`<div class="hint">💡 Best: Bottom ${ctxt(best.hi)} · Top ${ctxt(best.lo)} (EV ${fmtEV(ar.ev[ar.bi])})${isB?'':`<br><small>Banker showed ${ctxt(g.seats[v.banker].vis||[])} in Baccarat</small>`}</div>`:''}
@@ -264,11 +264,11 @@ function cardBtn(c){const red=(st(c)==0||st(c)==2);return `<div class="slot lg" 
 function moveCard(c,to){const ar=arranging;for(const z of['pool','bot','top'])ar[z]=ar[z].filter(x=>x!=c);if(to!='pool'&&ar[to].length>=2)ar.pool.push(ar[to].shift());ar[to].push(c);snd('flip');arrangeUI()}
 function bindDrag(el){const c=+el.dataset.c,zone=$('meZone');let sx=null,sy,dragging=false,ghost=null,over=null;
  el.onpointerdown=e=>{sx=e.clientX;sy=e.clientY;dragging=false;el.setPointerCapture(e.pointerId)};
- el.onpointermove=e=>{if(sx==null)return;if(!dragging&&Math.hypot(e.clientX-sx,e.clientY-sy)>8){dragging=true;ghost=el.cloneNode(true);ghost.classList.add('dragging');document.body.appendChild(ghost);el.style.opacity='.3'}
+ el.onpointermove=e=>{if(sx==null)return;if(!dragging&&Math.hypot(e.clientX-sx,e.clientY-sy)>8){dragging=true;window.__drag=true;ghost=el.cloneNode(true);ghost.classList.add('dragging');document.body.appendChild(ghost);el.style.opacity='.3'}
   if(dragging){ghost.style.left=(e.clientX-28)+'px';ghost.style.top=(e.clientY-40)+'px';const t=document.elementFromPoint(e.clientX,e.clientY);const z=t&&t.closest('[data-z]');zone.querySelectorAll('.zone').forEach(x=>x.classList.toggle('over',x===z));over=z}};
- el.onpointerup=()=>{const was=dragging;sx=null;if(ghost){ghost.remove();ghost=null}el.style.opacity='';
+ el.onpointerup=()=>{const was=dragging;sx=null;window.__drag=false;if(ghost){ghost.remove();ghost=null}el.style.opacity='';
   if(was){if(over)moveCard(c,over.dataset.z)}else{const ar=arranging;if(ar.pool.includes(c))moveCard(c,ar.bot.length<2?'bot':'top');else moveCard(c,'pool')}};
- el.onpointercancel=()=>{sx=null;if(ghost){ghost.remove();ghost=null}el.style.opacity=''}}
+ el.onpointercancel=()=>{sx=null;window.__drag=false;if(ghost){ghost.remove();ghost=null}el.style.opacity=''}}
 
 /* ================= events → chips & sounds ================= */
 function playEvents(evs){let mineTot=0,any=false,bestM=0,worstM=0;const nm=pid=>(PN(pid)||'').replace(/ \S+$/,'')||PN(pid);
@@ -278,10 +278,10 @@ function playEvents(evs){let mineTot=0,any=false,bestM=0,worstM=0;const nm=pid=>
    if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(8,e.m+2));else if(e.m<0)fly(el,bEl,Math.min(8,-e.m+2));floatOn(el,e.m>0?`+${e.m}× ${sgn(e.amt)}`:e.m<0?`${e.m}× ${sgn(e.amt)}`:'Push',e.m>0?'w':e.m<0?'l':'p')}
    if(e.pid===ME.pid&&e.ri===1&&V.game.seats[ME.pid]&&V.game.seats[ME.pid].pok&&e.m>0){FX.big('POK!',`+${e.m}×`);FX.flash('#ffd76a');FX.vibe(120)}
    if(e.pid===ME.pid){mineTot+=e.amt;bestM=Math.max(bestM,e.m);worstM=Math.min(worstM,e.m)}if(V.banker===ME.pid){mineTot-=e.amt;bestM=Math.max(bestM,-e.m);worstM=Math.min(worstM,-e.m)}
-   if(Math.abs(e.m)>=3)LOG.push(`${nm(e.pid)} ${e.m>0?'wins':'loses'} ${Math.abs(e.m)}×`);continue}
-  if(e.t==='act'){LOG.push(`${nm(e.pid)} ${e.a==='draw'?'draws':'stands'}${e.auto?' (timer)':''}`);if(e.pid!==ME.pid){const el=document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el)bubble(el,e.a==='draw'?'Draw':'Stand')}}
-  if(e.t==='open'||e.t==='skip'){LOG.push(`Banker ${e.t==='open'?'opens':'skips'} ${nm(e.pid)}`);if(V.banker!==ME.pid){const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,(e.t==='open'?'Open ':'Skip ')+nm(e.pid));if(e.pid===ME.pid){toast(e.t==='open'?'Banker OPENED you':'Banker SKIPPED you — push');FX.drum(500)}}}
-  if(e.t==='bank'){LOG.push(`Banker ${e.draw?'draws':'stands'}`);if(V.banker!==ME.pid){FX.drum(700);const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,e.draw?'Banker draws':'Banker stands')}}
+   if(Math.abs(e.m)>=3&&V.game&&e.ri===V.game.round-1)LOG.push(`${nm(e.pid)} ${e.m>0?'wins':'loses'} ${Math.abs(e.m)}×`);continue}
+  if(e.t==='act'){if(V.game&&V.game.round===2)LOG.push(`${nm(e.pid)} ${e.a==='draw'?'draws':'stands'}${e.auto?' (timer)':''}`);if(e.pid!==ME.pid){const el=document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el)bubble(el,e.a==='draw'?'Draw':'Stand')}}
+  if(e.t==='open'||e.t==='skip'){if(V.game&&V.game.round===2)LOG.push(`Banker ${e.t==='open'?'opens':'skips'} ${nm(e.pid)}`);if(V.banker!==ME.pid){const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,(e.t==='open'?'Open ':'Skip ')+nm(e.pid));if(e.pid===ME.pid){toast(e.t==='open'?'Banker OPENED you':'Banker SKIPPED you — push');FX.drum(500)}}}
+  if(e.t==='bank'){if(V.game&&V.game.round===2)LOG.push(`Banker ${e.draw?'draws':'stands'}`);if(V.banker!==ME.pid){FX.drum(700);const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,e.draw?'Banker draws':'Banker stands')}}
   if(e.t==='bpok'){LOG.push('Banker Pok!');FX.flash('#ffd76a');FX.shake()}
   if(e.t==='start'){LOG=[];toast(`New game · ${PN(e.banker)} is banker`)}}
  if(LOG.length>12)LOG=LOG.slice(-12);const ll=$('logline');if(ll)ll.textContent=LOG.slice(-2).join(' · ');
@@ -307,3 +307,7 @@ $('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classL
 $('hintBtn').onclick=()=>{hints=!hints;localStorage.setItem('ct.hints',hints?'1':'0');toast(hints?'💡 Hints on':'Hints off');renderTable()};
 $('muteBtn').onclick=()=>{mute=!mute;localStorage.setItem('ct.mute',mute?'1':'0');$('muteBtn').textContent=mute?'🔇':'🔊'};
 if(ME){if(qs.get('room')&&qs.get('room').toUpperCase()!==ME.code){/* invited elsewhere */ME=null;saveMe()}else{subscribe();refresh()}}
+
+/* safety: never leave a dragged card copy on screen */
+function clearGhosts(){setTimeout(()=>{if(!window.__drag)document.querySelectorAll('body>.dragging').forEach(g=>g.remove())},60)}
+addEventListener('pointerup',()=>{window.__drag=false;clearGhosts()},true);addEventListener('pointercancel',()=>{window.__drag=false;clearGhosts()},true);

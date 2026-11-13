@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0b0f0d"><meta name="apple-mobile-web-app-capable" content="yes"><title>Combo Table · Play with friends</title>
 <style>
 :root{--gold:#e9c46a;--gold2:#b8892c;--felt:#11683f;--felt2:#0a4a2c;--ink:#161616;--red:#c62828;--win:#7ee2a8;--lose:#ff8a80;--blue:#7fd3ff}
@@ -247,6 +247,12 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .lb .lr.me{outline:1px solid #7fd3ff}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid #9fd3ff;border-right-color:transparent;border-radius:50%;animation:spinr .7s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes spinr{to{transform:rotate(360deg)}}
+
+/* fixes: opponents' 5 cards fit seat; HUD pinned under notch */
+.ring .seat:not(.bk) .sm .slot{margin-left:-19px}.ring .seat:not(.bk) .sm .slot:first-child{margin-left:0}
+.ring .seat .gsep{width:3px;flex:none}
+.ring .seat .hand{max-width:100%;overflow:visible}
+.hud{position:sticky;top:0;z-index:60;background:#0b0f0d;padding-top:max(8px,env(safe-area-inset-top))!important;box-shadow:0 4px 10px #000a}
 </style>
 </head>
 <body>
