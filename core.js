@@ -37,7 +37,7 @@ function dealerShouldDraw(cs,group){ // group: 'stood' | 'drew'
 /* ---------- R3 Sikipi ---------- */
 const hv=r=>r==0?14:r+1;
 function skKey(a,b){const ra=rk(a),rb=rk(b);if(ra==rb)return[3,hv(ra),0];if((ra==1&&rb==7)||(ra==7&&rb==1))return[2,0,0];const p=(bp(a)+bp(b))%10;const k=[hv(ra),hv(rb)].sort((x,y)=>y-x);return[1,p,k[0]*20+k[1]]}
-const skLab=k=>k[0]==3?`Pair ${RN[(k[1]==14?0:k[1]-1)]}s ×5`:k[0]==2?'Gong (2+8) ×3':`${k[1]} pts${k[1]>=8?' ×2':''}`;
+const skLabN=k=>skLab(k).replace(/ ×\d+/,'');const skLab=k=>k[0]==3?`Pair ${RN[(k[1]==14?0:k[1]-1)]}s ×5`:k[0]==2?'Gong (2+8) ×3':`${k[1]} pts${k[1]>=8?' ×2':''}`;
 const skMult=k=>k[0]==3?5:k[0]==2?3:(k[1]>=8?2:1);
 function skSplits(cs){const out=[];for(const j of[1,2,3]){const a=[cs[0],cs[j]],b=cs.filter((_,i)=>i!=0&&i!=j);const ka=skKey(...a),kb=skKey(...b);const hiA=cmpArr(ka,kb)>=0;out.push({hi:hiA?a:b,lo:hiA?b:a,kh:hiA?ka:kb,kl:hiA?kb:ka})}return out}
 function skBestIdx(spl){let bi=0;spl.forEach((s,i)=>{const c=cmpArr(s.kl,spl[bi].kl);if(c>0||(c==0&&cmpArr(s.kh,spl[bi].kh)>0))bi=i});return bi}
@@ -59,7 +59,7 @@ function skBankerEV(D,P,M=300){const dset=new Set(D.hand);const ev=[0,0,0];
  return ev}
 function skRespond(){const D=S.dealer;S.players.forEach(p=>{p.ev=skEV(p,D.vis);if(!p.me)p.si=skEVBest(p.ev,p.spl)})}
 function skSettle(P,Ps,D,Ds){const pa=allPic(P),da=allPic(D);if(pa||da)return pa&&da?0:pa?7:-7;
- const h=cmpArr(Ps.kh,Ds.kh),l=cmpArr(Ps.kl,Ds.kl);if(h>0&&l>0)return skMult(Ps.kh);if(h<0&&l<0)return -skMult(Ds.kh);return 0}
+ const h=cmpArr(Ps.kh,Ds.kh),l=cmpArr(Ps.kl,Ds.kl);if(h>0&&l>0)return skMult(Ps.kl);if(h<0&&l<0)return -skMult(Ds.kl);return 0}
 
 /* ---------- R4 Niu Niu ---------- */
 const nv=c=>Math.min(rk(c)+1,10);const nvals=c=>{const v=nv(c);return(v==3||v==6)?[3,6]:[v]};

@@ -326,7 +326,7 @@ function dealerShouldDraw(cs,group){ // group: 'stood' | 'drew'
 /* ---------- R3 Sikipi ---------- */
 const hv=r=>r==0?14:r+1;
 function skKey(a,b){const ra=rk(a),rb=rk(b);if(ra==rb)return[3,hv(ra),0];if((ra==1&&rb==7)||(ra==7&&rb==1))return[2,0,0];const p=(bp(a)+bp(b))%10;const k=[hv(ra),hv(rb)].sort((x,y)=>y-x);return[1,p,k[0]*20+k[1]]}
-const skLab=k=>k[0]==3?`Pair ${RN[(k[1]==14?0:k[1]-1)]}s ×5`:k[0]==2?'Gong (2+8) ×3':`${k[1]} pts${k[1]>=8?' ×2':''}`;
+const skLabN=k=>skLab(k).replace(/ ×\d+/,'');const skLab=k=>k[0]==3?`Pair ${RN[(k[1]==14?0:k[1]-1)]}s ×5`:k[0]==2?'Gong (2+8) ×3':`${k[1]} pts${k[1]>=8?' ×2':''}`;
 const skMult=k=>k[0]==3?5:k[0]==2?3:(k[1]>=8?2:1);
 function skSplits(cs){const out=[];for(const j of[1,2,3]){const a=[cs[0],cs[j]],b=cs.filter((_,i)=>i!=0&&i!=j);const ka=skKey(...a),kb=skKey(...b);const hiA=cmpArr(ka,kb)>=0;out.push({hi:hiA?a:b,lo:hiA?b:a,kh:hiA?ka:kb,kl:hiA?kb:ka})}return out}
 function skBestIdx(spl){let bi=0;spl.forEach((s,i)=>{const c=cmpArr(s.kl,spl[bi].kl);if(c>0||(c==0&&cmpArr(s.kh,spl[bi].kh)>0))bi=i});return bi}
@@ -348,7 +348,7 @@ function skBankerEV(D,P,M=300){const dset=new Set(D.hand);const ev=[0,0,0];
  return ev}
 function skRespond(){const D=S.dealer;S.players.forEach(p=>{p.ev=skEV(p,D.vis);if(!p.me)p.si=skEVBest(p.ev,p.spl)})}
 function skSettle(P,Ps,D,Ds){const pa=allPic(P),da=allPic(D);if(pa||da)return pa&&da?0:pa?7:-7;
- const h=cmpArr(Ps.kh,Ds.kh),l=cmpArr(Ps.kl,Ds.kl);if(h>0&&l>0)return skMult(Ps.kh);if(h<0&&l<0)return -skMult(Ds.kh);return 0}
+ const h=cmpArr(Ps.kh,Ds.kh),l=cmpArr(Ps.kl,Ds.kl);if(h>0&&l>0)return skMult(Ps.kl);if(h<0&&l<0)return -skMult(Ds.kl);return 0}
 
 /* ---------- R4 Niu Niu ---------- */
 const nv=c=>Math.min(rk(c)+1,10);const nvals=c=>{const v=nv(c);return(v==3||v==6)?[3,6]:[v]};
@@ -676,10 +676,10 @@ async function round3(){
  // AI "thinking"
  for(const s of [B,...P].filter(s=>!s.me)){setLab(s,'Set ✓');}
  const me=G.me;me.si=await arrangeUI(me,me.isB?B.bev:me.ev,me.isB);
- setLab(me,(()=>{const s=me.spl[me.si];return allPic(me.hand)?'4 Picture ×7':`${skLab(s.kh)} / ${skLab(s.kl)}`})());
+ setLab(me,(()=>{const s=me.spl[me.si];return allPic(me.hand)?'4 Picture ×7':`${skLabN(s.kh)} / ${skLab(s.kl)}`})());
  // reveal
  banner('Reveal');await sleep(300);
- const showSplit=async s=>{await flipAll(s,60);const sp=s.spl[s.si];regroup(s,[sp.hi,sp.lo]);setLab(s,allPic(s.hand)?'4 Picture ×7':`${skLab(sp.kh)} / ${skLab(sp.kl)}`)};
+ const showSplit=async s=>{await flipAll(s,60);const sp=s.spl[s.si];regroup(s,[sp.hi,sp.lo]);setLab(s,allPic(s.hand)?'4 Picture ×7':`${skLabN(sp.kh)} / ${skLab(sp.kl)}`)};
  if(!B.me)await showSplit(B);await sleep(300);
  for(const p of P){if(!p.me)await showSplit(p);await settle(p,skSettle(p.hand,p.spl[p.si],B.hand,B.spl[B.si]),2)}
  bankerQuip(P.reduce((a,p)=>a+p.r[2]*p.bet,0));
@@ -687,8 +687,8 @@ async function round3(){
 function arrangeUI(me,ev,isB){return new Promise(res=>{
  const bi=skEVBest(ev,me.spl),zone=$('meZone');prompt('Drag cards into Bottom and Top (or tap)');
  const st={pool:[...me.hand],bot:[],top:[]};
- const lab=cs=>cs.length==2?skLab(skKey(cs[0],cs[1])):'';
- const draw_=()=>{zone.innerHTML=`<div class="pool" data-z="pool">${st.pool.map(c=>cardBtn(c)).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${st.bot.map(c=>cardBtn(c)).join('')}</div><div class="zl">${lab(st.bot)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${st.top.map(c=>cardBtn(c)).join('')}</div><div class="zl">${lab(st.top)}</div></div></div>`;$('me').scrollIntoView({block:'end',behavior:'smooth'});
+ const lab=(cs,b)=>cs.length==2?(b?skLabN:skLab)(skKey(cs[0],cs[1])):'';
+ const draw_=()=>{zone.innerHTML=`<div class="pool" data-z="pool">${st.pool.map(c=>cardBtn(c)).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${st.bot.map(c=>cardBtn(c)).join('')}</div><div class="zl">${lab(st.bot,1)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${st.top.map(c=>cardBtn(c)).join('')}</div><div class="zl">${lab(st.top)}</div></div></div>`;$('me').scrollIntoView({block:'end',behavior:'smooth'});
   zone.querySelectorAll('[data-c]').forEach(el=>bindDrag(el));
   const full=st.bot.length==2&&st.top.length==2;const best=me.spl[bi];
   const evTxt=()=>{if(!full)return '';const k=me.spl.findIndex(s=>sameSet(s.hi,st.bot)||sameSet(s.hi,st.top));return k>=0?` · EV ${ev[k]>=0?'+':''}${isB?'$'+ev[k].toFixed(2):ev[k].toFixed(2)+'×'}`:''};

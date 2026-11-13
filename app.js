@@ -90,7 +90,7 @@ function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.
  $('rGuestTxt').textContent=v.phase==='game'&&v.game.phase!=='summary'?'A game is running — you will join the next one':'Waiting for the host to deal…';
  {const lb=[...v.players].sort((x,y)=>y.chips-x.chips).map((p,i)=>`<div class="lr ${p.pid===ME.pid?'me':''}"><span>${i==0?'🏆 ':''}${esc(p.name)}</span><b class="${p.chips-st.start>0?'pos':p.chips-st.start<0?'neg':''}">${sgn(p.chips-st.start)}</b></div>`).join('');
   let el=$('rLB');if(!el){el=document.createElement('div');el.className='card2';el.id='rLB';$('rLast').before(el)}el.innerHTML=v.gameNo?`<b>Leaderboard</b> <span class="small">(net chips · ${v.gameNo} game${v.gameNo>1?'s':''})</span><div class="lb">${lb}</div>`:'';el.style.display=v.gameNo?'block':'none'}
- const last=v.game&&v.game.phase==='summary';$('rLast').style.display=last?'block':'none';if(last)$('rLast').innerHTML='<b>Last game</b>'+summaryTable(v);
+ const last=v.game&&v.game.phase==='summary';$('rLast').style.display=last?'block':'none';if(last)$('rLast').innerHTML='<b>Last game</b>'+summaryTable(v)+breakdownHTML();
  if(v.phase==='game'&&v.game.phase!=='summary'&&!force){roomOverride=false;renderTable()}}
 window.kick=pid=>doAct('kick',{target:pid});
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
@@ -123,7 +123,7 @@ function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!
  if(!vis&&g.round>=2)return g.round===3&&g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';
  if(g.round===1)return `${RN[rk(h[0])]}${SY[st(h[0])]}`;
  if(g.round===2)return bEval(h).lab;
- if(g.round===3){if(s.si==null)return g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';if(allPic(h))return '4 Picture ×7';const sp=skSplits(h)[s.si];return `${skLab(sp.kh)} / ${skLab(sp.kl)}`}
+ if(g.round===3){if(s.si==null)return g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';if(allPic(h))return '4 Picture ×7';const sp=skSplits(h)[s.si];return `${skLabN(sp.kh)} / ${skLab(sp.kl)}`}
  if(g.round===4){if(g.phase==='r4peek'&&pid!==ME.pid)return '';const a=niuAw(h);return a.m?`${a.n} ×${a.m}`:niuLab(niuKey(h).k)}
  if(g.round===5)return cLab(best7([...h,...g.comm]));return ''}
 const PN=pid=>{const p=V.players.find(x=>x.pid===pid);return p?p.name:'?'};
@@ -248,8 +248,8 @@ function arrangeUI(){if(window.__drag)return;const v=V,g=v.game,s=g.seats[ME.pid
   else ev=skEV({hand:s.hand,spl},g.seats[v.banker].vis||[]);
   arranging={game:v.gameNo,spl,ev,bi:skEVBest(ev,spl),pool:[...s.hand],bot:[],top:[]};first=true}
  const ar=arranging,zone=$('meZone');$('prompt').textContent='Drag cards into Bottom and Top (or tap)';
- const lab=cs=>cs.length==2?skLab(skKey(cs[0],cs[1])):'';const full=ar.bot.length==2&&ar.top.length==2;const best=ar.spl[ar.bi];
- zone.innerHTML=`<div class="pool" data-z="pool">${ar.pool.map(cardBtn).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${ar.bot.map(cardBtn).join('')}</div><div class="zl">${lab(ar.bot)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${ar.top.map(cardBtn).join('')}</div><div class="zl">${lab(ar.top)}</div></div></div>`;if(first)$('me').scrollIntoView({block:'end',behavior:'smooth'});
+ const lab=(cs,b)=>cs.length==2?(b?skLabN:skLab)(skKey(cs[0],cs[1])):'';const full=ar.bot.length==2&&ar.top.length==2;const best=ar.spl[ar.bi];
+ zone.innerHTML=`<div class="pool" data-z="pool">${ar.pool.map(cardBtn).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${ar.bot.map(cardBtn).join('')}</div><div class="zl">${lab(ar.bot,1)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${ar.top.map(cardBtn).join('')}</div><div class="zl">${lab(ar.top)}</div></div></div>`;if(first)$('me').scrollIntoView({block:'end',behavior:'smooth'});
  zone.querySelectorAll('[data-c]').forEach(bindDrag);
  const fmtEV=x=>isB?(x>=0?'+':'')+x.toFixed(2)+' chips':(x>=0?'+':'')+x.toFixed(2)+'×';
  A(`${hints?`<div class="hint">💡 Best: Bottom ${ctxt(best.hi)} · Top ${ctxt(best.lo)} (EV ${fmtEV(ar.ev[ar.bi])})${isB?'':`<br><small>Banker showed ${ctxt(g.seats[v.banker].vis||[])} in Baccarat</small>`}</div>`:''}
@@ -297,8 +297,20 @@ function bubble(el,t){const b=document.createElement('div');b.className='bubble'
 /* ================= summary ================= */
 function summaryTable(v){const g=v.game;const rows=g.order.map(pid=>{const s=g.seats[pid];return `<tr class="${pid===ME.pid?'mine':''}"><td>${esc(PN(pid))} <span class="small">${s.bet}</span></td>${s.r.map(x=>`<td class="${x>0?'pos':x<0?'neg':'zero'}">${x}</td>`).join('')}<td><b>${sgn(s.r.reduce((a,b)=>a+b,0)*s.bet)}</b></td></tr>`}).join('');
  return `<table class="t" style="margin-top:6px"><tr><th>Seat</th><th>HC</th><th>Bac</th><th>SKP</th><th>Niu</th><th>Cmb</th><th>±</th></tr>${rows}<tr class="${v.banker===ME.pid?'mine':''}"><td><b>${esc(PN(v.banker))} (Banker)</b></td><td colspan="5"></td><td><b>${sgn(delta(v.banker))}</b></td></tr></table>`}
+
+function roundHands(pid){const g=V.game,s=g.seats[pid];if(!s)return null;const h=s.hand;if(h.some(c=>c==null)||h.length<5)return null;const isBk=pid===V.banker;
+ const bac=isBk?(s.vis&&s.vis.length>=2?s.vis:h.slice(0,2)):h.slice(0,s.drew?3:2);const sk=h.slice(0,4),nn=h.slice(0,5);
+ let skt='?';if(allPic(sk))skt='4 Picture';else if(s.si!=null){const sp=skSplits(sk)[s.si];skt=`Bottom ${ctxt(sp.hi)} ${skLabN(sp.kh)} · Top ${ctxt(sp.lo)} <b>${skLab(sp.kl)}</b>`}
+ const a=niuAw(nn);
+ return [`${ctxt([h[0]])}`,`${ctxt(bac)} ${bEval(bac).lab}`,skt,`${ctxt(nn)} ${a.m?a.n+' ×'+a.m:niuLab(niuKey(nn).k)}`,`${cLab(best7([...nn,...g.comm]))}`]}
+function breakdownHTML(){const g=V.game;if(!g)return '';const me=ME.pid,isB=V.banker===me,bk=roundHands(V.banker);if(!bk)return '';
+ const res=x=>x>0?`<span class="pos">+${x}×</span>`:x<0?`<span class="neg">${x}×</span>`:'<span class="zero">Push</span>';
+ const nm=['High Card','Baccarat','Sikipi','Niu Niu','Combo'];
+ if(!isB){const mine=roundHands(me),s=g.seats[me];if(!mine)return '';
+  return `<div class="bd"><b>How you were paid</b> <span class="small">(bet ${s.bet})</span>${nm.map((n,i)=>`<div class="bdr"><div class="bdh"><b>${n}</b> ${i==1&&s.open===false?'<span class="zero">Skipped</span>':res(s.r[i])} <span class="small">${sgn(s.r[i]*s.bet)}</span></div><div class="small">You: ${mine[i]}</div><div class="small">Banker: ${bk[i]}</div></div>`).join('')}</div>`}
+ return `<div class="bd"><b>Your banker hands</b>${nm.map((n,i)=>`<div class="bdr"><div class="bdh"><b>${n}</b></div><div class="small">${bk[i]}</div></div>`).join('')}</div>`}
 window.showSummary=()=>{const v=V;if(!v.game)return;const d=delta(ME.pid);
- $('sheetIn').innerHTML=`<h2>${d>0?'You win!':d<0?'Tough game':'Break even'}</h2><div class="big ${d>0?'pos':d<0?'neg':''}">${sgn(d)}</div>${summaryTable(v)}
+ $('sheetIn').innerHTML=`<h2>${d>0?'You win!':d<0?'Tough game':'Break even'}</h2><div class="big ${d>0?'pos':d<0?'neg':''}">${sgn(d)}</div>${summaryTable(v)}${breakdownHTML()}
  <div class="small" style="text-align:center;margin:10px 0">Your chips ${fmtc(v.players.find(p=>p.pid===ME.pid).chips)}</div><button class="gold" style="width:100%" onclick="$('sheet').classList.remove('on');renderRoom(true)">Back to room</button>`;
  $('sheet').classList.add('on');snd(d>0?'big':d<0?'lose':'chip')};
 
