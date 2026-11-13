@@ -77,3 +77,20 @@ FX.rules=(round)=>{const d=document.createElement('div');d.className='rules';d.i
  document.body.appendChild(d);d.onclick=e=>{if(e.target===d||e.target.classList.contains('x'))d.remove()};
  if(round){const t=d.querySelector('#r'+round);if(t)setTimeout(()=>t.scrollIntoView({block:'start'}),50)}};
 })();
+
+/* ---------- fit the table to the phone screen (no scrolling) ---------- */
+(function(){let raf=0,z=1;
+ function fit(){raf=0;const felt=document.getElementById('felt');if(!felt||!felt.offsetParent)return;
+  const hud=document.querySelector('.hud'),bar=document.getElementById('tbar'),act=document.getElementById('actions');
+  const nat=felt.getBoundingClientRect().height/z;
+  const used=(hud?hud.offsetHeight:0)+(bar?bar.offsetHeight:0)+(act?act.offsetHeight:0)+14;
+  const avail=window.innerHeight-used;
+  const nz=Math.max(.55,Math.min(1,avail/nat));
+  if(Math.abs(nz-z)>.01){z=nz;felt.style.zoom=z}}
+ const go=()=>{if(!raf)raf=requestAnimationFrame(fit)};
+ window.FX=window.FX||{};FX.fit=go;
+ addEventListener('resize',go);addEventListener('orientationchange',()=>setTimeout(go,300));
+ function watch(){const f=document.getElementById('felt'),a=document.getElementById('actions');if(!f){return setTimeout(watch,300)}
+  const mo=new MutationObserver(go);mo.observe(f,{childList:true,subtree:true});if(a)mo.observe(a,{childList:true,subtree:true});
+  const tb=document.getElementById('table');if(tb)new MutationObserver(go).observe(tb,{attributes:true,attributeFilter:['class']});go()}
+ if(document.readyState==='loading')addEventListener('DOMContentLoaded',watch);else watch()})();

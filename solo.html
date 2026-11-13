@@ -245,6 +245,14 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .ring .bubble{top:auto;bottom:calc(100% + 18px);z-index:30}
 .ribbon.big{top:-12px;bottom:auto;left:auto;right:-6px;transform:rotate(8deg);font-size:10px;padding:3px 7px}
 .ring .obtns{margin-top:5px}
+
+/* compact decision panel so the table can stay big */
+.decide{padding:8px 10px}
+.decide .dtop{margin-bottom:5px}.decide .dpts b{font-size:24px}
+.decide .hint{font-size:12px;padding:5px 8px;margin:0 0 6px}
+.dbig{font-size:19px!important;padding:11px 0!important}
+.dbig small{font-size:10px;margin-top:2px}
+.actions{padding-top:6px;gap:6px}
 </style>
 </head>
 <body>
@@ -459,8 +467,8 @@ function seatEl(s){const d=document.createElement('div');d.className='seat'+(s.i
  s.root=d;s.handEl=d.querySelector('.hand');s.labEl=d.querySelector('.lab');s.betEl=d.querySelector('.betspot');return d}
 function meEl(s){const d=$('me');d.innerHTML=`<div class="who"><span class="plq ${s.isB?'':'blue'}">${s.isB?'YOU · BANKER':'YOU · PLAYER'}</span><span id="meBet"></span></div><div id="meZone"><div class="hand lg"></div></div><div class="lab"></div><div class="prompt" id="prompt"></div>${s.isB?'<div id="btray" class="btray"></div><div class="btot" id="btot"></div>':''}`;
  s.root=d;s.handEl=d.querySelector('.hand');s.labEl=d.querySelector('.lab');s.betEl=$('meBet')}
-function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),H=Math.max(540,185*k+200);
- const topY=banker?205:225,botY=H-105,ys=i=>k<=1?Math.round((topY+botY)/2+20):Math.round(botY-(botY-topY)*i/(k-1));
+function ringLayout(players,banker){const m=players.length,k=Math.max(1,Math.ceil(m/2)),H=Math.max(480,170*k+160);
+ const topY=banker?200:218,botY=H-95,ys=i=>k<=1?Math.round((topY+botY)/2+20):Math.round(botY-(botY-topY)*i/(k-1));
  const out=[];const L=players.slice(0,k),R=players.slice(k);
  L.forEach((p,i)=>out.push({p,x:15+(k>2&&i==k-1?3:0),y:ys(i)}));
  R.forEach((p,j)=>{const i=j;out.push({p,x:85-(k>2&&i==k-1?3:0),y:ys(i)})});
