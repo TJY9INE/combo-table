@@ -179,6 +179,60 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .obtn.sk{background:#3b4a43;color:#e6efe9;box-shadow:0 2px 0 #1d2622}
 .ribbon.big{top:auto;bottom:34px;left:50%;right:auto;transform:translateX(-50%) rotate(-6deg);font-size:12px;padding:4px 10px;border-radius:8px;letter-spacing:.08em;box-shadow:0 2px 6px #000a;z-index:6}
 .ribbon.big.open{background:#1f8a4c;color:#eafff2}.ribbon.big.skip{background:#5a6660;color:#fff}
+
+
+.cd .fc .ix2{position:absolute;right:3px;bottom:2px;line-height:.95;text-align:center;font-size:.42em;transform:rotate(180deg)}
+.sm .cd .fc .ix2{display:none}
+.shoe svg text{transform:scaleX(-1);transform-box:fill-box;transform-origin:center}
+.shoetag{left:112px!important;top:30px!important}
+.shoetag:before{left:-10px!important;bottom:auto!important;top:50%;margin-top:-6px;border:6px solid transparent!important;border-right-color:var(--gold)!important}
+.hud .rnd{font-size:14px!important;line-height:1.1}
+/* ===== UX overhaul ===== */
+.hud{gap:4px}.hud .ibtn{width:34px;height:34px;font-size:15px;border-radius:10px}.hud .rnd{font-size:16px}.hud .bank .v{font-size:16px}
+.shoe{left:2px!important;right:auto!important}
+.shoe svg{transform:scaleX(-1)}
+.shoe.active{transform-origin:top left!important}
+.tray{left:auto!important;right:14px}
+.shoetag{left:8px!important;right:auto!important}
+.shoetag:before{left:16px!important;right:auto!important}
+.ring .hintdot{top:auto;bottom:-11px;font-size:10px;padding:2px 6px}
+.ring .bubble{bottom:auto;top:30px;z-index:30}
+.ring .float{top:46%;z-index:31}
+.ring .lab{white-space:normal;line-height:1.15;font-size:11.5px;min-height:26px;overflow:visible}
+.ring .nm,.nm{font-size:12px}
+.lab{font-size:12px}
+.small{font-size:12px}
+.ring .seat .betspot span,.seat .delta{font-size:12px}
+.zones .zc{min-height:76px}
+.zone{min-height:96px}
+.pool{min-height:76px;margin-bottom:4px}
+/* decision panel */
+.decide{background:linear-gradient(#1d2a23,#0f1712);border:2px solid #e9c46a;border-radius:18px;padding:12px;box-shadow:0 0 0 4px #e9c46a22,0 8px 30px #000a;animation:decIn .35s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes decIn{from{transform:translateY(30px) scale(.9);opacity:0}to{transform:none;opacity:1}}
+.decide .dtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.decide .dpts{font-size:15px;color:#cfe}.decide .dpts b{font-size:30px;color:#fff;margin:0 4px;font-weight:900}
+.decide .dclock{font-size:15px;font-weight:900;color:#e9c46a;min-width:44px;text-align:right}
+.decide .dclock.hurry{color:#ff8a80;animation:pulse .5s infinite}
+.dbtns{display:flex;gap:10px}
+.dbig{flex:1;font-size:22px!important;font-weight:900;padding:16px 0!important;border-radius:16px!important;letter-spacing:.04em;line-height:1.1}
+.dbig small{display:block;font-size:11px;font-weight:600;letter-spacing:0;opacity:.85;margin-top:3px}
+.dbig.draw{background:linear-gradient(#ffe39a,#d4a23c);color:#2a1d00;box-shadow:0 4px 0 #8a6420,0 0 18px #e9c46a66;animation:dpulse 1.1s ease-in-out infinite}
+.dbig.stand{background:linear-gradient(#34a274,#1b6248);color:#fff;box-shadow:0 4px 0 #0e3a2a}
+.dbig.best{outline:3px solid #9fd3ff;outline-offset:2px}
+.dbig:active{transform:translateY(3px)}
+.seat.actor{animation:actorGlow 1s ease-in-out infinite}
+@keyframes actorGlow{50%{box-shadow:0 0 0 3px #e9c46a,0 0 22px #e9c46a}}
+.cdring{position:absolute;top:-26px;left:50%;transform:translateX(-50%);width:50px;height:50px;border-radius:50%;pointer-events:none;z-index:4;background:conic-gradient(#e9c46a var(--p,100%),transparent 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px))}
+#logline{font-size:12px;color:#e6f1ea;background:#0006;border-radius:10px;padding:4px 8px;margin-top:6px;min-height:20px;max-width:100%;line-height:1.3}
+.emobar{display:flex;gap:6px;justify-content:center}
+.emobar button{background:#151a17;border:1px solid #2b2418;border-radius:12px;font-size:20px;padding:6px 10px}
+.emo{position:absolute;left:50%;top:10px;transform:translateX(-50%);font-size:34px;z-index:40;pointer-events:none;animation:emo 1.8s ease both}
+@keyframes emo{0%{transform:translate(-50%,10px) scale(.3);opacity:0}20%{transform:translate(-50%,-10px) scale(1.3);opacity:1}80%{opacity:1}100%{transform:translate(-50%,-40px) scale(1);opacity:0}}
+.lb{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.lb .lr{display:flex;justify-content:space-between;font-size:13px;padding:6px 8px;background:#0f1411;border-radius:10px}
+.lb .lr.me{outline:1px solid #7fd3ff}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #9fd3ff;border-right-color:transparent;border-radius:50%;animation:spinr .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes spinr{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -192,6 +246,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
     <div class="lrow"><div><label>Players at table</label><select id="sN"></select></div><div><label>Hints</label><select id="sHint"><option value="1">On (💡)</option><option value="0">Off</option></select></div></div>
     <div class="rolebtns" style="margin-top:14px"><button class="gold" id="goPlayer">Sit as Player</button><button class="green" id="goBanker">Be the Banker</button></div>
   </div>
+  <button class="ghost" style="width:100%;margin-top:4px" onclick="FX.rules()">📖 How to play &amp; payouts</button>
   <div class="card2"><div style="display:flex;justify-content:space-between;align-items:center"><b>Your record</b><button class="ghost" id="resetStats" style="padding:5px 9px;font-size:12px">Reset</button></div>
     <div class="statgrid" style="margin-top:8px" id="statGrid"></div>
     <div class="ach" id="achList"></div>
@@ -204,7 +259,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
     <button class="ibtn" id="homeBtn" aria-label="Lobby">☰</button>
     <div class="bank"><div class="k">Bank</div><div class="v" id="hBank">$0</div></div>
     <div class="rnd" id="hRound"><small>GAME</small>Bets</div>
-    <button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
+    <button class="ibtn" id="rulesBtn" aria-label="Rules">?</button><button class="ibtn" id="autoBtn" aria-label="Auto reveal">👁</button><button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
     <button class="ibtn" id="muteBtn" aria-label="Sound">🔊</button>
   </div>
   <div class="felt" id="felt">
@@ -223,6 +278,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 </div>
 
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
+<script src="fx.js"></script>
 <script>
 
 /* ---------- cards ---------- */
@@ -319,7 +375,7 @@ function cSettle(Pk,Dk){if(Pk[0]==0&&Dk[0]==0)return 0;const c=cmpArr(Pk,Dk);ret
 
 
 /* =================== sound =================== */
-let AC=null;
+window._fxMute=()=>G.mute;let AC=null;
 function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state=='suspended')AC.resume();return AC}
 document.addEventListener('pointerdown',()=>ac());
 function tone(f,t0,d,type='sine',v=0.08){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,a.currentTime+t0);g.gain.setValueAtTime(v,a.currentTime+t0);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+t0+d);o.connect(g);g.connect(a.destination);o.start(a.currentTime+t0);o.stop(a.currentTime+t0+d+0.02)}
@@ -333,6 +389,7 @@ function snd(k){if(G.mute)return;try{
  if(k=='lose'){tone(300,0,0.18,'sawtooth',0.035);tone(200,0.15,0.3,'sawtooth',0.035)}
  if(k=='push')tone(520,0,0.12,'sine',0.05);
  if(k=='tap')tone(1200,0,0.03,'square',0.03);
+ if(k=='turn'){tone(880,0,0.12,'sine',0.07);tone(1175,0.12,0.16,'sine',0.07)}
 }catch(e){}}
 
 /* =================== state & storage =================== */
@@ -372,6 +429,7 @@ $('goPlayer').onclick=()=>{readSettings();G.role='player';startTable()};
 $('goBanker').onclick=()=>{readSettings();G.role='banker';startTable()};
 $('homeBtn').onclick=()=>{G.token={};$('sheet').classList.remove('on');G.abort=true;show('lobby');renderLobby()};
 function confirmLeave(){return true}
+G.autoRev=localStorage.getItem('ct.auto')==='1';$('rulesBtn').onclick=()=>FX.rules(G.round||0);$('autoBtn').classList.toggle('on',G.autoRev);$('autoBtn').onclick=()=>{G.autoRev=!G.autoRev;localStorage.setItem('ct.auto',G.autoRev?'1':'0');$('autoBtn').classList.toggle('on',G.autoRev);toast(G.autoRev?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON')};
 $('hintBtn').onclick=()=>{G.hints=!G.hints;$('hintBtn').classList.toggle('on',G.hints);toast(G.hints?'💡 Hints on':'Hints off');if(G.onHint)G.onHint()};
 $('muteBtn').onclick=()=>{G.mute=!G.mute;$('muteBtn').textContent=G.mute?'🔇':'🔊';save()};
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==id));window.scrollTo(0,0)}
@@ -412,7 +470,7 @@ function drawTray(dir){const t=$('btray');if(!t)return;const b=Math.round(G.bank
   t.innerHTML=[100,25,10,5,1].filter(d=>cnt[d]>0).map(d=>`<div class="bcol">${Array.from({length:Math.min(cnt[d],12)},(_,i)=>`<span class="chip c${d}" style="bottom:${i*4}px">${d}</span>`).join('')}<div class="cnt">×${cnt[d]}</div></div>`).join('')}
  $('btot').textContent='Banker bank '+money(G.bank);
  if(dir){t.classList.remove('up','down');t.offsetWidth;t.classList.add(dir>0?'up':'down');setTimeout(()=>t.classList.remove('up','down'),600)}}
-function hud(roundName,n){drawTray();$('hBank').textContent=money(G.bank);$('hBank').className='v '+(G.bank<0?'neg':'');if(roundName!=null)$('hRound').innerHTML=`<small>${n?`ROUND ${n}/5`:'GAME '+(G.st.games+1)}</small>${roundName}`}
+function hud(roundName,n){if(n!=null)G.round=n;drawTray();$('hBank').textContent=money(G.bank);$('hBank').className='v '+(G.bank<0?'neg':'');if(roundName!=null)$('hRound').innerHTML=`<small>${n?`ROUND ${n}/5`:'GAME '+(G.st.games+1)}</small>${roundName}`}
 function setLab(s,t){s.labEl.innerHTML=t||''}
 function prompt(t){const p=$('prompt');if(p)p.textContent=t||''}
 function banner(t,sub){$('centre').innerHTML=`<div class="banner">${t}${sub?`<small>${sub}</small>`:''}</div><div class="comm md" id="comm"></div>`}
@@ -422,7 +480,7 @@ function chipHTML(v,cls=''){return `<span class="chip c${v} ${cls}">${v}</span>`
 function showBet(s){if(!s.betEl)return;if(s.isB)return;const cs=chipsFor(s.bet);s.betEl.innerHTML=(s.me?`<span class="stack" style="width:30px;height:30px">${cs.slice(0,4).map((v,i)=>`<span class="chip c${v}" style="top:${-i*3}px;left:0;position:absolute">${v}</span>`).join('')}</span><b style="color:var(--gold);margin-left:4px">$${s.bet}</b>`:`${chipHTML(cs[0])}<b style="font-size:11px;color:var(--gold)">$${s.bet}</b>`)}
 
 /* =================== cards =================== */
-function cardFace(c){const red=(st(c)==0||st(c)==2);return `<div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span></div>`}
+function cardFace(c){const red=(st(c)==0||st(c)==2);return `<div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span><span class="ix2">${RN[rk(c)]}<br>${SY[st(c)]}</span></div>`}
 function makeCard(c,up){const sl=document.createElement('div');sl.className='slot';sl.dataset.c=c;sl.innerHTML=`<div class="cd ${up?'up':''}"><div class="bc"></div>${cardFace(c)}</div>`;return sl}
 function draw(){return G.deck[G.di++]}
 async function deal(s,{up=false,to=null}={}){
@@ -439,10 +497,10 @@ function flip(s,c){const el=s.els[c];if(el)flipEl(el,true)}
 async function flipAll(s,gap=140){for(const c of s.hand){const el=s.els[c];if(el&&!el.querySelector('.cd').classList.contains('up')){flipEl(el,true);await sleep(gap)}}}
 function isUp(s,c){const el=s.els[c];return el&&el.querySelector('.cd').classList.contains('up')}
 let flipWaiter=null;
-function makeTappable(s,el){const cd=el.querySelector('.cd');cd.classList.add('tap');el.onclick=()=>{if(cd.classList.contains('up'))return;flipEl(el,true);el.onclick=null;checkFlips()}}
+function makeTappable(s,el){const cd=el.querySelector('.cd');cd.classList.add('tap');if(G.autoRev){setTimeout(()=>{flipEl(el,true);checkFlips()},350);return}FX.squeeze(el,()=>{snd('flip');checkFlips()})}
 function checkFlips(){if(flipWaiter&&G.me.hand.every(c=>isUp(G.me,c))){const w=flipWaiter;flipWaiter=null;prompt('');w()}}
-function awaitMyFlips(msg='Tap your card to reveal 👆'){if(G.me.hand.every(c=>isUp(G.me,c)))return Promise.resolve();prompt(msg);
- actions(`<div class="arow"><button class="ghost" id="flipAllBtn">Reveal all</button></div>`);$('flipAllBtn').onclick=()=>{G.me.hand.forEach(c=>{const el=G.me.els[c];if(el){flipEl(el,true);el.onclick=null}});checkFlips()};
+function awaitMyFlips(msg='Squeeze your card: drag up-left ↖ (or tap)'){msg=msg.replace(/Tap (your|to see your)/,'Squeeze your').replace('👆','↖');if(G.me.hand.every(c=>isUp(G.me,c)))return Promise.resolve();prompt(msg);
+ actions(`<div class="arow"><button class="ghost" id="flipAllBtn">Reveal all</button></div>`);$('flipAllBtn').onclick=()=>{G.me.hand.forEach(c=>{const el=G.me.els[c];if(el){if(el._reveal)el._reveal();else flipEl(el,true)}});checkFlips()};
  return new Promise(r=>{flipWaiter=()=>{actions('');r()};if(G.fast)setTimeout(()=>$('flipAllBtn')&&$('flipAllBtn').click(),0)})}
 function regroup(s,groups,size){s.handEl.innerHTML='';s.els={};groups.forEach((g,gi)=>{if(gi){const sp=document.createElement('div');sp.className='gsep';s.handEl.appendChild(sp)}g.forEach(c=>{const el=makeCard(c,true);s.handEl.appendChild(el);s.els[c]=el})})}
 
@@ -460,6 +518,7 @@ async function settle(p,m,ri){p.r[ri]=m;const amt=m*p.bet;
  const mine=G.me===p?amt:G.me===G.B?-amt:null;
  if(mine!=null){if(mine>0){snd(m>=3?'big':'win')}else if(mine<0)snd('lose');else snd('push')}else snd('chip');
  if(!p.me&&m!==0&&Math.random()<0.55)say(p,m>0?pick(p.win):pick(p.lose));
+ if(mine!=null){const mm=G.me===p?m:-m;if(mm>=3||mm<=-5)FX.celebrate(mm,money(Math.abs(mine)),$('me'))}
  hud();if(G.B.me)setTimeout(()=>drawTray(-m),550);await sleep(320)}
 function bankerQuip(total){if(G.B.me)return;if(total!==0)say(G.B,total<0?pick(BANKER_AI.win):pick(BANKER_AI.lose))}
 
@@ -468,6 +527,10 @@ function shoeOn(fn){const sh=$('shoe');sh.classList.add('active');sh.onclick=()=
 function shoeOff(){const sh=$('shoe');sh.classList.remove('active');sh.onclick=null;const t=$('shoetag');if(t)t.remove()}
 /* =================== action bar =================== */
 function actions(h){$('actions').innerHTML=h}
+function decide(pts,best,hint,forced){return new Promise(res=>{const done=v=>{shoeOff();G.onHint=null;actions('');snd('tap');res(v)};shoeOn(()=>done(true));snd('turn');FX.vibe([60,30,60]);
+ const draw_=()=>{actions(`<div class="decide"><div class="dtop"><div class="dpts">Your turn · you have<b>${pts}</b>pts</div></div>${G.hints?`<div class="hint" style="margin-bottom:8px">💡 ${hint}</div>`:''}
+  <div class="dbtns"><button class="dbig draw ${G.hints&&best?'best':''}" id="dD">🂠 DRAW<small>${forced?'must take a 3rd card':'take a 3rd card · or tap the shoe'}</small></button>${forced?'':`<button class="dbig stand ${G.hints&&!best?'best':''}" id="dS">✋ STAND<small>keep ${pts} pts</small></button>`}</div></div>`);
+  $('dD').onclick=()=>done(true);if($('dS'))$('dS').onclick=()=>done(false)};G.onHint=draw_;draw_();if(G.fast&&G.auto)setTimeout(()=>done(G.auto([{v:true}])),0)})}
 function choose(btns,hintTxt,opt={}){return new Promise(res=>{
  const done=v=>{G.onHint=null;actions('');shoeOff();res(v)};
  if(opt.shoe)shoeOn(()=>done(opt.shoe));
@@ -541,8 +604,8 @@ async function round2(){
   // players take turns
   for(const p of P){if(p.pok)continue;const v=b2(p.hand);
    p.root.classList.add('turn');
-   if(p.me){if(v.p<=3){prompt(`You have ${v.p} — must draw (min 4)`);await choose([{t:'🂠 Draw card',v:true,cls:'gold drawbtn'}],null,{shoe:true});prompt('');await deal(p);await awaitMyFlips('Tap your third card 👆');p.drew=true}
-    else{prompt(`You have ${v.p} — tap the shoe to draw, or stand`);const d=await choose([{t:'🂠 Draw card',v:true,cls:'gold drawbtn'},{t:'✋ Stand',v:false,cls:'green drawbtn'}],`${playerShouldDraw(p.hand)?'Draw':'Stand'} — ${v.p==4?'always draw on 4':v.p==5?'on 5 draw only with 2+3 or 7+8 (straight draw)':'stand on 6–7'}`,{shoe:true});prompt('');
+   if(p.me){if(v.p<=3){await decide(v.p,true,'Under 4 — you must draw',true);prompt('');await deal(p);await awaitMyFlips('Tap your third card 👆');p.drew=true}
+    else{prompt('');const best=playerShouldDraw(p.hand);const d=await decide(v.p,best,`${best?'Best: DRAW':'Best: STAND'} · ${v.p==4?'always draw on 4':v.p==5?'on 5 draw only with 2+3 or 7+8':'stand on 6–7'}`);prompt('');
      p.drew=d;if(d){await deal(p);await awaitMyFlips('Tap your third card 👆')}}
     setLab(p,bEval(p.hand).lab)}
    else{const d=pDraws(p.hand);p.drew=d;say(p,d?'Draw':'Stand',1100);await sleep(450);if(d)await deal(p);setLab(p,d?'3 cards':'2 cards');await sleep(150)}
@@ -588,7 +651,8 @@ function bankerOpenSkipUI(B,act,plan,doOpen,doSkip){return new Promise(res=>{con
    if(G.hints){const a=pl.acts.get(p);if(!h){h=document.createElement('div');h.className='hintdot';p.root.appendChild(h)}h.textContent=`💡${a==='open'?'OPEN +'+Math.round(p.ev2.st*100)+'%':a==='skip'?'SKIP':'WAIT'}`}else if(h)h.remove()});
   const left=pending().length,bp=b2(B.hand).p;
   shoeOn(()=>finish(true));
-  actions(`${G.hints?`<div class="hint">💡 ${forced?`You have ${bp} — must draw before opening`:`You have ${bp}. OPEN / SKIP on the seats, then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest`}</div>`:''}<div class="arow"><button class="gold drawbtn" id="bkD">🂠 Draw${left?` for ${left} left`:''}</button>${forced?'':`<button class="green drawbtn" id="bkS">✋ Stand${left?` · settle ${left}`:''}</button>`}</div>`);
+  actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div></div><div class="hint" style="margin-bottom:8px">${forced?'Under 4 — you must draw. You can still SKIP players first.':`Tap <b>OPEN</b> / <b>SKIP</b> on players' seats.${G.hints?` 💡 Then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest.`:''}`}</div>
+  <div class="dbtns"><button class="dbig draw ${G.hints&&pl.draw?'best':''}" id="bkD">🂠 DRAW<small>${left?`then settle ${left} left`:'take a 3rd card'}</small></button>${forced?'':`<button class="dbig stand ${G.hints&&!pl.draw?'best':''}" id="bkS">✋ STAND<small>${left?`settle ${left} on ${bp}`:`keep ${bp}`}</small></button>`}</div></div>`);
   $('bkD').onclick=()=>finish(true);if($('bkS'))$('bkS').onclick=()=>finish(false);
   if(!left&&!forced){}};
  prompt('Tap OPEN or SKIP on each player');G.onHint=upd;upd();
@@ -618,7 +682,7 @@ function arrangeUI(me,ev,isB){return new Promise(res=>{
  const bi=skEVBest(ev,me.spl),zone=$('meZone');prompt('Drag cards into Bottom and Top (or tap)');
  const st={pool:[...me.hand],bot:[],top:[]};
  const lab=cs=>cs.length==2?skLab(skKey(cs[0],cs[1])):'';
- const draw_=()=>{zone.innerHTML=`<div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${st.bot.map(c=>cardBtn(c)).join('')}</div><div class="zl">${lab(st.bot)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${st.top.map(c=>cardBtn(c)).join('')}</div><div class="zl">${lab(st.top)}</div></div></div><div class="pool" data-z="pool">${st.pool.map(c=>cardBtn(c)).join('')}</div>`;
+ const draw_=()=>{zone.innerHTML=`<div class="pool" data-z="pool">${st.pool.map(c=>cardBtn(c)).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${st.bot.map(c=>cardBtn(c)).join('')}</div><div class="zl">${lab(st.bot)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${st.top.map(c=>cardBtn(c)).join('')}</div><div class="zl">${lab(st.top)}</div></div></div>`;$('me').scrollIntoView({block:'end',behavior:'smooth'});
   zone.querySelectorAll('[data-c]').forEach(el=>bindDrag(el));
   const full=st.bot.length==2&&st.top.length==2;const best=me.spl[bi];
   const evTxt=()=>{if(!full)return '';const k=me.spl.findIndex(s=>sameSet(s.hi,st.bot)||sameSet(s.hi,st.top));return k>=0?` · EV ${ev[k]>=0?'+':''}${isB?'$'+ev[k].toFixed(2):ev[k].toFixed(2)+'×'}`:''};
@@ -639,7 +703,7 @@ function arrangeUI(me,ev,isB){return new Promise(res=>{
  G.onHint=draw_;draw_();
  if(G.fast){const best=me.spl[bi];st.bot=[...best.hi];st.top=[...best.lo];st.pool=[];draw_();$('lockArr').click()}})}
 const sameSet=(a,b)=>a.length==b.length&&a.every(x=>b.includes(x));
-function cardBtn(c){const red=(st(c)==0||st(c)==2);return `<div class="slot lg" data-c="${c}" style="touch-action:none"><div class="cd up" style="width:64px;height:92px;border-radius:9px;font-size:50px"><div class="bc"></div><div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span></div></div></div>`}
+function cardBtn(c){const red=(st(c)==0||st(c)==2);return `<div class="slot lg" data-c="${c}" style="touch-action:none"><div class="cd up" style="width:50px;height:72px;border-radius:8px;font-size:40px"><div class="bc"></div><div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span><span class="ix2">${RN[rk(c)]}<br>${SY[st(c)]}</span></div></div></div>`}
 function cardsTxt(cs){return cs.map(c=>`<span style="color:${(st(c)==0||st(c)==2)?'#ff8a8a':'inherit'}">${RN[rk(c)]}${SY[st(c)]}</span>`).join(' ')}
 
 /* =================== ROUND 4: Niu Niu =================== */

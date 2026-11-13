@@ -193,6 +193,60 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .obtn.sk{background:#3b4a43;color:#e6efe9;box-shadow:0 2px 0 #1d2622}
 .ribbon.big{top:auto;bottom:34px;left:50%;right:auto;transform:translateX(-50%) rotate(-6deg);font-size:12px;padding:4px 10px;border-radius:8px;letter-spacing:.08em;box-shadow:0 2px 6px #000a;z-index:6}
 .ribbon.big.open{background:#1f8a4c;color:#eafff2}.ribbon.big.skip{background:#5a6660;color:#fff}
+
+
+.cd .fc .ix2{position:absolute;right:3px;bottom:2px;line-height:.95;text-align:center;font-size:.42em;transform:rotate(180deg)}
+.sm .cd .fc .ix2{display:none}
+.shoe svg text{transform:scaleX(-1);transform-box:fill-box;transform-origin:center}
+.shoetag{left:112px!important;top:30px!important}
+.shoetag:before{left:-10px!important;bottom:auto!important;top:50%;margin-top:-6px;border:6px solid transparent!important;border-right-color:var(--gold)!important}
+.hud .rnd{font-size:14px!important;line-height:1.1}
+/* ===== UX overhaul ===== */
+.hud{gap:4px}.hud .ibtn{width:34px;height:34px;font-size:15px;border-radius:10px}.hud .rnd{font-size:16px}.hud .bank .v{font-size:16px}
+.shoe{left:2px!important;right:auto!important}
+.shoe svg{transform:scaleX(-1)}
+.shoe.active{transform-origin:top left!important}
+.tray{left:auto!important;right:14px}
+.shoetag{left:8px!important;right:auto!important}
+.shoetag:before{left:16px!important;right:auto!important}
+.ring .hintdot{top:auto;bottom:-11px;font-size:10px;padding:2px 6px}
+.ring .bubble{bottom:auto;top:30px;z-index:30}
+.ring .float{top:46%;z-index:31}
+.ring .lab{white-space:normal;line-height:1.15;font-size:11.5px;min-height:26px;overflow:visible}
+.ring .nm,.nm{font-size:12px}
+.lab{font-size:12px}
+.small{font-size:12px}
+.ring .seat .betspot span,.seat .delta{font-size:12px}
+.zones .zc{min-height:76px}
+.zone{min-height:96px}
+.pool{min-height:76px;margin-bottom:4px}
+/* decision panel */
+.decide{background:linear-gradient(#1d2a23,#0f1712);border:2px solid #e9c46a;border-radius:18px;padding:12px;box-shadow:0 0 0 4px #e9c46a22,0 8px 30px #000a;animation:decIn .35s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes decIn{from{transform:translateY(30px) scale(.9);opacity:0}to{transform:none;opacity:1}}
+.decide .dtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.decide .dpts{font-size:15px;color:#cfe}.decide .dpts b{font-size:30px;color:#fff;margin:0 4px;font-weight:900}
+.decide .dclock{font-size:15px;font-weight:900;color:#e9c46a;min-width:44px;text-align:right}
+.decide .dclock.hurry{color:#ff8a80;animation:pulse .5s infinite}
+.dbtns{display:flex;gap:10px}
+.dbig{flex:1;font-size:22px!important;font-weight:900;padding:16px 0!important;border-radius:16px!important;letter-spacing:.04em;line-height:1.1}
+.dbig small{display:block;font-size:11px;font-weight:600;letter-spacing:0;opacity:.85;margin-top:3px}
+.dbig.draw{background:linear-gradient(#ffe39a,#d4a23c);color:#2a1d00;box-shadow:0 4px 0 #8a6420,0 0 18px #e9c46a66;animation:dpulse 1.1s ease-in-out infinite}
+.dbig.stand{background:linear-gradient(#34a274,#1b6248);color:#fff;box-shadow:0 4px 0 #0e3a2a}
+.dbig.best{outline:3px solid #9fd3ff;outline-offset:2px}
+.dbig:active{transform:translateY(3px)}
+.seat.actor{animation:actorGlow 1s ease-in-out infinite}
+@keyframes actorGlow{50%{box-shadow:0 0 0 3px #e9c46a,0 0 22px #e9c46a}}
+.cdring{position:absolute;top:-26px;left:50%;transform:translateX(-50%);width:50px;height:50px;border-radius:50%;pointer-events:none;z-index:4;background:conic-gradient(#e9c46a var(--p,100%),transparent 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px))}
+#logline{font-size:12px;color:#e6f1ea;background:#0006;border-radius:10px;padding:4px 8px;margin-top:6px;min-height:20px;max-width:100%;line-height:1.3}
+.emobar{display:flex;gap:6px;justify-content:center}
+.emobar button{background:#151a17;border:1px solid #2b2418;border-radius:12px;font-size:20px;padding:6px 10px}
+.emo{position:absolute;left:50%;top:10px;transform:translateX(-50%);font-size:34px;z-index:40;pointer-events:none;animation:emo 1.8s ease both}
+@keyframes emo{0%{transform:translate(-50%,10px) scale(.3);opacity:0}20%{transform:translate(-50%,-10px) scale(1.3);opacity:1}80%{opacity:1}100%{transform:translate(-50%,-40px) scale(1);opacity:0}}
+.lb{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.lb .lr{display:flex;justify-content:space-between;font-size:13px;padding:6px 8px;background:#0f1411;border-radius:10px}
+.lb .lr.me{outline:1px solid #7fd3ff}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #9fd3ff;border-right-color:transparent;border-radius:50%;animation:spinr .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes spinr{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -236,7 +290,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
     <button class="ibtn" id="tBack" aria-label="Room">☰</button>
     <div class="bank"><div class="k">Chips</div><div class="v" id="hBank">0</div></div>
     <div class="rnd" id="hRound"><small>ROOM</small>—</div>
-    <button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
+    <button class="ibtn" id="rulesBtn" aria-label="Rules">?</button><button class="ibtn" id="autoBtn" aria-label="Auto reveal">👁</button><button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
     <button class="ibtn" id="muteBtn" aria-label="Sound">🔊</button>
   </div>
   <div class="tbar" id="tbar"><i style="width:0"></i></div>
@@ -256,6 +310,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 </div>
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="fx.js"></script>
 <script src="core.js"></script>
 <script src="app.js"></script>
 </body></html>

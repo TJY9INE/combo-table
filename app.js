@@ -14,14 +14,14 @@ const fmtc=v=>(v<0?'-':'')+Math.abs(Math.round(v)).toLocaleString();
 const sgn=v=>(v>0?'+':v<0?'-':'')+Math.abs(Math.round(v)).toLocaleString();
 let ME=null;            // {code,pid,token,name}
 let V=null;             // latest view
-let lastSeq=0,busy=false,pollT=null,chan=null,hints=true,mute=false,peeked=new Set(),peekGame=0;
+let autoReveal=localStorage.getItem('ct.auto')==='1';let lastSeq=0,busy=false,pollT=null,chan=null,hints=true,mute=false,peeked=new Set(),peekGame=0;
 try{const s=JSON.parse(localStorage.getItem('ct.session')||'null');if(s)ME=s;hints=localStorage.getItem('ct.hints')!=='0';mute=localStorage.getItem('ct.mute')==='1'}catch(e){}
 function saveMe(){try{localStorage.setItem('ct.session',JSON.stringify(ME))}catch(e){}}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==id));}
 function toast(t,ms=1800){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),ms)}
 
 /* ================= sound ================= */
-let AC=null;function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state=='suspended')AC.resume();return AC}
+window._fxMute=()=>mute;let AC=null;window.ac=ac;function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state=='suspended')AC.resume();return AC}
 document.addEventListener('pointerdown',()=>ac());
 function tone(f,t0,d,type='sine',v=0.08){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,a.currentTime+t0);g.gain.setValueAtTime(v,a.currentTime+t0);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+t0+d);o.connect(g);g.connect(a.destination);o.start(a.currentTime+t0);o.stop(a.currentTime+t0+d+0.02)}
 function noise(t0,d,v=0.12,hp=1800){const a=ac();if(!a)return;const b=a.createBuffer(1,Math.max(1,Math.floor(a.sampleRate*d)),a.sampleRate),ch=b.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=(Math.random()*2-1)*(1-i/ch.length);const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();f.type='highpass';f.frequency.value=hp;g.gain.value=v;s.buffer=b;s.connect(f);f.connect(g);g.connect(a.destination);s.start(a.currentTime+t0)}
@@ -49,12 +49,16 @@ function subscribe(){try{if(chan){chan.unsubscribe();chan=null}const sb=supabase
 // local timer: when deadline/until passes, ask server to advance
 let tickT=null;function tickTimer(){if(!V||!V.game)return;const g=V.game,skew=Date.now()-V._recv+V.now;const t=g.until||g.deadline;
  const bar=$('tbar').firstChild;if(g.deadline&&!g.until){const tot=(V.settings.timer||30)*1000,left=Math.max(0,g.deadline-skew);bar.style.width=(left/tot*100)+'%'}else bar.style.width='0';
+ {const left=g.deadline&&!g.until?Math.max(0,g.deadline-skew):0,tot=(V.settings.timer||30)*1000;document.querySelectorAll('.cdring').forEach(r=>r.style.setProperty('--p',(left/tot*100)+'%'));const dc=$('dclock');if(dc&&g.deadline){const sec=Math.ceil(left/1000);dc.textContent=sec+'s';dc.classList.toggle('hurry',sec<=5)}}
  if(t&&skew>=t+300&&!tickT){tickT=setTimeout(()=>{tickT=null;refresh()},200)}}
 setInterval(tickTimer,250);
 
 /* ================= home ================= */
 $('hName').value=(ME&&ME.name)||localStorage.getItem('ct.name')||'';
 const qs=new URLSearchParams(location.search);if(qs.get('room'))$('hCode').value=qs.get('room').toUpperCase();
+$('hCode').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);if(e.target.value.length===4&&$('hName').value.trim())$('hJoin').click()});
+if(ME&&ME.code){const rj=document.createElement('button');rj.className='green';rj.style.cssText='width:100%;margin-top:10px';rj.textContent='↩ Rejoin room '+ME.code;rj.onclick=()=>{subscribe();refresh()};$('hErr').before(rj)}
+{const rb=document.createElement('button');rb.className='ghost';rb.style.cssText='width:100%;margin-top:10px';rb.textContent='📖 How to play & payouts';rb.onclick=()=>FX.rules();document.querySelector('#home .card2').after(rb)}
 $('hCreate').onclick=async()=>{const name=$('hName').value.trim()||'Host';localStorage.setItem('ct.name',name);
  try{ME=null;const j=await api('create',{name,settings:{}});ME={code:j.code,pid:j.pid,token:j.token,name};saveMe();subscribe();apply(j.view)}catch(e){$('hErr').textContent=e.message}};
 $('hJoin').onclick=async()=>{const name=$('hName').value.trim()||'Player';const code=$('hCode').value.trim().toUpperCase();if(code.length!==4){$('hErr').textContent='Enter the 4-letter room code';return}
@@ -84,8 +88,10 @@ function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.
   $('sStartBtn').textContent=v.gameNo?'Deal next game ▶':'Deal ▶'}
  $('rSettingsTxt').textContent=`Bets ${st.min}–${st.max} · timer ${st.timer?st.timer+'s':'off'} · start ${st.start} chips`;
  $('rGuestTxt').textContent=v.phase==='game'&&v.game.phase!=='summary'?'A game is running — you will join the next one':'Waiting for the host to deal…';
+ {const lb=[...v.players].sort((x,y)=>y.chips-x.chips).map((p,i)=>`<div class="lr ${p.pid===ME.pid?'me':''}"><span>${i==0?'🏆 ':''}${esc(p.name)}</span><b class="${p.chips-st.start>0?'pos':p.chips-st.start<0?'neg':''}">${sgn(p.chips-st.start)}</b></div>`).join('');
+  let el=$('rLB');if(!el){el=document.createElement('div');el.className='card2';el.id='rLB';$('rLast').before(el)}el.innerHTML=v.gameNo?`<b>Leaderboard</b> <span class="small">(net chips · ${v.gameNo} game${v.gameNo>1?'s':''})</span><div class="lb">${lb}</div>`:'';el.style.display=v.gameNo?'block':'none'}
  const last=v.game&&v.game.phase==='summary';$('rLast').style.display=last?'block':'none';if(last)$('rLast').innerHTML='<b>Last game</b>'+summaryTable(v);
- if(v.phase==='game'&&v.game.phase!=='summary'&&v.game.seats[ME.pid]){roomOverride=false;renderTable()}}
+ if(v.phase==='game'&&v.game.phase!=='summary'&&!force){roomOverride=false;renderTable()}}
 window.kick=pid=>doAct('kick',{target:pid});
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
@@ -93,7 +99,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 function apply(v){v._recv=Date.now();const prev=V;V=v;if(prev&&prev.gameNo!==v.gameNo){roomOverride=false;$('sheet').classList.remove('on')}
  if(prev&&prev.game&&v.game&&prev.gameNo!==v.gameNo){SEEN=new Map();peeked=new Set()}
  if(v.gameNo!==peekGame){peekGame=v.gameNo;peeked=new Set();SEEN=new Map()}
- const inGame=v.phase==='game'&&v.game&&v.game.seats[ME.pid];
+ const inGame=v.phase==='game'&&v.game&&(v.game.seats[ME.pid]||v.game.phase!=='summary');
  if(!inGame||roomOverride||(v.game.phase==='summary'&&!$('table').classList.contains('on')))renderRoom(roomOverride);else renderTable();
  // events → animations
  const evs=v.events.filter(e=>e.seq>lastSeq);if(lastSeq===0)evs.length=0;lastSeq=v.seq;
@@ -101,8 +107,8 @@ function apply(v){v._recv=Date.now();const prev=V;V=v;if(prev&&prev.gameNo!==v.g
  if(v.game&&v.game.phase==='summary'&&prev&&prev.game&&prev.game.phase!=='summary')setTimeout(()=>showSummary(),900)}
 
 /* ================= table rendering ================= */
-let SEEN=new Map();
-function cardFace(c){const red=(st(c)==0||st(c)==2);return `<div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span></div>`}
+let SEEN=new Map();let LOG=[];
+function cardFace(c){const red=(st(c)==0||st(c)==2);return `<div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span><span class="ix2">${RN[rk(c)]}<br>${SY[st(c)]}</span></div>`}
 function cardEl(key,c,showFace,slot,tap){const prev=SEEN.get(key);let cls='';
  if(prev===undefined)cls='deal';SEEN.set(key,showFace?c:null);
  const flipNow=prev===null&&showFace;
@@ -122,7 +128,7 @@ function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!
  if(g.round===5)return cLab(best7([...h,...g.comm]));return ''}
 const PN=pid=>{const p=V.players.find(x=>x.pid===pid);return p?p.name:'?'};
 const RNM=['Bets','High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
-function renderTable(){show('table');const v=V,g=v.game,meS=g.seats[ME.pid],isB=v.banker===ME.pid;if(g.phase!=='r2bank'){BK=null}if(g.phase!=='r3set')arranging=null;
+function renderTable(){show('table');const v=V,g=v.game,isB=v.banker===ME.pid;const SPEC=!g.seats[ME.pid];const meS=g.seats[ME.pid]||{hand:[],r:[0,0,0,0,0],bet:0,pub:[]};if(autoReveal&&!SPEC)meS.hand.forEach(c=>{if(c!=null)peeked.add(c)});if(g.phase!=='r2bank'){BK=null}if(g.phase!=='r3set')arranging=null;
  const meP=v.players.find(p=>p.pid===ME.pid);$('hBank').textContent=fmtc(meP.chips);$('hBank').className='v '+(meP.chips<v.settings.start?'neg':'');
  $('hRound').innerHTML=`<small>${g.round?`ROUND ${g.round}/5`:'ROOM '+v.code}</small>${g.phase==='bet'?'Place bets':RNM[g.round]}`;
  $('hintBtn').classList.toggle('on',hints);$('muteBtn').textContent=mute?'🔇':'🔊';
@@ -133,9 +139,9 @@ function renderTable(){show('table');const v=V,g=v.game,meS=g.seats[ME.pid],isB=
  $('top').innerHTML=top;
  // centre
  const cen={bet:['Place your bets',`Bets ${v.settings.min}–${v.settings.max}`],r1:['High Card','Higher card wins · ♦<♣<♥<♠'],r2turn:['Thai Baccarat','Min 4 to stand · players take turns'],r2bank:['Thai Baccarat','Banker decides: draw · open · skip'],r2done:['Showdown',''],r3set:['Sikipi','Bottom ≥ Top · set face down'],r3done:['Sikipi reveal',''],r4peek:['Niu Niu','Peek your 5th card'],r4done:['Niu Niu',''],r5done:['Combo Poker','Best 5 of 7 · min pair'],summary:['Game over','']}[g.phase]||['',''];
- $('centre').innerHTML=`<div class="banner" ${$('centre').dataset.k===g.phase?'style="animation:none"':''}>${cen[0]}${cen[1]?`<small>${cen[1]}</small>`:''}</div><div class="comm md" id="comm">${g.comm.map((c,i)=>cardEl('comm:'+i,c,true,i)).join('')}</div>`;$('centre').dataset.k=g.phase;
+ $('centre').innerHTML=`<div class="banner" ${$('centre').dataset.k===g.phase?'style="animation:none"':''}>${cen[0]}${cen[1]?`<small>${cen[1]}</small>`:''}</div><div class="comm md" id="comm">${g.comm.map((c,i)=>cardEl('comm:'+i,c,true,i)).join('')}</div><div id="logline">${esc(LOG.slice(-2).join(' · '))}</div>`;$('centre').dataset.k=g.phase;
  // me
- $('mePlq').textContent=isB?'YOU · BANKER':'YOU · PLAYER';$('mePlq').className='plq '+(isB?'':'blue');
+ $('mePlq').textContent=SPEC?'WATCHING · joins next game':isB?'YOU · BANKER':'YOU · PLAYER';$('mePlq').className='plq '+(isB?'':'blue');
  $('meBet').innerHTML=isB?'':meS.bet?`<span class="chip c${chipD(meS.bet)}">${meS.bet}</span> <b style="color:var(--gold)">${meS.bet}</b> <span class="delta ${delta(ME.pid)>0?'pos':delta(ME.pid)<0?'neg':''}">${delta(ME.pid)?sgn(delta(ME.pid)*1):''}</span>`:'';
  if(!arranging){$('meZone').innerHTML=`<div class="hand lg" id="meHand">${seatHand(ME.pid,meS,'lg',true)}</div>`;bindPeek()}
  $('meLab').textContent=seatLabel(ME.pid,meS);
@@ -148,12 +154,13 @@ function seatHTML(pid,isB,dy=0,pos=null){const g=V.game,s=g.seats[pid],p=V.playe
  const rib=!isB&&g.round===2&&s.open!=null&&!s.pok?`<div class="ribbon big ${s.open?'open':'skip'}">${s.open?'OPENED':'SKIPPED'}</div>`:s.pok&&g.round===2?'<div class="ribbon open">POK</div>':'';
  const hd=bankHint(pid);
  return `<div class="seat ${isB?'bk':''} ${g.actor===pid?'actor':''} ${bankUI&&!isB&&bankUI.has(pid)?'':''}" data-pid="${pid}" style="${pos?`left:${pos[0]}%;top:${pos[1]}px`:`margin-top:${dy}px`}" ${bankTap(pid)}>
- <div class="av">${p.bot?(p.name.split(' ').pop()):(esc(p.name)[0]||'?').toUpperCase()}</div><div class="nm">${isB?'<span class="plq">BANKER</span> ':''}${esc(p.name.replace(/ \S+$/,p.bot?'':' $&').trim())}${p.online?'':' 💤'}</div>
+ ${g.actor===pid&&g.deadline?'<div class="cdring"></div>':''}<div class="av">${p.bot?(p.name.split(' ').pop()):(esc(p.name)[0]||'?').toUpperCase()}</div><div class="nm">${isB?'<span class="plq">BANKER</span> ':''}${esc(p.name.replace(/ \S+$/,p.bot?'':' $&').trim())}${p.online?'':' 💤'}</div>
  <div class="hand sm">${seatHand(pid,s,'sm',false)}</div><div class="lab">${seatLabel(pid,s)}</div>
  ${isB?`<div class="small">${fmtc(p.chips)}</div>`:`<div class="betspot">${s.betDone&&s.bet?`<span class="chip c${chipD(s.bet)}">${s.bet}</span>`:'<span class="small">…</span>'}<span class="delta ${d>0?'pos':d<0?'neg':''}">${d?sgn(d):''}</span></div>`}${rib}${hd}</div>`}
 function trayHTML(b){b=Math.round(b);if(b<=0)return `<div class="iou">IOU ${fmtc(b)}</div>`;const cnt={},w={100:.4,25:.25,10:.15,5:.12};let carry=0,used=0;for(const d of[100,25,10,5]){const t=b*w[d]+carry;cnt[d]=Math.floor(t/d);carry=t-cnt[d]*d;used+=cnt[d]*d}cnt[1]=b-used;
  return [100,25,10,5,1].filter(d=>cnt[d]>0).map(d=>`<div class="bcol">${Array.from({length:Math.min(cnt[d],12)},(_,i)=>`<span class="chip c${d}" style="bottom:${i*4}px">${d}</span>`).join('')}<div class="cnt">×${cnt[d]}</div></div>`).join('')}
-function bindPeek(){document.querySelectorAll('#meHand [data-peek]').forEach(el=>el.onclick=()=>{const c=+el.dataset.peek;peeked.add(c);const hi=V.game.seats[ME.pid].hand.indexOf(c);SEEN.set(ME.pid+':'+hi,c);el.querySelector('.cd').classList.add('up');el.querySelector('.cd').classList.remove('tap');snd('flip');$('meLab').textContent=seatLabel(ME.pid,V.game.seats[ME.pid]);renderActions()})}
+function bindPeek(){document.querySelectorAll('#meHand [data-peek]').forEach(el=>FX.squeeze(el,()=>{const c=+el.dataset.peek;peeked.add(c);const hi=V.game.seats[ME.pid].hand.indexOf(c);SEEN.set(ME.pid+':'+hi,c);snd('flip');const big=b2like(c);$('meLab').textContent=seatLabel(ME.pid,V.game.seats[ME.pid]);renderActions()}))}
+function b2like(c){return 0}
 function peekAll(){V.game.seats[ME.pid].hand.forEach(c=>{if(c!=null)peeked.add(c)});renderTable()}
 function doFlips(){let n=0,f=0;document.querySelectorAll('[data-flip]').forEach(el=>{f++;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('up')))});
  document.querySelectorAll('.slot.deal').forEach(()=>n++);if(n)snd('deal',n);else if(f)snd('flip')}
@@ -162,26 +169,33 @@ function doFlips(){let n=0,f=0;document.querySelectorAll('[data-flip]').forEach(
 let arranging=null,bankUI=null;
 function A(h){$('actions').innerHTML=h}
 function unpeekedMine(){const s=V.game.seats[ME.pid];return s.hand.filter(c=>c!=null&&!peeked.has(c)).length}
+const EMO=['😂','🔥','😭','🧧','😱','👏'];
+function emoBar(){return `<div class="emobar">${EMO.map(e=>`<button onclick="sendEmo('${e}')">${e}</button>`).join('')}</div>`}
+window.sendEmo=e=>{api('emote',{e}).catch(()=>{})};
 function renderActions(){const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.pid;shoeOff();
- const wait=t=>A(`<div class="wait">${t}</div>`);
- if(unpeekedMine()&&g.phase!=='summary'){$('prompt').textContent='Tap your card to peek 👆'}else $('prompt').textContent='';
+ const wait=t=>A(`<div class="wait">${t}</div>${emoBar()}`);
+ if(!s){return wait(g.phase==='summary'?'Game over':'You are watching · you’ll be dealt in next game')}
+ if(unpeekedMine()&&g.phase!=='summary'){$('prompt').textContent='Squeeze your card: drag up-left ↖ (or tap)'}else $('prompt').textContent='';
  const peekBtn=unpeekedMine()?`<button class="ghost" onclick="peekAll()">Reveal my cards</button>`:'';
  switch(g.phase){
  case 'bet':if(isB){const n=g.order.filter(p=>!g.seats[p].betDone).length;return wait(n?`Waiting for ${n} bet(s)…`:'Dealing…')}
   if(s.betDone)return wait(`You bet ${s.bet}. Waiting for others…`);return betUI();
- case 'r1':return A(peekBtn?`<div class="arow">${peekBtn}</div>`:'<div class="wait">High card settled</div>');
+ case 'r1':return A(peekBtn?`<div class="arow">${peekBtn}</div>`:`<div class="wait">High card settled</div>${emoBar()}`);
  case 'r2turn':{if(g.actor===ME.pid){const p=b2(s.hand).p;const forced=p<=3;const best=pdrawsC(s.hand);
+   if(unpeekedMine())return A(`<div class="decide"><div class="dtop"><div class="dpts">🫣 Your turn — squeeze your 2nd card first</div><div class="dclock" id="dclock"></div></div><div class="arow">${peekBtn}</div></div>`);
    shoeOn(()=>doAct('draw'));
-   return A(`${hints?`<div class="hint">💡 ${forced?`You have ${p} — must draw`:best?'Draw':'Stand'}${forced?'':` — ${p==4?'always draw on 4':p==5?'on 5 draw only with 2+3 or 7+8':'stand on 6–7'}`}</div>`:''}<div class="arow"><button class="gold drawbtn" onclick="doAct('draw')">🂠 Draw card</button>${forced?'':`<button class="green drawbtn" onclick="doAct('stand')">✋ Stand</button>`}</div>${peekBtn?`<div class="arow">${peekBtn}</div>`:''}`)}
-  return A(`<div class="wait">${esc(PN(g.actor))} is deciding…</div>${peekBtn?`<div class="arow">${peekBtn}</div>`:''}`)}
- case 'r2bank':if(isB)return bankerUI();return wait('Banker is opening / skipping players…');
+   return A(`<div class="decide"><div class="dtop"><div class="dpts">Your turn · you have<b>${p}</b>pts</div><div class="dclock" id="dclock"></div></div>
+    ${hints?`<div class="hint" style="margin-bottom:8px">💡 ${forced?`Under 4 — you must draw`:best?'Best: DRAW':'Best: STAND'}${forced?'':` · ${p==4?'always draw on 4':p==5?'on 5 draw only with 2+3 or 7+8':'stand on 6–7'}`}</div>`:''}
+    <div class="dbtns"><button class="dbig draw ${hints&&best?'best':''}" onclick="doAct('draw')">🂠 DRAW<small>${forced?'must take a 3rd card':'take a 3rd card · or tap the shoe'}</small></button>${forced?'':`<button class="dbig stand ${hints&&!best?'best':''}" onclick="doAct('stand')">✋ STAND<small>keep ${p} pts</small></button>`}</div></div>`)}
+  return A(`<div class="wait">⏳ ${esc(PN(g.actor))} is deciding… <span id="dclock" class="dclock"></span></div>${peekBtn?`<div class="arow">${peekBtn}</div>`:''}${emoBar()}`)}
+ case 'r2bank':if(isB)return bankerUI();return wait('🎩 Banker is opening / skipping players…');
  case 'r2done':return wait('Baccarat settled · next: Sikipi');
- case 'r3set':if(s.si==null&&!s._sent)return arrangeUI();return wait(`Splits set: ${[v.banker,...g.order].filter(p=>g.seats[p].set).length}/${g.order.length+1}`);
+ case 'r3set':if(s.si==null&&!s._sent){if(unpeekedMine())return A(`<div class="decide"><div class="dpts">🫣 Squeeze your new card(s) first</div><div class="arow" style="margin-top:8px">${peekBtn}</div></div>`);return arrangeUI()}return wait(`Splits set: ${[v.banker,...g.order].filter(p=>g.seats[p].set).length}/${g.order.length+1}`);
  case 'r3done':return wait('Sikipi settled · next: Niu Niu');
- case 'r4peek':return A(peekBtn?`<div class="arow">${peekBtn}</div>`:'<div class="wait">Revealing…</div>');
+ case 'r4peek':return A(peekBtn?`<div class="decide"><div class="dpts">🫣 Squeeze your 5th card…</div><div class="arow" style="margin-top:8px">${peekBtn}</div></div>`:`<div class="wait">Revealing…</div>${emoBar()}`);
  case 'r4done':return wait('Niu Niu settled · next: Combo Poker');
  case 'r5done':return wait('Final round settled…');
- case 'summary':return A(`<div class="arow"><button class="gold" onclick="showSummary()">Results</button><button class="green" onclick="renderRoom(true)">Room</button></div>`);
+ case 'summary':return A(`<div class="arow"><button class="gold" onclick="showSummary()">Results</button><button class="green" onclick="renderRoom(true)">Room</button></div>${emoBar()}`);
  }}
 const pdrawsC=cs=>{const v=b2(cs);return !v.pok&&(v.p<=3||playerShouldDraw(cs))};
 
@@ -218,10 +232,14 @@ function bankHint(pid){const g=V.game;if(!(g.phase==='r2bank'&&V.banker===ME.pid
  return btns+(hints?`<div class="hintdot">💡${a==='open'?'OPEN':a==='skip'?'SKIP':'WAIT'} ${a==='open'?'+'+Math.round(e.st*100)+'%':a==='rest'?'then '+(pl.draw?'draw':'stand'):''}</div>`:'')}
 function bankTap(pid){return ''}
 window.bkDo=(pid,mode)=>{snd(mode==='open'?'flip':'tap');doAct('bopen',{target:pid,mode})};
-function bankerUI(){const g=V.game,s=g.seats[ME.pid];const pl=bkPlanC();const bp=b2(s.hand).p;const left=pl.act.length;
- if(!pl.forced)shoeOn(()=>doAct('bfinish',{draw:true}));else shoeOn(()=>doAct('bfinish',{draw:true}));
- A(`${hints?`<div class="hint">💡 ${pl.forced?`You have ${bp} — must draw before opening anyone`:`You have ${bp}. Open/skip players on their seats, then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest`}</div>`:`<div class="wait">You have ${bp}. OPEN or SKIP players, then draw or stand for the rest</div>`}
-  <div class="arow"><button class="gold drawbtn" onclick="doAct('bfinish',{draw:true})">🂠 Draw${left?` for ${left} left`:''}</button>${pl.forced?'':`<button class="green drawbtn" onclick="doAct('bfinish',{draw:false})">✋ Stand${left?` · settle ${left}`:''}</button>`}</div>`)}
+function bankerUI(){const g=V.game,s=g.seats[ME.pid];
+ if(unpeekedMine())return A(`<div class="decide"><div class="dpts">🫣 Squeeze your cards first</div><div class="arow" style="margin-top:8px"><button class="ghost" onclick="peekAll()">Reveal my cards</button></div></div>`);
+ if(!BK||BK.game!==V.gameNo||BK.hk!==s.hand.slice(0,2).join()){A(`<div class="decide"><div class="dpts"><span class="spin"></span>Reading the table…</div></div>`);setTimeout(()=>{bkPlanC();renderTable()},30);return}
+ const pl=bkPlanC();const bp=b2(s.hand).p;const left=pl.act.length;
+ shoeOn(()=>doAct('bfinish',{draw:true}));
+ A(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div><div class="dclock" id="dclock"></div></div>
+  <div class="hint" style="margin-bottom:8px">${pl.forced?`Under 4 — you must draw. You can still SKIP players first.`:`Tap <b>OPEN</b> / <b>SKIP</b> on players' seats.${hints?` 💡 Then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest.`:''}`}</div>
+  <div class="dbtns"><button class="dbig draw ${hints&&pl.draw?'best':''}" onclick="doAct('bfinish',{draw:true})">🂠 DRAW<small>${left?`then settle ${left} left`:'take a 3rd card'}</small></button>${pl.forced?'':`<button class="dbig stand ${hints&&!pl.draw?'best':''}" onclick="doAct('bfinish',{draw:false})">✋ STAND<small>${left?`settle ${left} on ${bp}`:`keep ${bp}`}</small></button>`}</div></div>`)}
 
 /* ---- sikipi arrange ---- */
 function arrangeUI(){const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.pid;if(s.hand.some(c=>c==null))return;
@@ -231,7 +249,7 @@ function arrangeUI(){const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.pid;
   arranging={game:v.gameNo,spl,ev,bi:skEVBest(ev,spl),pool:[...s.hand],bot:[],top:[]}}
  const ar=arranging,zone=$('meZone');$('prompt').textContent='Drag cards into Bottom and Top (or tap)';
  const lab=cs=>cs.length==2?skLab(skKey(cs[0],cs[1])):'';const full=ar.bot.length==2&&ar.top.length==2;const best=ar.spl[ar.bi];
- zone.innerHTML=`<div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${ar.bot.map(cardBtn).join('')}</div><div class="zl">${lab(ar.bot)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${ar.top.map(cardBtn).join('')}</div><div class="zl">${lab(ar.top)}</div></div></div><div class="pool" data-z="pool">${ar.pool.map(cardBtn).join('')}</div>`;
+ zone.innerHTML=`<div class="pool" data-z="pool">${ar.pool.map(cardBtn).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${ar.bot.map(cardBtn).join('')}</div><div class="zl">${lab(ar.bot)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${ar.top.map(cardBtn).join('')}</div><div class="zl">${lab(ar.top)}</div></div></div>`;$('me').scrollIntoView({block:'end',behavior:'smooth'});
  zone.querySelectorAll('[data-c]').forEach(bindDrag);
  const fmtEV=x=>isB?(x>=0?'+':'')+x.toFixed(2)+' chips':(x>=0?'+':'')+x.toFixed(2)+'×';
  A(`${hints?`<div class="hint">💡 Best: Bottom ${ctxt(best.hi)} · Top ${ctxt(best.lo)} (EV ${fmtEV(ar.ev[ar.bi])})${isB?'':`<br><small>Banker showed ${ctxt(g.seats[v.banker].vis||[])} in Baccarat</small>`}</div>`:''}
@@ -242,7 +260,7 @@ function arrangeUI(){const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.pid;
   const k=ar.spl.findIndex(sp=>sameSet(sp.hi,ar.bot));s._sent=true;arranging=null;doAct('split',{si:k>=0?k:ar.bi})}}
 const sameSet=(a,b)=>a.length==b.length&&a.every(x=>b.includes(x));
 function ctxt(cs){return cs.map(c=>`<span style="color:${(st(c)==0||st(c)==2)?'#ff8a8a':'inherit'}">${RN[rk(c)]}${SY[st(c)]}</span>`).join(' ')}
-function cardBtn(c){const red=(st(c)==0||st(c)==2);return `<div class="slot lg" data-c="${c}" style="touch-action:none"><div class="cd up" style="width:56px;height:80px;border-radius:8px;font-size:44px"><div class="bc"></div><div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span></div></div></div>`}
+function cardBtn(c){const red=(st(c)==0||st(c)==2);return `<div class="slot lg" data-c="${c}" style="touch-action:none"><div class="cd up" style="width:56px;height:80px;border-radius:8px;font-size:44px"><div class="bc"></div><div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span><span class="ix2">${RN[rk(c)]}<br>${SY[st(c)]}</span></div></div></div>`}
 function moveCard(c,to){const ar=arranging;for(const z of['pool','bot','top'])ar[z]=ar[z].filter(x=>x!=c);if(to!='pool'&&ar[to].length>=2)ar.pool.push(ar[to].shift());ar[to].push(c);snd('flip');arrangeUI()}
 function bindDrag(el){const c=+el.dataset.c,zone=$('meZone');let sx=null,sy,dragging=false,ghost=null,over=null;
  el.onpointerdown=e=>{sx=e.clientX;sy=e.clientY;dragging=false;el.setPointerCapture(e.pointerId)};
@@ -253,18 +271,25 @@ function bindDrag(el){const c=+el.dataset.c,zone=$('meZone');let sx=null,sy,drag
  el.onpointercancel=()=>{sx=null;if(ghost){ghost.remove();ghost=null}el.style.opacity=''}}
 
 /* ================= events → chips & sounds ================= */
-function playEvents(evs){let mineTot=0,any=false;
- for(const e of evs){if(e.t==='settle'){any=true;const el=document.querySelector(`.seat[data-pid="${e.pid}"]`)||(e.pid===ME.pid?$('me'):null);const bEl=V.banker===ME.pid?($('btray')||$('me')):document.querySelector(`.seat[data-pid="${V.banker}"]`);
-   if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(5,e.m+1));else if(e.m<0)fly(el,bEl,Math.min(5,-e.m+1));floatOn(el,e.m>0?`+${e.m}× ${sgn(e.amt)}`:e.m<0?`${e.m}× ${sgn(e.amt)}`:'Push',e.m>0?'w':e.m<0?'l':'p')}
-   if(e.pid===ME.pid)mineTot+=e.amt;if(V.banker===ME.pid)mineTot-=e.amt}
-  if(e.t==='act'&&e.pid!==ME.pid){const el=document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el)bubble(el,e.a==='draw'?'Draw':'Stand')}
-  if((e.t==='open'||e.t==='skip')&&V.banker!==ME.pid){const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,(e.t==='open'?'Open ':'Skip ')+PN(e.pid).split(' ')[0]);if(e.pid===ME.pid)toast(e.t==='open'?'Banker OPENED you':'Banker SKIPPED you — push')}
-  if(e.t==='bank'&&V.banker!==ME.pid){const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,e.draw?'Banker draws':'Banker stands')}
-  if(e.t==='start')toast(`New game · ${PN(e.banker)} is banker`)}
- if(any){if(mineTot>0)snd(mineTot>=3*(V.game.seats[ME.pid].bet||1)?'big':'win');else if(mineTot<0)snd('lose');else snd('chip')}
- if(V.game&&V.game.actor===ME.pid&&!window._turnPinged){window._turnPinged=true;snd('turn');if(navigator.vibrate)navigator.vibrate(80)}
+function playEvents(evs){let mineTot=0,any=false,bestM=0,worstM=0;const nm=pid=>(PN(pid)||'').replace(/ \S+$/,'')||PN(pid);
+ for(const e of evs){
+  if(e.t==='emote'){const el=e.pid===ME.pid?$('me'):document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el){const d=document.createElement('div');d.className='emo';d.textContent=e.e;el.appendChild(d);setTimeout(()=>d.remove(),1900)}continue}
+  if(e.t==='settle'){any=true;const el=document.querySelector(`.seat[data-pid="${e.pid}"]`)||(e.pid===ME.pid?$('me'):null);const bEl=V.banker===ME.pid?($('btray')||$('me')):document.querySelector(`.seat[data-pid="${V.banker}"]`);
+   if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(8,e.m+2));else if(e.m<0)fly(el,bEl,Math.min(8,-e.m+2));floatOn(el,e.m>0?`+${e.m}× ${sgn(e.amt)}`:e.m<0?`${e.m}× ${sgn(e.amt)}`:'Push',e.m>0?'w':e.m<0?'l':'p')}
+   if(e.pid===ME.pid&&e.ri===1&&V.game.seats[ME.pid]&&V.game.seats[ME.pid].pok&&e.m>0){FX.big('POK!',`+${e.m}×`);FX.flash('#ffd76a');FX.vibe(120)}
+   if(e.pid===ME.pid){mineTot+=e.amt;bestM=Math.max(bestM,e.m);worstM=Math.min(worstM,e.m)}if(V.banker===ME.pid){mineTot-=e.amt;bestM=Math.max(bestM,-e.m);worstM=Math.min(worstM,-e.m)}
+   if(Math.abs(e.m)>=3)LOG.push(`${nm(e.pid)} ${e.m>0?'wins':'loses'} ${Math.abs(e.m)}×`);continue}
+  if(e.t==='act'){LOG.push(`${nm(e.pid)} ${e.a==='draw'?'draws':'stands'}${e.auto?' (timer)':''}`);if(e.pid!==ME.pid){const el=document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el)bubble(el,e.a==='draw'?'Draw':'Stand')}}
+  if(e.t==='open'||e.t==='skip'){LOG.push(`Banker ${e.t==='open'?'opens':'skips'} ${nm(e.pid)}`);if(V.banker!==ME.pid){const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,(e.t==='open'?'Open ':'Skip ')+nm(e.pid));if(e.pid===ME.pid){toast(e.t==='open'?'Banker OPENED you':'Banker SKIPPED you — push');FX.drum(500)}}}
+  if(e.t==='bank'){LOG.push(`Banker ${e.draw?'draws':'stands'}`);if(V.banker!==ME.pid){FX.drum(700);const el=document.querySelector(`.seat[data-pid="${V.banker}"]`);if(el)bubble(el,e.draw?'Banker draws':'Banker stands')}}
+  if(e.t==='bpok'){LOG.push('Banker Pok!');FX.flash('#ffd76a');FX.shake()}
+  if(e.t==='start'){LOG=[];toast(`New game · ${PN(e.banker)} is banker`)}}
+ if(LOG.length>12)LOG=LOG.slice(-12);const ll=$('logline');if(ll)ll.textContent=LOG.slice(-2).join(' · ');
+ if(any){if(mineTot>0)snd(bestM>=3?'big':'win');else if(mineTot<0)snd('lose');else snd('chip');
+  if(bestM>=3)FX.celebrate(bestM,sgn(mineTot),$('me'));else if(worstM<=-5)FX.celebrate(worstM,'',$('me'))}
+ if(V.game&&V.game.actor===ME.pid&&!window._turnPinged){window._turnPinged=true;snd('turn');FX.vibe([80,40,80])}
  if(V.game&&V.game.actor!==ME.pid)window._turnPinged=false}
-function fly(a_,b_,n){const a=a_.getBoundingClientRect(),b=b_.getBoundingClientRect();for(let i=0;i<n;i++){const c=document.createElement('span');c.className='chip c5 fly';c.textContent='';c.style.left=(a.left+a.width/2-12)+'px';c.style.top=(a.top+a.height/2-12)+'px';document.body.appendChild(c);
+function fly(a_,b_,n){const a=a_.getBoundingClientRect(),b=b_.getBoundingClientRect();for(let i=0;i<n;i++){if(i<3)setTimeout(()=>snd('chip'),120+i*70);const c=document.createElement('span');c.className='chip c5 fly';c.textContent='';c.style.left=(a.left+a.width/2-12)+'px';c.style.top=(a.top+a.height/2-12)+'px';document.body.appendChild(c);
  setTimeout(()=>{c.style.transform=`translate(${b.left+b.width/2-a.left-a.width/2+(i-1)*6}px,${b.top+b.height/2-a.top-a.height/2}px)`;c.style.opacity='.9'},20+i*70);setTimeout(()=>c.remove(),700+i*70)}}
 function floatOn(el,txt,cls){const f=document.createElement('div');f.className='float '+cls;f.textContent=txt;el.appendChild(f);setTimeout(()=>f.remove(),1700)}
 function bubble(el,t){const b=document.createElement('div');b.className='bubble';b.textContent=t;el.appendChild(b);setTimeout(()=>b.remove(),1500)}
@@ -278,6 +303,7 @@ window.showSummary=()=>{const v=V;if(!v.game)return;const d=delta(ME.pid);
  $('sheet').classList.add('on');snd(d>0?'big':d<0?'lose':'chip')};
 
 /* ================= toggles & boot ================= */
+$('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classList.toggle('on',autoReveal);$('autoBtn').onclick=()=>{autoReveal=!autoReveal;localStorage.setItem('ct.auto',autoReveal?'1':'0');$('autoBtn').classList.toggle('on',autoReveal);toast(autoReveal?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON');if(V&&V.game)renderTable()};
 $('hintBtn').onclick=()=>{hints=!hints;localStorage.setItem('ct.hints',hints?'1':'0');toast(hints?'💡 Hints on':'Hints off');renderTable()};
 $('muteBtn').onclick=()=>{mute=!mute;localStorage.setItem('ct.mute',mute?'1':'0');$('muteBtn').textContent=mute?'🔇':'🔊'};
 if(ME){if(qs.get('room')&&qs.get('room').toUpperCase()!==ME.code){/* invited elsewhere */ME=null;saveMe()}else{subscribe();refresh()}}
