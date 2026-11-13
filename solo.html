@@ -206,7 +206,8 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 const RN=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],SY=['♦','♣','♥','♠'];
 const rk=c=>c>>2, st=c=>c&3;
 function cardHTML(c,opts={}){if(c==null)return '';if(opts.back)return '<div class="cd back"></div>';const red=(st(c)==0||st(c)==2);return `<div class="cd ${red?'r':''} ${opts.dim?'dim':''}">${RN[rk(c)]}<small>${SY[st(c)]}</small></div>`}
-function shuffle(){const d=[...Array(52).keys()];for(let i=51;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}return d}
+function rint(n){const b=new Uint32Array(1),lim=Math.floor(4294967296/n)*n;let x;do{crypto.getRandomValues(b);x=b[0]}while(x>=lim);return x%n}
+function shuffle(){const d=[...Array(52).keys()];for(let i=51;i>0;i--){const j=rint(i+1);[d[i],d[j]]=[d[j],d[i]]}return d}
 const cmpArr=(a,b)=>{for(let i=0;i<Math.max(a.length,b.length);i++){const x=a[i]??-1,y=b[i]??-1;if(x!==y)return x>y?1:-1}return 0};
 
 /* ---------- R1 High card: 2 low … A high, ♦<♣<♥<♠ ---------- */
