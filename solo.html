@@ -296,6 +296,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 
 .densef.nobk .shoe{left:6px!important;margin-left:0!important}
 .ring.dense .bubble{display:none!important}
+.setbank{display:flex;gap:8px;align-items:center;justify-content:center;margin:6px 0 2px;font-size:13px;color:#cfe3d6}.setbank select{width:auto!important;flex:0 0 auto;padding:5px 6px;border-radius:8px;background:#0e1f17;color:#fff;border:1px solid #ffffff33}.setbank button{padding:5px 12px;font-size:12px}
 </style>
 </head>
 <body>
@@ -304,6 +305,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
   <div style="text-align:left"><a href="/" style="color:#e9c46a;font-size:13px;text-decoration:none">← Play online with friends</a></div><div class="logo">Combo Table</div>
   <div class="tag">High Card · Thai Baccarat · Sikipi · Niu Niu · Combo Poker</div><div class="small" style="text-align:center;margin-top:10px;line-height:1.5">🔒 <b style="color:#e9c46a">Fair &amp; random:</b> every deck is shuffled with a cryptographic random number generator (unbiased Fisher–Yates). Neither the banker nor the players are favoured.</div>
   <div class="bankbig">Your bank<b id="lBank">$200</b></div>
+  <div class="setbank"><span>Set bank</span><select id="sBankAmt"><option>200</option><option>500</option><option>1000</option><option>2000</option><option>5000</option><option>10000</option><option value="c">Custom…</option></select><button class="ghost" id="setBank">Set</button></div>
   <div class="card2">
     <div class="lrow"><div><label>Min bet ($)</label><input id="sMin" type="number" value="1" min="1" inputmode="numeric"></div><div><label>Max bet ($)</label><input id="sMax" type="number" value="10" min="1" inputmode="numeric"></div></div>
     <div class="lrow"><div><label>Players at table</label><select id="sN"></select></div><div><label>Hints</label><select id="sHint"><option value="1">On (💡)</option><option value="0">Off</option></select></div></div>
@@ -462,9 +464,9 @@ const fmt=v=>(v<0?'-':v>0?'+':'')+'$'+Math.abs(Math.round(v*100)/100);
 const money=v=>(v<0?'-':'')+'$'+Math.abs(Math.round(v*100)/100);
 const KEY='comboTable.v2';
 const ACH=[['pok','Pok 9'],['niuniu','Niu Niu+'],['pic4','4 Pictures'],['combo5','Straight+ in Combo'],['sweep','Win all 5 rounds'],['bigbank','Big banker game'],['streak3','3-game win streak']];
-let G={bank:200,mute:false,hints:true,fast:false,st:{games:0,pG:0,pPl:0,bG:0,bPl:0,biggest:0,streak:0,best:0,ach:{}}};
-function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){G.bank=d.bank??200;G.st=Object.assign(G.st,d.st||{});G.mute=!!d.mute}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({bank:G.bank,st:G.st,mute:G.mute}))}catch(e){}}
+let G={bank:200,startBank:200,mute:false,hints:true,fast:false,st:{games:0,pG:0,pPl:0,bG:0,bPl:0,biggest:0,streak:0,best:0,ach:{}}};
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){G.bank=d.bank??200;G.startBank=d.startBank??200;G.st=Object.assign(G.st,d.st||{});G.mute=!!d.mute}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({bank:G.bank,startBank:G.startBank,st:G.st,mute:G.mute}))}catch(e){}}
 const ROSTER=[
  {n:'Ah Seng',e:'🐯',style:'high',win:['Huat ah! 🧧','Easy money 😎','Steady lah'],lose:['Wah lau…','Sian 😩','Cannot be…']},
  {n:'Auntie Mei',e:'👵',style:'low',win:['Heng ah!','Ho seh liao','Aiyah, small win'],lose:['Aiyo…','Like that also can?','My kopi money!']},
@@ -480,13 +482,14 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 
 /* =================== lobby =================== */
 for(let i=1;i<=8;i++){const o=document.createElement('option');o.value=i;o.textContent=i;if(i==4)o.selected=true;$('sN').appendChild(o)}
-function renderLobby(){
+function renderLobby(){{const o=[...$('sBankAmt').options].find(x=>x.value==String(G.startBank));if(o)$('sBankAmt').value=o.value};
  $('lBank').textContent=money(G.bank);$('lBank').className=G.bank<0?'neg':'';
  const s=G.st;
  $('statGrid').innerHTML=[['Games played',s.games],['Best streak',s.best],['As player P&L',fmt(s.pPl)+` <small style="font-size:11px;color:#a89a7a">(${s.pG})</small>`],['As banker P&L',fmt(s.bPl)+` <small style="font-size:11px;color:#a89a7a">(${s.bG})</small>`],['Biggest game win',money(s.biggest)],['Current streak',s.streak]].map(([k,v])=>`<div class="sbox"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
  $('achList').innerHTML=ACH.map(([k,n])=>`<span class="${s.ach[k]?'got':''}">${s.ach[k]?'🏆':'🔒'} ${n}</span>`).join('');
 }
-$('resetStats').onclick=()=>{G.bank=200;G.st={games:0,pG:0,pPl:0,bG:0,bPl:0,biggest:0,streak:0,best:0,ach:{}};save();renderLobby()};
+$('setBank').onclick=()=>{let v=$('sBankAmt').value;if(v==='c'){v=prompt('Starting bank amount ($):',String(G.startBank||200));if(v==null)return}const n=Math.round(+v);if(!(n>=10&&n<=10000000)){toast('Enter 10 – 10,000,000');return}G.bank=n;G.startBank=n;save();renderLobby();toast('Bank set to $'+n.toLocaleString())};
+$('resetStats').onclick=()=>{G.bank=G.startBank||200;G.st={games:0,pG:0,pPl:0,bG:0,bPl:0,biggest:0,streak:0,best:0,ach:{}};save();renderLobby()};
 function readSettings(){G.min=Math.max(1,Math.round(+$('sMin').value||1));G.max=Math.max(G.min,Math.round(+$('sMax').value||G.min));G.N=+$('sN').value;G.hints=$('sHint').value=='1'}
 $('goPlayer').onclick=()=>{readSettings();G.role='player';startTable()};
 $('goBanker').onclick=()=>{readSettings();G.role='banker';startTable()};
