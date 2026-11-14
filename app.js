@@ -230,7 +230,14 @@ function bkEV(Bh,U,drew){const known=new Set([...Bh,U]);const rem=[...Array(52).
   else{for(const p3 of rest){const pv=b3([...P2,p3]);st_+=-bSettle(pv,B2);let s=0,m=0;for(const d3 of rest){if(d3===p3)continue;s+=-bSettle(pv,b3([...Bh,d3]));m++}dr+=s/m;n++}}}
  return n?{st:st_/n,dr:dr/n}:{st:0,dr:0}}
 let BK=null;
+function bkEV3(Bh,U,drew){const known=new Set([...Bh,U]);const rem=[...Array(52).keys()].filter(c=>!known.has(c));const BV=b3(Bh);let t=0,n=0;
+ for(const c2 of rem){const P2=[U,c2];if(b2(P2).pok||pdrawsC(P2)!==drew)continue;
+  if(!drew){t+=-bSettle(b2(P2),BV);n++}else{let s=0,m=0;for(const p3 of rem){if(p3===c2)continue;s+=-bSettle(b3([...P2,p3]),BV);m++}t+=s/m;n++}}
+ return n?t/n:0}
+const bkDrew=()=>{const s=V.game.seats[ME.pid];return s.hand.length>=3&&b2(s.hand.slice(0,2)).p<=3};
 function bkPlanC(){const g=V.game,s=g.seats[ME.pid];const act=g.order.filter(p=>{const t=g.seats[p];return !t.pok&&t.open==null});const forced=b2(s.hand).p<=3;
+ if(bkDrew()){const hk='3:'+s.hand.join();if(!BK||BK.game!==V.gameNo||BK.hk!==hk){const ev={};g.order.filter(p=>!g.seats[p].pok).forEach(p=>{const e=bkEV3(s.hand,g.seats[p].hand[0],g.seats[p].drew);ev[p]={st:e,dr:e}});BK={game:V.gameNo,hk,ev}}
+  const acts={};act.forEach(p=>acts[p]=BK.ev[p].st<0?'skip':'open');return {draw:false,acts,forced:false,act,after:true}}
  if(!BK||BK.game!==V.gameNo||BK.hk!==s.hand.slice(0,2).join()){const ev={};g.order.filter(p=>!g.seats[p].pok).forEach(p=>ev[p]=bkEV(s.hand.slice(0,2),g.seats[p].hand[0],g.seats[p].drew));BK={game:V.gameNo,hk:s.hand.slice(0,2).join(),ev}}
  const best=(p,d)=>forced?Math.max(0,BK.ev[p].dr):Math.max(0,BK.ev[p].st,d?BK.ev[p].dr:BK.ev[p].st);
  const val=d=>act.reduce((x,p)=>x+g.seats[p].bet*best(p,d),0);const dr=forced?true:val(true)>val(false);
@@ -238,17 +245,23 @@ function bkPlanC(){const g=V.game,s=g.seats[ME.pid];const act=g.order.filter(p=>
  return {draw:dr,acts,forced,act}}
 function bankHint(pid){const g=V.game;if(!(g.phase==='r2bank'&&V.banker===ME.pid))return '';const t=g.seats[pid];if(!t||t.pok||t.open!=null)return '';
  const pl=bkPlanC();const a=pl.acts[pid];const e=BK.ev[pid];
- const btns=`<div class="obtns"><button class="obtn op" ${pl.forced?'disabled':''} onclick="event.stopPropagation();bkDo('${pid}','open')">OPEN</button><button class="obtn sk" onclick="event.stopPropagation();bkDo('${pid}','skip')">SKIP</button></div>`;
- return btns+(hints?`<div class="hintdot">💡${a==='open'?'OPEN':a==='skip'?'SKIP':'WAIT'} ${a==='open'?'+'+Math.round(e.st*100)+'%':a==='rest'?'then '+(pl.draw?'draw':'stand'):''}</div>`:'')}
+ const btns=`<div class="obtns"><button class="obtn op" ${pl.forced?'disabled':''} onclick="event.stopPropagation();bkDo('${pid}','open')">OPEN</button><button class="obtn sk" ${pl.forced?'disabled':''} onclick="event.stopPropagation();bkDo('${pid}','skip')">SKIP</button></div>`;
+ if(pl.forced||(pl.after&&unpeekedMine()))return btns;return btns+(hints?`<div class="hintdot">💡${a==='open'?'OPEN':a==='skip'?'SKIP':'WAIT'} ${pl.after?'':a==='open'?'+'+Math.round(e.st*100)+'%':a==='rest'?'then '+(pl.draw?'draw':'stand'):''}</div>`:'')}
 function bankTap(pid){return ''}
 window.bkDo=(pid,mode)=>{snd(mode==='open'?'flip':'tap');doAct('bopen',{target:pid,mode})};
 function bankerUI(){const g=V.game,s=g.seats[ME.pid];
  if(unpeekedMine())return A(`<div class="decide"><div class="dpts">🫣 Squeeze your cards first</div><div class="arow" style="margin-top:8px"><button class="ghost" onclick="peekAll()">Reveal my cards</button></div></div>`);
- if(!BK||BK.game!==V.gameNo||BK.hk!==s.hand.slice(0,2).join()){A(`<div class="decide"><div class="dpts"><span class="spin"></span>Reading the table…</div></div>`);setTimeout(()=>{bkPlanC();renderTable()},30);return}
+ if(!BK||BK.game!==V.gameNo||BK.hk!==(bkDrew()?'3:'+s.hand.join():s.hand.slice(0,2).join())){A(`<div class="decide"><div class="dpts"><span class="spin"></span>Reading the table…</div></div>`);setTimeout(()=>{bkPlanC();renderTable()},30);return}
  const pl=bkPlanC();const bp=b2(s.hand).p;const left=pl.act.length;
+ if(pl.forced){shoeOn(()=>doAct('bdraw'));return A(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div><div class="dclock" id="dclock"></div></div>
+  <div class="hint" style="margin-bottom:8px">Under 4 — <b>draw first</b>. Then OPEN / SKIP players with your 3 cards.</div>
+  <div class="dbtns"><button class="dbig draw best" onclick="doAct('bdraw')">🂠 DRAW<small>banker must reach 4</small></button></div></div>`)}
+ if(pl.after){shoeOff();const fp=bEval(s.hand).p;return A(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · 3 cards<b>${fp}</b>pts</div><div class="dclock" id="dclock"></div></div>
+  <div class="hint" style="margin-bottom:8px">Tap <b>OPEN</b> / <b>SKIP</b> on players' seats, then settle the rest vs your ${fp}.</div>
+  <div class="dbtns"><button class="dbig stand best" onclick="doAct('bfinish',{draw:false})">✅ SETTLE REST<small>${left?`${left} player${left>1?'s':''} vs ${fp}`:'done'}</small></button></div></div>`)}
  shoeOn(()=>doAct('bfinish',{draw:true}));
  A(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div><div class="dclock" id="dclock"></div></div>
-  <div class="hint" style="margin-bottom:8px">${pl.forced?`Under 4 — you must draw. You can still SKIP players first.`:`Tap <b>OPEN</b> / <b>SKIP</b> on players' seats.${hints?` 💡 Then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest.`:''}`}</div>
+  <div class="hint" style="margin-bottom:8px">${pl.forced?`Under 4 — draw first.`:`Tap <b>OPEN</b> / <b>SKIP</b> on players' seats.${hints?` 💡 Then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest.`:''}`}</div>
   <div class="dbtns"><button class="dbig draw ${hints&&pl.draw?'best':''}" onclick="doAct('bfinish',{draw:true})">🂠 DRAW<small>${left?`then settle ${left} left`:'take a 3rd card'}</small></button>${pl.forced?'':`<button class="dbig stand ${hints&&!pl.draw?'best':''}" onclick="doAct('bfinish',{draw:false})">✋ STAND<small>${left?`settle ${left} on ${bp}`:`keep ${bp}`}</small></button>`}</div></div>`)}
 
 /* ---- sikipi arrange ---- */

@@ -692,7 +692,15 @@ async function round2(){
    const doSkip=async p=>{p.open=false;ribbon(p,'SKIPPED');p.r[1]=0;setLab(p,'Skipped');floatOn(p,'Skip','p');snd('push');await sleep(200)};
    const plan=soloPlan(B2,act);
    let drawIt;
-   if(!B.me){say(B,'Hmm… let me see',1200);await sleep(800);
+   if(b2(B2).p<=3){ /* banker under 4: draw first, then open/skip with 3 cards */
+    if(!B.me){say(B,'Under 4 — banker draws',1100);await sleep(600);await deal(B)}else await bankerDrawFirstUI(B);
+    act.forEach(p=>{const e=bkEV3(B.hand.slice(0,3),p.hand[0],p.drew);p.ev2={st:e,dr:e}});
+    const showB3=async()=>{if(bShown)return;bShown=true;for(const c of B.hand){const el=B.els[c];if(el)flipEl(el,true)}setLab(B,bEval(B.hand).lab);await sleep(250)};
+    const doOpen3=async p=>{p.open=true;ribbon(p,'OPENED');await showB3();await flipAll(p,60);setLab(p,bEval(p.hand).lab);await settle(p,bSettle(bEval(p.hand),bEval(B.hand)),1)};
+    if(!B.me){await sleep(300);for(const p of act){if(p.ev2.st<0){say(B,'Skip '+p.n.split(' ')[0],1000);await doSkip(p);if(p.me)toast('Banker SKIPPED you — push')}}}
+    else await bankerOpenSkipUI(B,act,{forced:false,after:true,draw:false,acts:new Map(act.map(p=>[p,p.ev2.st<0?'skip':'open']))},doOpen3,doSkip);
+    drawIt=false}
+   else if(!B.me){say(B,'Hmm… let me see',1200);await sleep(800);
     for(const p of act){const a=plan.acts.get(p);if(a==='open'){say(B,'Open '+p.n.split(' ')[0]+'!',1000);await sleep(350);await doOpen(p);if(p.me)toast('Banker OPENED you')}else if(a==='skip'){say(B,'Skip '+p.n.split(' ')[0],1000);await doSkip(p);if(p.me)toast('Banker SKIPPED you — push')}}
     drawIt=plan.draw;await sleep(300);say(B,drawIt?'Banker draws':'Banker stands',1100);await sleep(500)}
    else drawIt=await bankerOpenSkipUI(B,act,plan,doOpen,doSkip);
@@ -707,13 +715,21 @@ async function round2(){
  bankerQuip(P.reduce((a,p)=>a+p.r[1]*p.bet,0));
  await nextBtn('Sikipi')}
 function ribbon(p,txt){let r=p.root.querySelector('.ribbon');if(!r){r=document.createElement('div');p.root.appendChild(r)}const t=txt||(p.open?'OPEN':'SKIP');r.className='ribbon big '+(/SKIP/.test(t)?'skip':'open');r.textContent=t;if(p.me){r.style.right='10px';r.style.top='8px'}}
+function bkEV3(Bh,U,drew){const known=new Set([...Bh,U]);const rem=[...Array(52).keys()].filter(c=>!known.has(c));const BV=b3(Bh);let t=0,n=0;
+ for(const c2 of rem){const P2=[U,c2];if(b2(P2).pok||pDraws(P2)!==drew)continue;
+  if(!drew){t+=-bSettle(b2(P2),BV);n++}else{let s=0,m=0;for(const p3 of rem){if(p3===c2)continue;s+=-bSettle(b3([...P2,p3]),BV);m++}t+=s/m;n++}}
+ return n?t/n:0}
+function bankerDrawFirstUI(B){return new Promise(res=>{let done=false;const go=async()=>{if(done)return;done=true;shoeOff();actions('');prompt('');await deal(B);await awaitMyFlips('Tap your third card 👆');res()};
+ shoeOn(go);prompt('Under 4 — draw first');
+ actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${b2(B.hand).p}</b>pts</div></div><div class="hint" style="margin-bottom:8px">Under 4 — <b>draw first</b>. Then OPEN / SKIP players with your 3 cards.</div><div class="dbtns"><button class="dbig draw best" id="bkD1">🂠 DRAW<small>banker must reach 4</small></button></div></div>`);
+ $('bkD1').onclick=go;if(G.fast)go()})}
 function soloPlan(B2,act){const forced=b2(B2).p<=3;const best=(p,d)=>forced?Math.max(0,p.ev2.dr):Math.max(0,p.ev2.st,d?p.ev2.dr:p.ev2.st);
  const val=d=>act.reduce((x,p)=>x+p.bet*best(p,d),0);const dr=forced?true:val(true)>val(false);const acts=new Map();
  act.forEach(p=>{const e=p.ev2,fin=dr?e.dr:e.st;acts.set(p,(!forced&&e.st>=fin&&e.st>0)?'open':(fin<=0&&(forced||e.st<=0))?'skip':'rest')});return {draw:dr,acts,forced}}
 function bankerOpenSkipUI(B,act,plan,doOpen,doSkip){return new Promise(res=>{const forced=plan.forced;let busy=false;
  const pending=()=>act.filter(p=>p.open===undefined);
  const finish=d=>{shoeOff();act.forEach(p=>{const o=p.root.querySelector('.obtns');if(o)o.remove();const h=p.root.querySelector('.hintdot');if(h)h.remove();p.root.classList.remove('tapme')});G.onHint=null;actions('');prompt('');res(d)};
- const upd=()=>{const pl=soloPlan(B.hand.slice(0,2),pending());
+ const upd=()=>{const pl=plan.after?plan:soloPlan(B.hand.slice(0,2),pending());
   act.forEach(p=>{let o=p.root.querySelector('.obtns'),h=p.root.querySelector('.hintdot');
    if(p.open!==undefined){if(o)o.remove();if(h)h.remove();p.root.classList.remove('tapme');return}
    p.root.classList.add('tapme');
@@ -721,15 +737,16 @@ function bankerOpenSkipUI(B,act,plan,doOpen,doSkip){return new Promise(res=>{con
     o.children[0].onclick=async e=>{e.stopPropagation();if(busy)return;busy=true;await doOpen(p);busy=false;upd()};
     o.children[1].onclick=async e=>{e.stopPropagation();if(busy)return;busy=true;await doSkip(p);busy=false;upd()}}
    o.children[0].disabled=forced;
-   if(G.hints){const a=pl.acts.get(p);if(!h){h=document.createElement('div');h.className='hintdot';p.root.appendChild(h)}h.textContent=`💡${a==='open'?'OPEN +'+Math.round(p.ev2.st*100)+'%':a==='skip'?'SKIP':'WAIT'}`}else if(h)h.remove()});
+   if(G.hints){const a=pl.acts.get(p);if(!h){h=document.createElement('div');h.className='hintdot';p.root.appendChild(h)}h.textContent=plan.after?`💡${a==='open'?'OPEN':'SKIP'}`:`💡${a==='open'?'OPEN +'+Math.round(p.ev2.st*100)+'%':a==='skip'?'SKIP':'WAIT'}`}else if(h)h.remove()});
   const left=pending().length,bp=b2(B.hand).p;
+  if(plan.after){const fp=bEval(B.hand).p;actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · 3 cards<b>${fp}</b>pts</div></div><div class="hint" style="margin-bottom:8px">Tap <b>OPEN</b> / <b>SKIP</b> on players' seats, then settle the rest vs your ${fp}.</div><div class="dbtns"><button class="dbig stand best" id="bkS">✅ SETTLE REST<small>${left?left+' vs '+fp:'done'}</small></button></div></div>`);$('bkS').onclick=()=>finish(false);return}
   shoeOn(()=>finish(true));
-  actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div></div><div class="hint" style="margin-bottom:8px">${forced?'Under 4 — you must draw. You can still SKIP players first.':`Tap <b>OPEN</b> / <b>SKIP</b> on players' seats.${G.hints?` 💡 Then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest.`:''}`}</div>
+  actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div></div><div class="hint" style="margin-bottom:8px">${forced?'Under 4 — draw first.':`Tap <b>OPEN</b> / <b>SKIP</b> on players' seats.${G.hints?` 💡 Then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest.`:''}`}</div>
   <div class="dbtns"><button class="dbig draw ${G.hints&&pl.draw?'best':''}" id="bkD">🂠 DRAW<small>${left?`then settle ${left} left`:'take a 3rd card'}</small></button>${forced?'':`<button class="dbig stand ${G.hints&&!pl.draw?'best':''}" id="bkS">✋ STAND<small>${left?`settle ${left} on ${bp}`:`keep ${bp}`}</small></button>`}</div></div>`);
   $('bkD').onclick=()=>finish(true);if($('bkS'))$('bkS').onclick=()=>finish(false);
   if(!left&&!forced){}};
  prompt('Tap OPEN or SKIP on each player');G.onHint=upd;upd();
- if(G.fast){(async()=>{for(const p of act){const a=plan.acts.get(p);if(a==='open'&&!forced)await doOpen(p);else if(a==='skip')await doSkip(p)}finish(plan.draw)})()}})}
+ if(G.fast){(async()=>{for(const p of act){const a=plan.acts.get(p);if(a==='open'&&!forced&&!plan.after)await doOpen(p);else if(a==='skip')await doSkip(p)}finish(plan.draw)})()}})}
 /* =================== ROUND 3: Sikipi =================== */
 async function round3(){
  const B=G.B,P=G.P;hud('Sikipi',3);banner('Sikipi','Bottom ≥ Top · win BOTH to win');
