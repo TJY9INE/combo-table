@@ -241,10 +241,10 @@ function bkPlanC(){const g=V.game,s=g.seats[ME.pid];const act=g.order.filter(p=>
  if(!BK||BK.game!==V.gameNo||BK.hk!==s.hand.slice(0,2).join()){const ev={};g.order.filter(p=>!g.seats[p].pok).forEach(p=>ev[p]=bkEV(s.hand.slice(0,2),g.seats[p].hand[0],g.seats[p].drew));BK={game:V.gameNo,hk:s.hand.slice(0,2).join(),ev}}
  const best=(p,d)=>forced?Math.max(0,BK.ev[p].dr):Math.max(0,BK.ev[p].st,d?BK.ev[p].dr:BK.ev[p].st);
  const val=d=>act.reduce((x,p)=>x+g.seats[p].bet*best(p,d),0);const dr=forced?true:val(true)>val(false);
- const acts={};act.forEach(p=>{const e=BK.ev[p],fin=dr?e.dr:e.st;acts[p]=(!forced&&e.st>=fin&&e.st>0)?'open':(fin<=0&&(forced||e.st<=0))?'skip':'rest'});
+ const acts={};act.forEach(p=>{const e=BK.ev[p],fin=dr?e.dr:e.st;acts[p]=(!forced&&e.st>=fin&&e.st>0)?'open':(!forced&&fin<=0&&e.st<=0)?'skip':'rest'});
  return {draw:dr,acts,forced,act}}
 function bankHint(pid){const g=V.game;if(!(g.phase==='r2bank'&&V.banker===ME.pid))return '';const t=g.seats[pid];if(!t||t.pok||t.open!=null)return '';
- const pl=bkPlanC();const a=pl.acts[pid];const e=BK.ev[pid];
+ const pl=bkPlanC();if(pl.forced)return '';const a=pl.acts[pid];const e=BK.ev[pid];
  const btns=`<div class="obtns"><button class="obtn op" ${pl.forced?'disabled':''} onclick="event.stopPropagation();bkDo('${pid}','open')">OPEN</button><button class="obtn sk" ${pl.forced?'disabled':''} onclick="event.stopPropagation();bkDo('${pid}','skip')">SKIP</button></div>`;
  if(pl.forced||(pl.after&&unpeekedMine()))return btns;return btns+(hints?`<div class="hintdot">💡${a==='open'?'OPEN':a==='skip'?'SKIP':'WAIT'} ${pl.after?'':a==='open'?'+'+Math.round(e.st*100)+'%':a==='rest'?'then '+(pl.draw?'draw':'stand'):''}</div>`:'')}
 function bankTap(pid){return ''}
@@ -253,9 +253,9 @@ function bankerUI(){const g=V.game,s=g.seats[ME.pid];
  if(unpeekedMine())return A(`<div class="decide"><div class="dpts">🫣 Squeeze your cards first</div><div class="arow" style="margin-top:8px"><button class="ghost" onclick="peekAll()">Reveal my cards</button></div></div>`);
  if(!BK||BK.game!==V.gameNo||BK.hk!==(bkDrew()?'3:'+s.hand.join():s.hand.slice(0,2).join())){A(`<div class="decide"><div class="dpts"><span class="spin"></span>Reading the table…</div></div>`);setTimeout(()=>{bkPlanC();renderTable()},30);return}
  const pl=bkPlanC();const bp=b2(s.hand).p;const left=pl.act.length;
- if(pl.forced){shoeOn(()=>doAct('bdraw'));return A(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div><div class="dclock" id="dclock"></div></div>
-  <div class="hint" style="margin-bottom:8px">Under 4 — <b>draw first</b>. Then OPEN / SKIP players with your 3 cards.</div>
-  <div class="dbtns"><button class="dbig draw best" onclick="doAct('bdraw')">🂠 DRAW<small>banker must reach 4</small></button></div></div>`)}
+ if(pl.forced){shoeOn(()=>doAct('bfinish',{draw:true}));return A(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div><div class="dclock" id="dclock"></div></div>
+  <div class="hint" style="margin-bottom:8px">Under 4 — you must <b>draw</b> and show down with <b>everyone</b>. No OPEN / SKIP.</div>
+  <div class="dbtns"><button class="dbig draw best" onclick="doAct('bfinish',{draw:true})">🂠 DRAW<small>then show down with all ${left}</small></button></div></div>`)}
  if(pl.after){shoeOff();const fp=bEval(s.hand).p;return A(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · 3 cards<b>${fp}</b>pts</div><div class="dclock" id="dclock"></div></div>
   <div class="hint" style="margin-bottom:8px">Tap <b>OPEN</b> / <b>SKIP</b> on players' seats, then settle the rest vs your ${fp}.</div>
   <div class="dbtns"><button class="dbig stand best" onclick="doAct('bfinish',{draw:false})">✅ SETTLE REST<small>${left?`${left} player${left>1?'s':''} vs ${fp}`:'done'}</small></button></div></div>`)}
