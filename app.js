@@ -102,9 +102,41 @@ function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.
   let el=$('rLB');if(!el){el=document.createElement('div');el.className='card2';el.id='rLB';$('rLast').before(el)}el.innerHTML=v.gameNo?`<b>Leaderboard</b> <span class="small">(net chips · ${v.gameNo} game${v.gameNo>1?'s':''})</span><div class="lb">${lb}</div>`:'';el.style.display=v.gameNo?'block':'none'}
  const last=v.game&&v.game.phase==='summary';$('rLast').style.display=last?'block':'none';if(last)$('rLast').innerHTML='<b>Last game</b>'+summaryTable(v)+breakdownHTML();
  if(v.phase==='game'&&v.game.phase!=='summary'&&!force){roomOverride=false;renderTable()}}
+/* ---- Niu Niu drag-into-3-and-2 arranger (shared) ---- */
+let NIU={key:'',a:[],b:[]},NIU_RR=null,NIU_CARDS=[];
+function niuTile(c,i){return `<div class="ntile" data-i="${i}" onpointerdown="niuDown(event,${i})"><div class="slot"><div class="cd up"><div class="bc"></div>${cardFace(c)}</div></div></div>`}
+function niuHTML(cards,hint,timer){NIU_CARDS=cards;const pool=[0,1,2,3,4].filter(i=>!NIU.a.includes(i)&&!NIU.b.includes(i));
+ const aw=niuAw(cards),full=NIU.a.length===3,k=full?niuKeyPick(cards,NIU.a):null;
+ let lab=full?(k[0]===0?"❌ These 3 don't make 10 → No Niu":niuLab(k)):`Drag 3 cards that make 10 into the left box (${NIU.a.length}/3)`;
+ if(aw.m)lab+=` · special ${aw.n} ×${aw.m} counts automatically`;
+ return `<div class="decide"><div class="dtop"><div class="dpts">🐂 Arrange Niu Niu</div>${timer||''}</div>
+ <div class="nzones"><div class="nzone three ${full?'full':''}" data-z="a"><div class="nzt">3 · make 10</div><div class="nzc">${NIU.a.map(i=>niuTile(cards[i],i)).join('')}</div></div>
+ <div class="nzone two" data-z="b"><div class="nzt">2 · points</div><div class="nzc">${NIU.b.map(i=>niuTile(cards[i],i)).join('')}</div></div></div>
+ <div class="nzone pool" data-z="p"><div class="nzc">${pool.length?pool.map(i=>niuTile(cards[i],i)).join(''):'<span class="small">All placed · drag to swap</span>'}</div></div>
+ <div class="alab ${full&&k[0]?'ok':''}">${lab}</div>${hint?`<div class="hint" style="margin:4px 0 6px">${hint}</div>`:''}
+ <div class="dbtns"><button class="dbig stand" onclick="niuSend(true)">🚫 NO NIU<small>can't make 10</small></button><button class="dbig draw ${full?'best':''}" ${full?'':'disabled'} onclick="niuSend(false)">✅ CONFIRM<small>${full?'lock it in':'place 3 cards'}</small></button></div></div>`}
+function niuPlace(i,z,tgt){
+ if(tgt!=null&&tgt!==i){const zt=NIU.a.includes(tgt)?'a':NIU.b.includes(tgt)?'b':'p',zi=NIU.a.includes(i)?'a':NIU.b.includes(i)?'b':'p';
+  if(zt===z&&zt!=='p'&&(z==='a'?NIU.a.length>=3:NIU.b.length>=2)&&zi!==z){const sw=(arr)=>arr.map(x=>x===tgt?i:x===i?tgt:x);NIU.a=sw(NIU.a);NIU.b=sw(NIU.b);if(zi==='p'){}try{snd&&snd('tap')}catch(e){}if(NIU_RR)NIU_RR();return}}
+ const inA=NIU.a.includes(i),inB=NIU.b.includes(i);NIU.a=NIU.a.filter(x=>x!==i);NIU.b=NIU.b.filter(x=>x!==i);
+ if(z==='a'){if(NIU.a.length>=3){const out=NIU.a.shift();if(inB)NIU.b.push(out)}NIU.a.push(i)}
+ else if(z==='b'){if(NIU.b.length>=2){const out=NIU.b.shift();if(inA)NIU.a.push(out)}NIU.b.push(i)}
+ if(NIU.a.length===3)NIU.b=[0,1,2,3,4].filter(x=>!NIU.a.includes(x));
+ try{snd&&snd('tap')}catch(e){}if(NIU_RR)NIU_RR()}
+window.niuDown=(e,i)=>{e.preventDefault();const el=e.currentTarget,sx=e.clientX,sy=e.clientY;let ghost=null;
+ const from=el.closest('.nzone')?.dataset.z||'p';
+ const mv=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;if(!ghost&&Math.hypot(dx,dy)>6){ghost=el.cloneNode(true);ghost.classList.add('dragging','nghost');document.body.appendChild(ghost);el.style.opacity='.25';window.__drag=true}
+  if(ghost){ghost.style.left=(ev.clientX-25)+'px';ghost.style.top=(ev.clientY-36)+'px';document.querySelectorAll('.nzone').forEach(z=>z.classList.remove('hot'));const t=document.elementFromPoint(ev.clientX,ev.clientY);const z=t&&t.closest&&t.closest('.nzone');if(z)z.classList.add('hot')}};
+ const up=ev=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+  if(ghost){ghost.remove();window.__drag=false;const t=document.elementFromPoint(ev.clientX,ev.clientY);const z=t&&t.closest&&t.closest('.nzone');const tt=t&&t.closest&&t.closest('.ntile');niuPlace(i,z?z.dataset.z:from,tt?+tt.dataset.i:null)}
+  else niuPlace(i,from==='p'?(NIU.a.length<3?'a':'b'):'p')};
+ addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)};
+
+window.niuSend=none=>doAct('niu',{pick:none?[]:NIU.a.slice()});
 window.kick=pid=>doAct('kick',{target:pid});
 let ARR={key:'',sel:[]};
 function arrPanel(kind){const g=V.game,s=g.seats[ME.pid],cards=kind==='niu'?s.hand:[...s.hand,...g.comm],need=kind==='niu'?3:5,key=kind+V.gameNo;
+ if(kind==='niu'){if(NIU.key!==key)NIU={key,a:[],b:[]};NIU_RR=renderActions;let hint='';if(hints){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}return niuHTML(cards,hint,'<div class="dclock" id="dclock"></div>')}
  if(ARR.key!==key)ARR={key,sel:[]};const sel=ARR.sel;
  let lab;if(kind==='niu'){const a=niuAw(cards);lab=sel.length===3?niuLab(niuKeyPick(cards,sel)):`Pick 3 cards that make 10 (${sel.length}/3)`;if(a.m)lab+=` · special ${a.n} ×${a.m} counts automatically`}
  else lab=sel.length===5?cLab(p5(sel.map(i=>cards[i]))):`Pick 5 cards (${sel.length}/5)`;
@@ -197,7 +229,7 @@ function unpeekedMine(){const s=V.game.seats[ME.pid];return s.hand.filter(c=>c!=
 const EMO=['😂','🔥','😭','🧧','😱','👏'];
 function emoBar(){return `<div class="emobar">${EMO.map(e=>`<button onclick="sendEmo('${e}')">${e}</button>`).join('')}</div>`}
 window.sendEmo=e=>{api('emote',{e}).catch(()=>{})};
-function renderActions(){const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.pid;shoeOff();
+function renderActions(){if(window.__drag)return;const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.pid;shoeOff();
  const wait=t=>A(`<div class="wait">${t}</div>${emoBar()}`);
  if(!s){return wait(g.phase==='summary'?'Game over':'You are watching · you’ll be dealt in next game')}
  if(unpeekedMine()&&g.phase!=='summary'){$('prompt').textContent='Squeeze your card: drag up-left ↖ (or tap)'}else $('prompt').textContent='';

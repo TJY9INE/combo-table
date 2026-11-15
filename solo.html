@@ -298,6 +298,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .ring.dense .bubble{display:none!important}
 .setbank{display:flex;gap:8px;align-items:center;justify-content:center;margin:6px 0 2px;font-size:13px;color:#cfe3d6}.setbank select{width:auto!important;flex:0 0 auto;padding:5px 6px;border-radius:8px;background:#0e1f17;color:#fff;border:1px solid #ffffff33}.setbank button{padding:5px 12px;font-size:12px}
 .atiles{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0 6px}.atile{border-radius:8px;padding:2px;transition:transform .12s}.atile .slot{width:46px;height:66px;margin:0!important}.atile .cd{width:46px;height:66px;font-size:34px;filter:none!important;opacity:1!important;background:#fff!important}.atile.on{transform:translateY(-8px)}.atile.on .cd{box-shadow:0 0 0 3px var(--gold),0 8px 16px #000a}.atile.comm{box-shadow:0 0 0 1px #6cf inset}.alab{text-align:center;font-weight:700;font-size:15px;color:#cfe3d6;margin:2px 0}.alab.ok{color:var(--gold)}.dbig[disabled]{opacity:.45}
+.nzones{display:flex;gap:8px;margin:4px 0}.nzone{border:2px dashed #ffffff40;border-radius:12px;padding:4px 4px 6px;min-height:84px;transition:background .15s,border-color .15s}.nzone.three{flex:3}.nzone.two{flex:2}.nzone.full{border-color:var(--gold);border-style:solid}.nzone.hot{background:#ffffff14;border-color:var(--gold)}.nzone.pool{border-style:solid;border-color:#ffffff1a;min-height:76px;margin-bottom:4px}.nzt{font-size:11px;font-weight:700;color:#cfe3d6;text-align:center;letter-spacing:.5px;margin-bottom:3px}.nzc{display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;min-height:66px;align-items:center}.ntile{touch-action:none;cursor:grab}.ntile .slot{width:44px;height:63px;margin:0!important}.ntile .cd{width:44px;height:63px;font-size:32px;background:#fff!important}.nghost{position:fixed;z-index:9999;pointer-events:none;transform:scale(1.12) rotate(-4deg);filter:drop-shadow(0 8px 12px #000a)}
 </style>
 </head>
 <body>
@@ -801,7 +802,38 @@ const sameSet=(a,b)=>a.length==b.length&&a.every(x=>b.includes(x));
 function cardBtn(c){const red=(st(c)==0||st(c)==2);return `<div class="slot lg" data-c="${c}" style="touch-action:none"><div class="cd up" style="width:50px;height:72px;border-radius:8px;font-size:40px"><div class="bc"></div><div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span><span class="ix2">${RN[rk(c)]}<br>${SY[st(c)]}</span></div></div></div>`}
 function cardsTxt(cs){return cs.map(c=>`<span style="color:${(st(c)==0||st(c)==2)?'#ff8a8a':'inherit'}">${RN[rk(c)]}${SY[st(c)]}</span>`).join(' ')}
 
-function arrangePick(kind,cards){return new Promise(res=>{const need=kind==='niu'?3:5;let sel=[];
+/* ---- Niu Niu drag-into-3-and-2 arranger (shared) ---- */
+let NIU={key:'',a:[],b:[]},NIU_RR=null,NIU_CARDS=[];
+function niuTile(c,i){return `<div class="ntile" data-i="${i}" onpointerdown="niuDown(event,${i})"><div class="slot"><div class="cd up"><div class="bc"></div>${cardFace(c)}</div></div></div>`}
+function niuHTML(cards,hint,timer){NIU_CARDS=cards;const pool=[0,1,2,3,4].filter(i=>!NIU.a.includes(i)&&!NIU.b.includes(i));
+ const aw=niuAw(cards),full=NIU.a.length===3,k=full?niuKeyPick(cards,NIU.a):null;
+ let lab=full?(k[0]===0?"❌ These 3 don't make 10 → No Niu":niuLab(k)):`Drag 3 cards that make 10 into the left box (${NIU.a.length}/3)`;
+ if(aw.m)lab+=` · special ${aw.n} ×${aw.m} counts automatically`;
+ return `<div class="decide"><div class="dtop"><div class="dpts">🐂 Arrange Niu Niu</div>${timer||''}</div>
+ <div class="nzones"><div class="nzone three ${full?'full':''}" data-z="a"><div class="nzt">3 · make 10</div><div class="nzc">${NIU.a.map(i=>niuTile(cards[i],i)).join('')}</div></div>
+ <div class="nzone two" data-z="b"><div class="nzt">2 · points</div><div class="nzc">${NIU.b.map(i=>niuTile(cards[i],i)).join('')}</div></div></div>
+ <div class="nzone pool" data-z="p"><div class="nzc">${pool.length?pool.map(i=>niuTile(cards[i],i)).join(''):'<span class="small">All placed · drag to swap</span>'}</div></div>
+ <div class="alab ${full&&k[0]?'ok':''}">${lab}</div>${hint?`<div class="hint" style="margin:4px 0 6px">${hint}</div>`:''}
+ <div class="dbtns"><button class="dbig stand" onclick="niuSend(true)">🚫 NO NIU<small>can't make 10</small></button><button class="dbig draw ${full?'best':''}" ${full?'':'disabled'} onclick="niuSend(false)">✅ CONFIRM<small>${full?'lock it in':'place 3 cards'}</small></button></div></div>`}
+function niuPlace(i,z,tgt){
+ if(tgt!=null&&tgt!==i){const zt=NIU.a.includes(tgt)?'a':NIU.b.includes(tgt)?'b':'p',zi=NIU.a.includes(i)?'a':NIU.b.includes(i)?'b':'p';
+  if(zt===z&&zt!=='p'&&(z==='a'?NIU.a.length>=3:NIU.b.length>=2)&&zi!==z){const sw=(arr)=>arr.map(x=>x===tgt?i:x===i?tgt:x);NIU.a=sw(NIU.a);NIU.b=sw(NIU.b);if(zi==='p'){}try{snd&&snd('tap')}catch(e){}if(NIU_RR)NIU_RR();return}}
+ const inA=NIU.a.includes(i),inB=NIU.b.includes(i);NIU.a=NIU.a.filter(x=>x!==i);NIU.b=NIU.b.filter(x=>x!==i);
+ if(z==='a'){if(NIU.a.length>=3){const out=NIU.a.shift();if(inB)NIU.b.push(out)}NIU.a.push(i)}
+ else if(z==='b'){if(NIU.b.length>=2){const out=NIU.b.shift();if(inA)NIU.a.push(out)}NIU.b.push(i)}
+ if(NIU.a.length===3)NIU.b=[0,1,2,3,4].filter(x=>!NIU.a.includes(x));
+ try{snd&&snd('tap')}catch(e){}if(NIU_RR)NIU_RR()}
+window.niuDown=(e,i)=>{e.preventDefault();const el=e.currentTarget,sx=e.clientX,sy=e.clientY;let ghost=null;
+ const from=el.closest('.nzone')?.dataset.z||'p';
+ const mv=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;if(!ghost&&Math.hypot(dx,dy)>6){ghost=el.cloneNode(true);ghost.classList.add('dragging','nghost');document.body.appendChild(ghost);el.style.opacity='.25';window.__drag=true}
+  if(ghost){ghost.style.left=(ev.clientX-25)+'px';ghost.style.top=(ev.clientY-36)+'px';document.querySelectorAll('.nzone').forEach(z=>z.classList.remove('hot'));const t=document.elementFromPoint(ev.clientX,ev.clientY);const z=t&&t.closest&&t.closest('.nzone');if(z)z.classList.add('hot')}};
+ const up=ev=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+  if(ghost){ghost.remove();window.__drag=false;const t=document.elementFromPoint(ev.clientX,ev.clientY);const z=t&&t.closest&&t.closest('.nzone');const tt=t&&t.closest&&t.closest('.ntile');niuPlace(i,z?z.dataset.z:from,tt?+tt.dataset.i:null)}
+  else niuPlace(i,from==='p'?(NIU.a.length<3?'a':'b'):'p')};
+ addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)};
+
+function arrangePick(kind,cards){if(kind==='niu')return new Promise(res=>{NIU={key:'s',a:[],b:[]};let hint='';if(G.hints){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}NIU_RR=()=>actions(niuHTML(cards,hint));window.niuSend=none=>{actions('');NIU_RR=null;res(none?[]:NIU.a.slice())};NIU_RR()});
+ return new Promise(res=>{const need=kind==='niu'?3:5;let sel=[];
  const draw_=()=>{let lab;if(kind==='niu'){const a=niuAw(cards);lab=sel.length===3?niuLab(niuKeyPick(cards,sel)):`Pick 3 cards that make 10 (${sel.length}/3)`;if(a.m)lab+=` · special ${a.n} ×${a.m} counts automatically`}else lab=sel.length===5?cLab(p5(sel.map(i=>cards[i]))):`Pick 5 cards (${sel.length}/5)`;
   let hint='';if(G.hints){if(kind==='niu'){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}else hint=`💡 Best: ${cLab(best7(cards))}`}
   const ok=sel.length===need;
