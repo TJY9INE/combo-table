@@ -297,6 +297,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .densef.nobk .shoe{left:6px!important;margin-left:0!important}
 .ring.dense .bubble{display:none!important}
 .setbank{display:flex;gap:8px;align-items:center;justify-content:center;margin:6px 0 2px;font-size:13px;color:#cfe3d6}.setbank select{width:auto!important;flex:0 0 auto;padding:5px 6px;border-radius:8px;background:#0e1f17;color:#fff;border:1px solid #ffffff33}.setbank button{padding:5px 12px;font-size:12px}
+.atiles{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0 6px}.atile{border-radius:8px;padding:2px;transition:transform .12s}.atile .slot{width:46px;height:66px;margin:0!important}.atile .cd{width:46px;height:66px;font-size:34px;filter:none!important;opacity:1!important;background:#fff!important}.atile.on{transform:translateY(-8px)}.atile.on .cd{box-shadow:0 0 0 3px var(--gold),0 8px 16px #000a}.atile.comm{box-shadow:0 0 0 1px #6cf inset}.alab{text-align:center;font-weight:700;font-size:15px;color:#cfe3d6;margin:2px 0}.alab.ok{color:var(--gold)}.dbig[disabled]{opacity:.45}
 </style>
 </head>
 <body>
@@ -309,6 +310,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
   <div class="card2">
     <div class="lrow"><div><label>Min bet ($)</label><input id="sMin" type="number" value="1" min="1" inputmode="numeric"></div><div><label>Max bet ($)</label><input id="sMax" type="number" value="10" min="1" inputmode="numeric"></div></div>
     <div class="lrow"><div><label>Players at table</label><select id="sN"></select></div><div><label>Hints</label><select id="sHint"><option value="1">On (💡)</option><option value="0">Off</option></select></div></div>
+    <div class="lrow"><div><label>Niu Niu &amp; Combo arranging</label><select id="sArrS"><option value="auto">Auto (best hand)</option><option value="manual">Manual (you arrange)</option></select></div><div></div></div>
     <div class="rolebtns" style="margin-top:14px"><button class="gold" id="goPlayer">Sit as Player</button><button class="green" id="goBanker">Be the Banker</button></div>
   </div>
   <button class="ghost" style="width:100%;margin-top:4px" onclick="FX.rules()">📖 How to play &amp; payouts</button>
@@ -432,6 +434,11 @@ function p5(cs){const r=cs.map(c=>hv(rk(c))).sort((a,b)=>b-a);const cnt={};r.for
  const u=[...new Set(r)];let s=null;if(u.length==5){if(u[0]-u[4]==4)s=u[0];else if(u.join()=='14,5,4,3,2')s=5}
  const sh=g.map(x=>x[1]),rs=g.map(x=>x[0]);
  if(s&&fl)return[8,s];if(sh[0]==4)return[7,...rs];if(sh[0]==3&&sh[1]==2)return[6,...rs];if(fl)return[5,...r];if(s)return[4,s];if(sh[0]==3)return[3,...rs];if(sh[0]==2&&sh[1]==2)return[2,...rs];if(sh[0]==2)return[1,...rs];return[0,...r]}
+function niuKeyPick(cs,pick){if(!Array.isArray(pick)||pick.length!==3||new Set(pick).size!==3)return [0,0];
+ const t=pick.map(i=>cs[i]);let ok=false;for(const x of nvals(t[0]))for(const y of nvals(t[1]))for(const z of nvals(t[2]))if((x+y+z)%10==0)ok=true;if(!ok)return [0,0];
+ const two=[0,1,2,3,4].filter(i=>!pick.includes(i)).map(i=>cs[i]);
+ if(rk(two[0])==rk(two[1]))return [11,hv(rk(two[0]))];let v=0;for(const x of nvals(two[0]))for(const y of nvals(two[1]))v=Math.max(v,((x+y)%10)||10);return [v,0]}
+function bestNiuPick(cs){let best=[],bk=[0,0];for(let a=0;a<5;a++)for(let b=a+1;b<5;b++)for(let c=b+1;c<5;c++){const k=niuKeyPick(cs,[a,b,c]);if(cmpArr(k,bk)>0){bk=k;best=[a,b,c]}}return best}
 function best7(cs){let b=null;for(let a=0;a<7;a++)for(let c=a+1;c<7;c++){const h=cs.filter((_,i)=>i!=a&&i!=c);const k=p5(h);if(!b||cmpArr(k,b)>0)b=k}return b}
 const CN=['High card','Pair','Two pair','Trips','Straight','Flush','Full house','Quads','Straight flush'];
 const cMult=k=>k[0]==1?1:k[0]==2?2:k[0]==3?3:k[0]>=4?5:0;
@@ -490,7 +497,7 @@ function renderLobby(){{const o=[...$('sBankAmt').options].find(x=>x.value==Stri
 }
 $('setBank').onclick=()=>{let v=$('sBankAmt').value;if(v==='c'){v=prompt('Starting bank amount ($):',String(G.startBank||200));if(v==null)return}const n=Math.round(+v);if(!(n>=10&&n<=10000000)){toast('Enter 10 – 10,000,000');return}G.bank=n;G.startBank=n;save();renderLobby();toast('Bank set to $'+n.toLocaleString())};
 $('resetStats').onclick=()=>{G.bank=G.startBank||200;G.st={games:0,pG:0,pPl:0,bG:0,bPl:0,biggest:0,streak:0,best:0,ach:{}};save();renderLobby()};
-function readSettings(){G.min=Math.max(1,Math.round(+$('sMin').value||1));G.max=Math.max(G.min,Math.round(+$('sMax').value||G.min));G.N=+$('sN').value;G.hints=$('sHint').value=='1'}
+function readSettings(){G.min=Math.max(1,Math.round(+$('sMin').value||1));G.max=Math.max(G.min,Math.round(+$('sMax').value||G.min));G.N=+$('sN').value;G.hints=$('sHint').value=='1';G.manual=$('sArrS').value==='manual'}
 $('goPlayer').onclick=()=>{readSettings();G.role='player';startTable()};
 $('goBanker').onclick=()=>{readSettings();G.role='banker';startTable()};
 $('homeBtn').onclick=()=>{G.token={};$('sheet').classList.remove('on');G.abort=true;show('lobby');renderLobby()};
@@ -794,12 +801,21 @@ const sameSet=(a,b)=>a.length==b.length&&a.every(x=>b.includes(x));
 function cardBtn(c){const red=(st(c)==0||st(c)==2);return `<div class="slot lg" data-c="${c}" style="touch-action:none"><div class="cd up" style="width:50px;height:72px;border-radius:8px;font-size:40px"><div class="bc"></div><div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span><span class="ix2">${RN[rk(c)]}<br>${SY[st(c)]}</span></div></div></div>`}
 function cardsTxt(cs){return cs.map(c=>`<span style="color:${(st(c)==0||st(c)==2)?'#ff8a8a':'inherit'}">${RN[rk(c)]}${SY[st(c)]}</span>`).join(' ')}
 
+function arrangePick(kind,cards){return new Promise(res=>{const need=kind==='niu'?3:5;let sel=[];
+ const draw_=()=>{let lab;if(kind==='niu'){const a=niuAw(cards);lab=sel.length===3?niuLab(niuKeyPick(cards,sel)):`Pick 3 cards that make 10 (${sel.length}/3)`;if(a.m)lab+=` · special ${a.n} ×${a.m} counts automatically`}else lab=sel.length===5?cLab(p5(sel.map(i=>cards[i]))):`Pick 5 cards (${sel.length}/5)`;
+  let hint='';if(G.hints){if(kind==='niu'){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}else hint=`💡 Best: ${cLab(best7(cards))}`}
+  const ok=sel.length===need;
+  actions(`<div class="decide"><div class="dtop"><div class="dpts">${kind==='niu'?'🐂 Arrange Niu Niu':'🃏 Pick your 5'}</div></div><div class="atiles">${cards.map((c,i)=>`<div class="atile ${sel.includes(i)?'on':''} ${kind==='combo'&&i>=5?'comm':''}" data-i="${i}"><div class="slot"><div class="cd up"><div class="bc"></div>${cardFace(c)}</div></div></div>`).join('')}</div><div class="alab ${ok?'ok':''}">${lab}</div>${hint?`<div class="hint" style="margin:4px 0 6px">${hint}</div>`:''}<div class="dbtns">${kind==='niu'?`<button class="dbig stand" id="arrNone">🚫 NO NIU<small>can't make 10</small></button>`:''}<button class="dbig draw ${ok?'best':''}" id="arrOk" ${ok?'':'disabled'}>✅ CONFIRM<small>${ok?'lock it in':'select '+need}</small></button></div></div>`);
+  document.querySelectorAll('.atile').forEach(t=>t.onclick=()=>{const i=+t.dataset.i,k=sel.indexOf(i);if(k>=0)sel.splice(k,1);else if(sel.length<need)sel.push(i);else{sel.shift();sel.push(i)}if(window.snd)try{snd('tap')}catch(e){};draw_()});
+  const fin=p=>{actions('');res(p)};$('arrOk').onclick=()=>{if(sel.length===need)fin(sel.slice())};if($('arrNone'))$('arrNone').onclick=()=>fin([])};
+ draw_()})}
 /* =================== ROUND 4: Niu Niu =================== */
 async function round4(){
  const B=G.B,P=G.P;hud('Niu Niu',4);banner('Niu Niu','3 cards make 10 · 3 ↔ 6');await sleep(400);
  for(const s of [B,...P])await deal(s,{up:false});
  await awaitMyFlips('Tap your 5th card 👆');
- const show_=async s=>{await flipAll(s,50);s.na=niuAw(s.hand);s.nk=niuKey(s.hand);if(!s.na.m&&s.nk.grp)regroup(s,[s.nk.grp.three,s.nk.grp.two]);setLab(s,s.na.m?`${s.na.n} ×${s.na.m}`:niuLab(s.nk.k))};
+ if(G.manual&&G.me&&!G.fast){const pick=await arrangePick('niu',G.me.hand.slice());const h=G.me.hand;G.me.nkm={k:niuKeyPick(h,pick),grp:pick.length===3?{three:pick.map(i=>h[i]),two:[0,1,2,3,4].filter(i=>!pick.includes(i)).map(i=>h[i])}:null}}
+ const show_=async s=>{await flipAll(s,50);s.na=niuAw(s.hand);s.nk=s.nkm||niuKey(s.hand);s.nkm=null;if(!s.na.m&&s.nk.grp)regroup(s,[s.nk.grp.three,s.nk.grp.two]);setLab(s,s.na.m?`${s.na.n} ×${s.na.m}`:niuLab(s.nk.k))};
  await show_(G.me);await sleep(300);banner('Reveal');
  await show_(B);if(!B.me&&(B.na.m||B.nk.k[0]>=10))say(B,B.na.m?B.na.n+'!':'Niu Niu!');await sleep(300);
  for(const p of P){if(!p.me)await show_(p);await settle(p,niuSettle(p.na,p.nk.k,B.na,B.nk.k),3)}
@@ -813,7 +829,8 @@ async function round5(){
  for(const s of [B,...P])regroup(s,[s.hand]);
  const comm=$('comm');for(let i=0;i<2;i++){const c=await deal(null,{to:comm});G.comm.push(c);await sleep(250);flipEl(comm.lastChild,true)}
  await sleep(400);
- for(const s of [B,...P]){s.ck=best7([...s.hand,...G.comm]);setLab(s,cLab(s.ck))}
+ let myCk=null;if(G.manual&&G.me&&!G.fast){const c7=[...G.me.hand,...G.comm];const pick=await arrangePick('combo',c7);myCk=p5(pick.map(i=>c7[i]))}
+ for(const s of [B,...P]){s.ck=(s.me&&myCk)?myCk:best7([...s.hand,...G.comm]);setLab(s,cLab(s.ck))}
  await sleep(300);for(const p of P)await settle(p,cSettle(p.ck,B.ck),4);
  bankerQuip(P.reduce((a,p)=>a+p.r[4]*p.bet,0));await sleep(600)}
 

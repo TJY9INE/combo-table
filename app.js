@@ -83,7 +83,7 @@ $('rShare').onclick=async()=>{const url=location.origin+location.pathname+'?room
  try{if(navigator.share){await navigator.share({title:'Combo Table',text:txt,url});return}}catch(e){}
  try{await navigator.clipboard.writeText(txt);toast('Invite link copied')}catch(e){$('rShareNote').textContent=url}};
 $('sSave').onclick=()=>saveSettings(true);
-async function saveSettings(show_){const s={min:+$('sMin').value,max:+$('sMax').value,timer:+$('sTimer').value,bots:+$('sBots').value};if(V.gameNo===0)s.start=+$('sStart').value;
+async function saveSettings(show_){const s={min:+$('sMin').value,max:+$('sMax').value,timer:+$('sTimer').value,bots:+$('sBots').value,arrange:$('sArr').value};if(V.gameNo===0)s.start=+$('sStart').value;
  try{await api('settings',{settings:s});if(show_)toast('Saved')}catch(e){$('rErr').textContent=e.message}}
 $('sStartBtn').onclick=async()=>{try{await saveSettings(false);await api('start',{banker:$('sBanker').value})}catch(e){$('rErr').textContent=e.message}};
 $('tBack').onclick=()=>{if(V.phase!=='game'||V.game.phase==='summary')renderRoom(true);else toast('Game in progress — room menu after this game')};
@@ -93,16 +93,29 @@ function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.
  $('rPlayers').innerHTML=v.players.map(p=>`<div class="prow"><span class="dot ${p.online?'on':''}"></span><span>${esc(p.name)}${p.pid===ME.pid?' <span class="tg">YOU</span>':''}${p.pid===v.host?' <span class="tg">HOST</span>':''}${p.bot?' <span class="tg">BOT</span>':''}${p.pid===v.banker&&v.phase==='game'?' <span class="tg bk">BANKER</span>':''}</span><span class="ch">${fmtc(p.chips)}</span>${isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost topup" onclick="topUp('${p.pid}')">＋💰</button>`:''}${isHost&&!p.bot&&p.pid!==ME.pid&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost" style="padding:3px 8px;font-size:11px" onclick="kick('${p.pid}')">✕</button>`:''}</div>`).join('')+(isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost resetall" onclick="resetChips()">🔄 Reset everyone's chips…</button>`:'');
  $('rHost').style.display=isHost?'block':'none';$('rGuest').style.display=isHost?'none':'block';
  const st=v.settings;
- if(isHost&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='SELECT'){$('sMin').value=st.min;$('sMax').value=st.max;$('sTimer').value=st.timer;$('sBots').value=st.bots;$('sStart').value=st.start;$('sStart').disabled=v.gameNo>0;
+ if(isHost&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='SELECT'){$('sMin').value=st.min;$('sMax').value=st.max;$('sTimer').value=st.timer;$('sArr').value=st.arrange==='manual'?'manual':'auto';$('sBots').value=st.bots;$('sStart').value=st.start;$('sStart').disabled=v.gameNo>0;
   const sel=$('sBanker'),cur=sel.value;sel.innerHTML=v.players.filter(p=>!p.bot).map(p=>`<option value="${p.pid}">${esc(p.name)}${p.pid===ME.pid?' (you)':''}</option>`).join('');if(cur&&v.players.some(p=>p.pid===cur))sel.value=cur;
   $('sStartBtn').textContent=v.gameNo?'Deal next game ▶':'Deal ▶'}
- $('rSettingsTxt').textContent=`Bets ${st.min}–${st.max} · timer ${st.timer?st.timer+'s':'off'} · start ${st.start} chips`;
+ $('rSettingsTxt').textContent=`Bets ${st.min}–${st.max} · timer ${st.timer?st.timer+'s':'off'} · start ${st.start} chips · Niu/Combo ${st.arrange==='manual'?'manual':'auto'}`;
  $('rGuestTxt').textContent=v.phase==='game'&&v.game.phase!=='summary'?'A game is running — you will join the next one':'Waiting for the host to deal…';
  {const net=p=>p.chips-st.start-(p.buyin||0);const lb=[...v.players].sort((x,y)=>net(y)-net(x)).map((p,i)=>`<div class="lr ${p.pid===ME.pid?'me':''}"><span>${i==0?'🏆 ':''}${esc(p.name)}${p.buyin?` <span class="small">(bought in ${fmtc(p.buyin)})</span>`:''}</span><b class="${net(p)>0?'pos':net(p)<0?'neg':''}">${sgn(net(p))}</b></div>`).join('');
   let el=$('rLB');if(!el){el=document.createElement('div');el.className='card2';el.id='rLB';$('rLast').before(el)}el.innerHTML=v.gameNo?`<b>Leaderboard</b> <span class="small">(net chips · ${v.gameNo} game${v.gameNo>1?'s':''})</span><div class="lb">${lb}</div>`:'';el.style.display=v.gameNo?'block':'none'}
  const last=v.game&&v.game.phase==='summary';$('rLast').style.display=last?'block':'none';if(last)$('rLast').innerHTML='<b>Last game</b>'+summaryTable(v)+breakdownHTML();
  if(v.phase==='game'&&v.game.phase!=='summary'&&!force){roomOverride=false;renderTable()}}
 window.kick=pid=>doAct('kick',{target:pid});
+let ARR={key:'',sel:[]};
+function arrPanel(kind){const g=V.game,s=g.seats[ME.pid],cards=kind==='niu'?s.hand:[...s.hand,...g.comm],need=kind==='niu'?3:5,key=kind+V.gameNo;
+ if(ARR.key!==key)ARR={key,sel:[]};const sel=ARR.sel;
+ let lab;if(kind==='niu'){const a=niuAw(cards);lab=sel.length===3?niuLab(niuKeyPick(cards,sel)):`Pick 3 cards that make 10 (${sel.length}/3)`;if(a.m)lab+=` · special ${a.n} ×${a.m} counts automatically`}
+ else lab=sel.length===5?cLab(p5(sel.map(i=>cards[i]))):`Pick 5 cards (${sel.length}/5)`;
+ let hint='';if(hints){if(kind==='niu'){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}else hint=`💡 Best: ${cLab(best7(cards))}`}
+ const tiles=cards.map((c,i)=>`<div class="atile ${sel.includes(i)?'on':''} ${kind==='combo'&&i>=5?'comm':''}" onclick="arrTap(${i},'${kind}')"><div class="slot"><div class="cd up"><div class="bc"></div>${cardFace(c)}</div></div></div>`).join('');
+ const ok=sel.length===need;
+ return `<div class="decide"><div class="dtop"><div class="dpts">${kind==='niu'?'🐂 Arrange Niu Niu':'🃏 Pick your 5'}</div><div class="dclock" id="dclock"></div></div>
+  <div class="atiles">${tiles}</div><div class="alab ${ok?'ok':''}">${lab}</div>${hint?`<div class="hint" style="margin:4px 0 6px">${hint}</div>`:''}
+  <div class="dbtns">${kind==='niu'?`<button class="dbig stand" onclick="arrSend('niu',true)">🚫 NO NIU<small>can't make 10</small></button>`:''}<button class="dbig draw ${ok?'best':''}" ${ok?'':'disabled'} onclick="arrSend('${kind}')">✅ CONFIRM<small>${ok?'lock it in':'select '+need}</small></button></div></div>`}
+window.arrTap=(i,kind)=>{const need=kind==='niu'?3:5;const k=ARR.sel.indexOf(i);if(k>=0)ARR.sel.splice(k,1);else if(ARR.sel.length<need)ARR.sel.push(i);else{ARR.sel.shift();ARR.sel.push(i)}snd('tap');renderActions()};
+window.arrSend=(kind,none)=>{const pick=none?[]:ARR.sel.slice();doAct(kind,{pick})};
 window.topUp=pid=>{const p=V.players.find(x=>x.pid===pid);if(!p)return;const a=prompt(`Top up ${p.name} — how many chips?`,String(V.settings.start));if(a==null)return;const n=Math.round(+a);if(!(n>0)){toast('Enter a number');return}api('topup',{target:pid,amount:n}).then(()=>toast(`${p.name} +${n} chips`)).catch(e=>toast(e.message))};
 window.resetChips=()=>{const a=prompt("Reset EVERYONE's chips to how many? (leaderboard restarts)",String(V.settings.start));if(a==null)return;const n=Math.round(+a);if(!(n>=10)){toast('Minimum 10');return}if(!confirm(`Set every player to ${n} chips and restart the leaderboard?`))return;api('reset',{amount:n}).then(()=>toast(`Everyone reset to ${n} chips`)).catch(e=>toast(e.message))};
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
@@ -128,7 +141,7 @@ function cardEl(key,c,showFace,slot,tap){const prev=SEEN.get(key);let cls='';
 function seatHand(pid,s,size,mine){const g=V.game;let groups=[s.hand.map((c,i)=>i)];
  // regroup when splits/niu revealed
  if(g.round===3&&s.si!=null&&s.hand.every(c=>c!=null)&&(g.phase==='r3done'||mine)){const sp=skSplits(s.hand)[s.si];groups=[sp.hi.map(c=>s.hand.indexOf(c)),sp.lo.map(c=>s.hand.indexOf(c))]}
- if(g.round===4&&g.phase!=='r4peek'&&s.hand.length===5&&s.hand.every(c=>c!=null)&&!niuAw(s.hand).m){const nk=niuKey(s.hand);if(nk.grp)groups=[nk.grp.three.map(c=>s.hand.indexOf(c)),nk.grp.two.map(c=>s.hand.indexOf(c))]}
+ if(g.round===4&&s.np&&s.np.length===3&&s.hand.every(c=>c!=null)&&g.phase!=='r4set'){groups=[s.np,[0,1,2,3,4].filter(i=>!s.np.includes(i))]}else if(g.round===4&&g.phase!=='r4peek'&&g.phase!=='r4set'&&s.hand.length===5&&s.hand.every(c=>c!=null)&&!niuAw(s.hand).m){const nk=niuKey(s.hand);if(nk.grp)groups=[nk.grp.three.map(c=>s.hand.indexOf(c)),nk.grp.two.map(c=>s.hand.indexOf(c))]}
  let k=0;return groups.map(gr=>`<div class="grp" style="display:flex">${gr.map(i=>{const c=s.hand[i];const face=c!=null&&(!mine||peeked.has(c));return cardEl(pid+':'+i,c,face,k++,mine&&c!=null&&!peeked.has(c))}).join('')}</div>`).join('<div class="gsep"></div>')}
 function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!==ME.pid||h.every(c=>peeked.has(c)));
  if(g.round===2&&g.phase!=='r2done'&&!vis)return s.pok?'Pok!':(g.phase==='r2bank'||g.phase==='r2turn')&&s.drew?'3 cards':'';
@@ -136,8 +149,8 @@ function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!
  if(g.round===1)return `${RN[rk(h[0])]}${SY[st(h[0])]}`;
  if(g.round===2)return bEval(h).lab;
  if(g.round===3){if(s.si==null)return g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';if(allPic(h))return '4 Picture ×7';const sp=skSplits(h)[s.si];return `${skLabN(sp.kh)} / ${skLab(sp.kl)}`}
- if(g.round===4){if(g.phase==='r4peek'&&pid!==ME.pid)return '';const a=niuAw(h);return a.m?`${a.n} ×${a.m}`:niuLab(niuKey(h).k)}
- if(g.round===5)return cLab(best7([...h,...g.comm]));return ''}
+ if(g.round===4){const st_=g.seats[pid];if(g.phase==='r4set')return pid===ME.pid?'':(st_.nset?'✓ arranged':'arranging…');if(g.phase==='r4peek'&&pid!==ME.pid)return '';const a=niuAw(h);return a.m?`${a.n} ×${a.m}`:niuLab(st_.np?niuKeyPick(h,st_.np):niuKey(h).k)}
+ if(g.round===5){const st_=g.seats[pid];if(g.phase==='r5set')return pid===ME.pid?'':(st_.cset?'✓ arranged':'arranging…');const c7=[...h,...g.comm];return cLab(st_.cp?p5(st_.cp.map(i=>c7[i])):best7(c7))}return ''}
 const PN=pid=>{const p=V.players.find(x=>x.pid===pid);return p?p.name:'?'};
 const RNM=['Bets','High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
 function renderTable(){show('table');const v=V,g=v.game;if(g&&(g.round+':'+v.gameNo)!==LOGR){LOGR=g.round+':'+v.gameNo;LOG=[]}clearGhosts();const isB=v.banker===ME.pid;const SPEC=!g.seats[ME.pid];const meS=g.seats[ME.pid]||{hand:[],r:[0,0,0,0,0],bet:0,pub:[]};if(autoReveal&&!SPEC)meS.hand.forEach(c=>{if(c!=null)peeked.add(c)});if(g.phase!=='r2bank'){BK=null}if(g.phase!=='r3set')arranging=null;
@@ -150,7 +163,7 @@ function renderTable(){show('table');const v=V,g=v.game;if(g&&(g.round+':'+v.gam
  let top=RL.out.map(o=>seatHTML(o.p,o.p===v.banker,0,[o.x,o.y])).join('');
  $('top').innerHTML=top;
  // centre
- const cen={bet:['Place your bets',`Bets ${v.settings.min}–${v.settings.max}`],r1:['High Card','Higher card wins · ♦<♣<♥<♠'],r2turn:['Thai Baccarat','Min 4 to stand · players take turns'],r2bank:['Thai Baccarat','Banker decides: draw · open · skip'],r2done:['Showdown',''],r3set:['Sikipi','Bottom ≥ Top · set face down'],r3done:['Sikipi reveal',''],r4peek:['Niu Niu','Peek your 5th card'],r4done:['Niu Niu',''],r5done:['Combo Poker','Best 5 of 7 · min pair'],summary:['Game over','']}[g.phase]||['',''];
+ const cen={r4set:['Niu Niu','Arrange: 3 cards making 10 + 2'],r5set:['Combo Poker','Pick your best 5 of 7'],bet:['Place your bets',`Bets ${v.settings.min}–${v.settings.max}`],r1:['High Card','Higher card wins · ♦<♣<♥<♠'],r2turn:['Thai Baccarat','Min 4 to stand · players take turns'],r2bank:['Thai Baccarat','Banker decides: draw · open · skip'],r2done:['Showdown',''],r3set:['Sikipi','Bottom ≥ Top · set face down'],r3done:['Sikipi reveal',''],r4peek:['Niu Niu','Peek your 5th card'],r4done:['Niu Niu',''],r5done:['Combo Poker','Best 5 of 7 · min pair'],summary:['Game over','']}[g.phase]||['',''];
  $('centre').innerHTML=`<div class="banner" ${$('centre').dataset.k===g.phase?'style="animation:none"':''}>${cen[0]}${cen[1]?`<small>${cen[1]}</small>`:''}</div><div class="comm md" id="comm">${g.comm.map((c,i)=>cardEl('comm:'+i,c,true,i)).join('')}</div><div id="logline">${esc(LOG.slice(-2).join(' · '))}</div>`;$('centre').dataset.k=g.phase;
  // me
  $('mePlq').textContent=SPEC?'WATCHING · joins next game':isB?'YOU · BANKER':'YOU · PLAYER';$('mePlq').className='plq '+(isB?'':'blue');
@@ -205,6 +218,9 @@ function renderActions(){const v=V,g=v.game,s=g.seats[ME.pid],isB=v.banker===ME.
  case 'r3set':if(s.si==null&&!s._sent){if(unpeekedMine())return A(`<div class="decide"><div class="dpts">🫣 Squeeze your new card(s) first</div><div class="arow" style="margin-top:8px">${peekBtn}</div></div>`);return arrangeUI()}return wait(`Splits set: ${[v.banker,...g.order].filter(p=>g.seats[p].set).length}/${g.order.length+1}`);
  case 'r3done':return wait('Sikipi settled · next: Niu Niu');
  case 'r4peek':return A(peekBtn?`<div class="decide"><div class="dpts">🫣 Squeeze your 5th card…</div><div class="arow" style="margin-top:8px">${peekBtn}</div></div>`:`<div class="wait">Revealing…</div>${emoBar()}`);
+ case 'r4set':{if(peekBtn)return A(`<div class="decide"><div class="dpts">🫣 Squeeze your 5th card…</div><div class="arow" style="margin-top:8px">${peekBtn}</div></div>`);
+   if(!g.seats[ME.pid])return wait('Players are arranging…');if(g.seats[ME.pid].nset)return wait('Arranged ✓ · waiting for others…');return A(arrPanel('niu'))}
+ case 'r5set':{if(!g.seats[ME.pid])return wait('Players are arranging…');if(g.seats[ME.pid].cset)return wait('Arranged ✓ · waiting for others…');return A(arrPanel('combo'))}
  case 'r4done':return wait('Niu Niu settled · next: Combo Poker');
  case 'r5done':return wait('Final round settled…');
  case 'summary':return A(`<div class="arow"><button class="gold" onclick="showSummary()">Results</button><button class="green" onclick="renderRoom(true)">Room</button></div>${emoBar()}`);
@@ -327,7 +343,7 @@ function roundHands(pid){const g=V.game,s=g.seats[pid];if(!s)return null;const h
  const bac=isBk?(s.vis&&s.vis.length>=2?s.vis:h.slice(0,2)):h.slice(0,s.drew?3:2);const sk=h.slice(0,4),nn=h.slice(0,5);
  let skt='?';if(allPic(sk))skt='4 Picture';else if(s.si!=null){const sp=skSplits(sk)[s.si];skt=`Bottom ${ctxt(sp.hi)} ${skLabN(sp.kh)} · Top ${ctxt(sp.lo)} <b>${skLab(sp.kl)}</b>`}
  const a=niuAw(nn);
- return [`${ctxt([h[0]])}`,`${ctxt(bac)} ${bEval(bac).lab}`,skt,`${ctxt(nn)} ${a.m?a.n+' ×'+a.m:niuLab(niuKey(nn).k)}`,`${cLab(best7([...nn,...g.comm]))}`]}
+ return [`${ctxt([h[0]])}`,`${ctxt(bac)} ${bEval(bac).lab}`,skt,`${ctxt(nn)} ${a.m?a.n+' ×'+a.m:niuLab(s.np?niuKeyPick(nn,s.np):niuKey(nn).k)}`,`${(()=>{const c7=[...nn,...g.comm];return s.cp?ctxt(s.cp.map(i=>c7[i]))+' '+cLab(p5(s.cp.map(i=>c7[i]))):cLab(best7(c7))})()}`]}
 function breakdownHTML(){const g=V.game;if(!g)return '';const me=ME.pid,isB=V.banker===me,bk=roundHands(V.banker);if(!bk)return '';
  const res=x=>x>0?`<span class="pos">+${x}×</span>`:x<0?`<span class="neg">${x}×</span>`:'<span class="zero">Push</span>';
  const nm=['High Card','Baccarat','Sikipi','Niu Niu','Combo'];

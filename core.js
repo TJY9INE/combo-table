@@ -90,3 +90,11 @@ const cMult=k=>k[0]==1?1:k[0]==2?2:k[0]==3?3:k[0]>=4?5:0;
 const cLab=k=>CN[k[0]]+(k[0]>=1?` ×${cMult(k)}`:' (no pay)');
 function cSettle(Pk,Dk){if(Pk[0]==0&&Dk[0]==0)return 0;const c=cmpArr(Pk,Dk);return c>0?cMult(Pk):c<0?-cMult(Dk):0}
 
+
+/* manual arrangement helpers */
+function niuKeyPick(cs,pick){if(!Array.isArray(pick)||pick.length!==3||new Set(pick).size!==3)return [0,0];
+ const t=pick.map(i=>cs[i]);let ok=false;for(const x of nvals(t[0]))for(const y of nvals(t[1]))for(const z of nvals(t[2]))if((x+y+z)%10==0)ok=true;if(!ok)return [0,0];
+ const two=[0,1,2,3,4].filter(i=>!pick.includes(i)).map(i=>cs[i]);
+ if(rk(two[0])==rk(two[1]))return [11,hv(rk(two[0]))];let v=0;for(const x of nvals(two[0]))for(const y of nvals(two[1]))v=Math.max(v,((x+y)%10)||10);return [v,0]}
+function bestNiuPick(cs){let best=[],bk=[0,0];for(let a=0;a<5;a++)for(let b=a+1;b<5;b++)for(let c=b+1;c<5;c++){const k=niuKeyPick(cs,[a,b,c]);if(cmpArr(k,bk)>0){bk=k;best=[a,b,c]}}return best}
+function best7Pick(cs){let b=null,bp=null;for(let a=0;a<7;a++)for(let c=a+1;c<7;c++){const idx=[0,1,2,3,4,5,6].filter(i=>i!==a&&i!==c);const k=p5(idx.map(i=>cs[i]));if(!b||cmpArr(k,b)>0){b=k;bp=idx}}return bp}
