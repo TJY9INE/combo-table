@@ -194,17 +194,17 @@ function renderTable(){show('table');const v=V,g=v.game;if(g&&(g.round+':'+v.gam
  const others=[v.banker,...g.order].filter(pid=>pid!==ME.pid);
  const pl=others.filter(p=>p!==v.banker);const RL=ringLayout(pl,isB?null:v.banker);$('top').style.height=RL.H+'px';$('centre').style.top=RL.cy+'px';
  let top=RL.out.map(o=>seatHTML(o.p,o.p===v.banker,0,[o.x,o.y])).join('');
- $('top').innerHTML=top;
+ setH($('top'),top);
  // centre
  const cen={r4set:['Niu Niu','Arrange: 3 cards making 10 + 2'],r5set:['Combo Poker','Pick your best 5 of 7'],bet:['Place your bets',`Bets ${v.settings.min}–${v.settings.max}`],r1:['High Card','Higher card wins · ♦<♣<♥<♠'],r2turn:['Thai Baccarat','Min 4 to stand · players take turns'],r2bank:['Thai Baccarat','Banker decides: draw · open · skip'],r2done:['Showdown',''],r3set:['Sikipi','Bottom ≥ Top · set face down'],r3done:['Sikipi reveal',''],r4peek:['Niu Niu','Peek your 5th card'],r4done:['Niu Niu',''],r5done:['Combo Poker','Best 5 of 7 · min pair'],summary:['Game over','']}[g.phase]||['',''];
- $('centre').innerHTML=`<div class="banner" ${$('centre').dataset.k===g.phase?'style="animation:none"':''}>${cen[0]}${cen[1]?`<small>${cen[1]}</small>`:''}</div><div class="comm md" id="comm">${g.comm.map((c,i)=>cardEl('comm:'+i,c,true,i)).join('')}</div><div id="logline">${esc(LOG.slice(-2).join(' · '))}</div>`;$('centre').dataset.k=g.phase;
+ setH($('centre'),`<div class="banner" ${$('centre').dataset.k===g.phase?'style="animation:none"':''}>${cen[0]}${cen[1]?`<small>${cen[1]}</small>`:''}</div><div class="comm md" id="comm">${g.comm.map((c,i)=>cardEl('comm:'+i,c,true,i)).join('')}</div><div id="logline">${esc(LOG.slice(-2).join(' · '))}</div>`);$('centre').dataset.k=g.phase;
  // me
  $('mePlq').textContent=SPEC?'WATCHING · joins next game':isB?'YOU · BANKER':'YOU · PLAYER';$('mePlq').className='plq '+(isB?'':'blue');
  $('meBet').innerHTML=isB?'':meS.bet?`<span class="chip c${chipD(meS.bet)}">${meS.bet}</span> <b style="color:var(--gold)">${meS.bet}</b> <span class="delta ${delta(ME.pid)>0?'pos':delta(ME.pid)<0?'neg':''}">${delta(ME.pid)?sgn(delta(ME.pid)*1):''}</span>`:'';
- if(!arranging){$('meZone').innerHTML=`<div class="hand lg" id="meHand">${seatHand(ME.pid,meS,'lg',true)}</div>`;bindPeek()}
+ if(!arranging){const _z=$('meZone'),_h=`<div class="hand lg" id="meHand">${seatHand(ME.pid,meS,'lg',true)}</div>`;if(_z._h!==_h){_z._h=_h;_z.innerHTML=_h;bindPeek()}}
  $('meLab').textContent=seatLabel(ME.pid,meS);
  $('me').classList.toggle('actor',g.actor===ME.pid);
- $('btrayWrap').innerHTML=isB?`<div class="btray" id="btray">${trayHTML(meP.chips)}</div><div class="btot">Banker chips ${fmtc(meP.chips)}</div>`:'';
+ setH($('btrayWrap'),isB?`<div class="btray" id="btray">${trayHTML(meP.chips)}</div><div class="btot">Banker chips ${fmtc(meP.chips)}</div>`:'');
  doFlips();renderActions()}
 function delta(pid){const s=V.game.seats[pid];if(!s)return 0;if(pid===V.banker)return -V.game.order.reduce((a,q)=>{const t=V.game.seats[q];return a+t.r.reduce((x,y)=>x+y,0)*t.bet},0);return s.r.reduce((a,b)=>a+b,0)*s.bet}
 const chipD=a=>a>=100?100:a>=25?25:a>=10?10:a>=5?5:1;
@@ -225,7 +225,8 @@ function doFlips(){let n=0,f=0;document.querySelectorAll('[data-flip]').forEach(
 
 /* ================= actions panel ================= */
 let arranging=null,bankUI=null;
-function A(h){$('actions').innerHTML=h}
+function setH(el,h){if(!el||el._h===h)return false;el._h=h;el.innerHTML=h;return true}
+function A(h){const el=$('actions');if(el._h===h)return;el._h=h;el.innerHTML=h}
 function unpeekedMine(){const s=V.game.seats[ME.pid];return s.hand.filter(c=>c!=null&&!peeked.has(c)).length}
 const EMO=['😂','🔥','😭','🧧','😱','👏'];
 function emoBar(){return `<div class="emobar">${EMO.map(e=>`<button onclick="sendEmo('${e}')">${e}</button>`).join('')}</div>`}
@@ -323,7 +324,7 @@ function arrangeUI(){if(window.__drag)return;const v=V,g=v.game,s=g.seats[ME.pid
   arranging={game:v.gameNo,spl,ev,bi:skEVBest(ev,spl),pool:[...s.hand],bot:[],top:[]};first=true}
  const ar=arranging,zone=$('meZone');$('prompt').textContent='Drag cards into Bottom and Top (or tap)';
  const lab=(cs,b)=>cs.length==2?(b?skLabN:skLab)(skKey(cs[0],cs[1])):'';const full=ar.bot.length==2&&ar.top.length==2;const best=ar.spl[ar.bi];
- zone.innerHTML=`<div class="pool" data-z="pool">${ar.pool.map(cardBtn).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${ar.bot.map(cardBtn).join('')}</div><div class="zl">${lab(ar.bot,1)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${ar.top.map(cardBtn).join('')}</div><div class="zl">${lab(ar.top)}</div></div></div>`;if(first)$('me').scrollIntoView({block:'end',behavior:'smooth'});
+ const _html=`<div class="pool" data-z="pool">${ar.pool.map(cardBtn).join('')}</div><div class="zones"><div class="zone" data-z="bot"><div class="zt">Bottom (stronger)</div><div class="zc">${ar.bot.map(cardBtn).join('')}</div><div class="zl">${lab(ar.bot,1)}</div></div><div class="zone" data-z="top"><div class="zt">Top</div><div class="zc">${ar.top.map(cardBtn).join('')}</div><div class="zl">${lab(ar.top)}</div></div></div>`;if(zone._h===_html&&!first)return;zone._h=_html;zone.innerHTML=_html;if(first)$('me').scrollIntoView({block:'end',behavior:'smooth'});
  zone.querySelectorAll('[data-c]').forEach(bindDrag);
  const fmtEV=x=>isB?(x>=0?'+':'')+x.toFixed(2)+' chips':(x>=0?'+':'')+x.toFixed(2)+'×';
  A(`${hints?`<div class="hint">💡 Best: Bottom ${ctxt(best.hi)} · Top ${ctxt(best.lo)} (EV ${fmtEV(ar.ev[ar.bi])})${isB?'':`<br><small>Banker showed ${ctxt(g.seats[v.banker].vis||[])} in Baccarat</small>`}</div>`:''}
