@@ -351,7 +351,7 @@ function playEvents(evs){let mineTot=0,any=false,bestM=0,worstM=0;const nm=pid=>
   if(e.t==='emote'){const el=e.pid===ME.pid?$('me'):document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el){const d=document.createElement('div');d.className='emo';d.textContent=e.e;el.appendChild(d);setTimeout(()=>d.remove(),1900)}continue}
   if(e.t==='settle'){any=true;const el=document.querySelector(`.seat[data-pid="${e.pid}"]`)||(e.pid===ME.pid?$('me'):null);const bEl=V.banker===ME.pid?($('btray')||$('me')):document.querySelector(`.seat[data-pid="${V.banker}"]`);
    if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(8,e.m+2));else if(e.m<0)fly(el,bEl,Math.min(8,-e.m+2));floatOn(el,e.m>0?`+${e.m}× ${sgn(e.amt)}`:e.m<0?`${e.m}× ${sgn(e.amt)}`:'Push',e.m>0?'w':e.m<0?'l':'p')}
-   if(e.pid===ME.pid&&e.ri===1&&V.game.seats[ME.pid]&&V.game.seats[ME.pid].pok&&e.m>0){FX.big('POK!',`+${e.m}×`);FX.flash('#ffd76a');FX.vibe(120)}
+   if(e.pid===ME.pid&&e.ri===1&&V.game.seats[ME.pid]&&V.game.seats[ME.pid].pok&&e.m>0){FX.big('POK!',`+${e.m}×`);FX.flash('#ffd76a');FX.vibe(120);FX.haptic(2,90)}
    if(e.pid===ME.pid){mineTot+=e.amt;bestM=Math.max(bestM,e.m);worstM=Math.min(worstM,e.m)}if(V.banker===ME.pid){mineTot-=e.amt;bestM=Math.max(bestM,-e.m);worstM=Math.min(worstM,-e.m)}
    if(Math.abs(e.m)>=3&&V.game&&e.ri===V.game.round-1)LOG.push(`${nm(e.pid)} ${e.m>0?'wins':'loses'} ${Math.abs(e.m)}×`);continue}
   if(e.t==='act'){if(V.game&&V.game.round===2)LOG.push(`${nm(e.pid)} ${e.a==='draw'?'draws':'stands'}${e.auto?' (timer)':''}`);if(e.pid!==ME.pid){const el=document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el)bubble(el,e.a==='draw'?'Draw':'Stand')}}

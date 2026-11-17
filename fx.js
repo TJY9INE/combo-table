@@ -41,12 +41,16 @@ FX.shake=(el=document.body)=>{el.classList.remove('shake');void el.offsetWidth;e
 FX.flash=(color='#ffd76a')=>{const f=document.createElement('div');f.className='fxflash';f.style.background=color;document.body.appendChild(f);setTimeout(()=>f.remove(),650)};
 FX.big=(txt,sub,lose)=>{const d=document.createElement('div');d.className='bigtxt'+(lose?' lose':'');d.innerHTML=txt+(sub?`<small>${sub}</small>`:'');document.body.appendChild(d);setTimeout(()=>d.remove(),1650)};
 FX.vibe=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+/* iPhone haptics (iOS 18+): toggling a hidden 'switch' checkbox fires the system haptic tick */
+FX.isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+FX.tap1=()=>{try{const l=document.createElement('label');l.ariaHidden='true';l.style.display='none';const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');l.appendChild(i);document.head.appendChild(l);l.click();l.remove()}catch(e){}};
+FX.haptic=(n=1,gap=70)=>{if(navigator.vibrate&&!FX.isIOS)return;for(let k=0;k<n;k++)setTimeout(FX.tap1,k*gap)};
 /* sounds (use host's AudioContext helpers if available) */
 FX.tick=(f)=>{try{const a=(window.ac&&window.ac())||null;if(!a||window._fxMute&&window._fxMute())return;const o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.04,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.05);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.06)}catch(e){}};
 FX.drum=(ms=900)=>{try{const a=(window.ac&&window.ac())||null;if(!a||window._fxMute&&window._fxMute())return;const n=Math.floor(ms/45);for(let i=0;i<n;i++){const t=a.currentTime+i*0.045,b=a.createBuffer(1,800,a.sampleRate),ch=b.getChannelData(0);for(let k=0;k<800;k++)ch[k]=(Math.random()*2-1)*(1-k/800);const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();f.type='lowpass';f.frequency.value=420;g.gain.value=.05+.25*(i/n);s.buffer=b;s.connect(f);f.connect(g);g.connect(a.destination);s.start(t)}}catch(e){}};
 FX.celebrate=(m,amt,anchor)=>{const r=(anchor||document.body).getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/3;
- if(m>=5){FX.big(m>=7?'MASSIVE!':'BIG WIN!',`+${m}× ${amt||''}`);FX.confetti(x,y,90);FX.shake();FX.flash('#ffd76a');FX.vibe([60,40,120])}
- else if(m>=3){FX.big('NICE!',`+${m}×`);FX.confetti(x,y,50);FX.vibe(60)}
+ if(m>=5){FX.big(m>=7?'MASSIVE!':'BIG WIN!',`+${m}× ${amt||''}`);FX.confetti(x,y,90);FX.shake();FX.flash('#ffd76a');FX.vibe([60,40,120]);FX.haptic(m>=10?9:6,65)}
+ else if(m>=3){FX.big('NICE!',`+${m}×`);FX.confetti(x,y,50);FX.vibe(60);FX.haptic(2,90)}
  else if(m<=-5){FX.big('OUCH',`${m}×`,true);FX.flash('#ff5252');FX.shake();FX.vibe([30,30,30])}};
 /* squeeze-to-peel a face-down card. slot = element containing .cd(.bc,.fc). onReveal called once. */
 FX.squeeze=(slot,onReveal)=>{const cd=slot.querySelector('.cd');if(!cd||slot._sq)return;slot._sq=1;cd.classList.add('sqhint');
