@@ -359,6 +359,7 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
     <div class="lrow"><div><label>Decision timer</label><select id="sTimer"><option value="0">Off</option><option value="15">15 s</option><option value="30">30 s</option><option value="60">60 s</option></select></div><div><label>Deal speed</label><select id="sFast"><option value="0">Normal</option><option value="1">⚡ Fast (2×)</option></select></div>
      <div><label>Computer players</label><select id="sBots"><option value="0">None</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div></div>
     <div class="lrow" style="display:none"><div><select id="sArr"><option value="manual">manual</option></select></div></div>
+    <div class="lrow"><div><label>🏰 League code (optional)</label><input id="sLeague" maxlength="4" autocapitalize="characters" placeholder="Count for league"></div></div>
     <div class="lrow"><div><label>Starting chips</label><input id="sStart" type="number" inputmode="numeric"></div><div><label>Banker this game</label><select id="sBanker"></select></div></div>
     <div class="rolebtns" style="margin-top:14px"><button class="green" id="sSave">Save settings</button><button class="gold" id="sStartBtn">Deal ▶</button></div>
     <div class="err" id="rErr"></div>
@@ -367,6 +368,8 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
   <div class="card2"><button class="ghost" id="rSeasonBtn" style="width:100%">🏆 Season leaderboard &amp; badges</button></div>
   <div class="card2" id="rLast" style="display:none"></div>
 </div></div>
+
+<div class="screen" id="dwait"><div class="lobby"><div class="card2" style="text-align:center;margin-top:30vh" id="dwaitIn"></div></div></div>
 
 <!-- TABLE -->
 <div class="screen" id="table">
@@ -395,7 +398,7 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
 </div>
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="fx.js?v=2611180215"></script>
-<script src="core.js?v=2611180215"></script>
-<script src="app.js?v=2611180215"></script>
+<script src="fx.js?v=2611180245"></script>
+<script src="core.js?v=2611180245"></script>
+<script src="app.js?v=2611180245"></script>
 </body></html>

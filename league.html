@@ -57,11 +57,11 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
   <h1>Combo League</h1><div class="sub">Conquer Singapore with your kakis · play chips only</div>
   <div class="card"><b>Join a league</b>
    <label>League code</label><input id="jCode" maxlength="4" autocapitalize="characters" placeholder="ABCD">
-   <label>Your name</label><input id="jName" maxlength="16" placeholder="Name">
+   <div class="row"><div><label>Your name</label><input id="jName" maxlength="16" placeholder="Name"></div><div style="flex:.6"><label>PIN (if set)</label><input id="jPin" maxlength="6" inputmode="numeric" type="password" placeholder="••••"></div></div>
    <div style="margin-top:12px"><button class="gold" id="jBtn">Join league</button></div></div>
   <div class="card"><b>Start a new league</b>
    <label>League name</label><input id="cLname" maxlength="24" placeholder="e.g. Kopi Kakis">
-   <label>Your name</label><input id="cName" maxlength="16" placeholder="Name">
+   <div class="row"><div><label>Your name</label><input id="cName" maxlength="16" placeholder="Name"></div><div style="flex:.6"><label>PIN (optional)</label><input id="cPin" maxlength="6" inputmode="numeric" type="password" placeholder="4–6 digits"></div></div><div class="small" style="margin-top:4px">A PIN lets you log back in on a new phone and stops others using your name.</div>
    <div class="row"><div><label>Duel bankroll</label><input id="cBank" type="number" inputmode="numeric" value="1000"></div><div><label>Fixed bet</label><input id="cBet" type="number" inputmode="numeric" value="100"></div></div>
    <div class="small" style="margin-top:6px">Each duel: both sides start with the bankroll, bet is fixed, banker alternates — play until someone can't cover a bet.</div>
    <div style="margin-top:12px"><button class="green" id="cBtn">Create league</button></div></div>
@@ -97,9 +97,9 @@ function saveLG(){try{localStorage.setItem('ct.league',JSON.stringify(LG))}catch
 const qs=new URLSearchParams(location.search);if(qs.get('code')){$('jCode').value=qs.get('code').toUpperCase();if(LG&&LG.league!==qs.get('code').toUpperCase())LG=null}
 $('jName').value=$('cName').value=localStorage.getItem('ct.name')||'';
 $('jBtn').onclick=async()=>{const code=$('jCode').value.trim().toUpperCase(),name=$('jName').value.trim();if(!code||!name)return $('sErr').textContent='Enter code and name';
- try{LG=null;const j=await api('ljoin',{league:code,name});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view)}catch(e){$('sErr').textContent=e.message}};
+ try{LG=null;const j=await api('ljoin',{league:code,name,pin:$('jPin').value});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view)}catch(e){$('sErr').textContent=e.message}};
 $('cBtn').onclick=async()=>{const name=$('cName').value.trim();if(!name)return $('sErr').textContent='Enter your name';
- try{LG=null;const j=await api('lcreate',{lname:$('cLname').value.trim()||'Kopi Kakis',name,bank:+$('cBank').value,bet:+$('cBet').value});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view);setTimeout(share,400)}catch(e){$('sErr').textContent=e.message}};
+ try{LG=null;const j=await api('lcreate',{lname:$('cLname').value.trim()||'Kopi Kakis',name,bank:+$('cBank').value,bet:+$('cBet').value,pin:$('cPin').value});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view);setTimeout(share,400)}catch(e){$('sErr').textContent=e.message}};
 $('leaveBtn').onclick=()=>{LG=null;saveLG();clearInterval(pollT);$('main').style.display='none';$('start').style.display=''};
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('tMap').style.display=tab==='map'?'':'none';$('tBoard').style.display=tab==='board'?'':'none';$('tLog').style.display=tab==='log'?'':'none'});
 async function share(){const url=location.origin+'/league?code='+LG.league;const txt=`Join my Combo League "${V?V.name:''}" — code ${LG.league}\n${url}`;
@@ -112,10 +112,14 @@ function apply(v){const prevLog=V?V.log.length&&V.log[V.log.length-1].t:0;V=v;$(
  $('lName').textContent=v.name;$('lCode').textContent=v.code;const me=v.members.find(m=>m.mid===v.you);
  $('lSub').innerHTML=`${v.members.length} member${v.members.length>1?'s':''} · Duel: ${v.bank.toLocaleString()} bankroll, ${v.bet.toLocaleString()} bet${me?` · You hold <b style="color:var(--gold)">${me.land}</b> town${me.land===1?'':'s'}`:''}`;
  // duel banner
- $('duelBox').innerHTML=me&&me.duel?`<div class="duel"><b>⚔️ Duel in progress</b><button class="gold" style="width:auto;padding:9px 14px" onclick="resumeDuel()">Resume</button><button class="red" onclick="forfeit()">Forfeit</button></div>`:'';
+ const iv=v.invite;const ivLeft=iv?Math.max(0,Math.ceil((iv.until-v.now)/1000)):0;
+ $('duelBox').innerHTML=(iv?`<div class="duel" style="margin-bottom:8px;flex-wrap:wrap"><b>⚔️ ${esc(iv.fromName)} challenges you for ${esc(iv.town)}! <span class="small">${ivLeft}s</span></b><button class="gold" style="width:auto;padding:9px 14px" onclick="acceptInv()">Play live</button><button class="ghost" onclick="declineInv()">👻 Let ghost play</button></div>`:'')+(me&&me.duel?`<div class="duel"><b>⚔️ Duel in progress</b><button class="gold" style="width:auto;padding:9px 14px" onclick="resumeDuel()">Resume</button><button class="red" onclick="forfeit()">Forfeit</button></div>`:'');
+ if(iv&&!window._ivBuzz){window._ivBuzz=1;try{navigator.vibrate&&navigator.vibrate([80,60,80])}catch(e){}toast('⚔️ '+iv.fromName+' is attacking '+iv.town+'!',3000)}if(!iv)window._ivBuzz=0;
  drawMap();drawBoard();drawLog();
  const last=v.log.length?v.log[v.log.length-1]:null;if(prevLog&&last&&last.t!==prevLog)toast(last.text,2600);
- clearInterval(pollT);pollT=setInterval(refresh,10000)}
+ clearInterval(pollT);pollT=setInterval(refresh,document.hidden?15000:4000)}
+window.acceptInv=async()=>{try{const j=await api('laccept');goRoom(j)}catch(e){toast(e.message);refresh()}};
+window.declineInv=async()=>{try{const j=await api('ldecline');apply(j.view);toast('Your ghost is defending 👻')}catch(e){toast(e.message);refresh()}};
 function drawMap(){const v=V;
  const island='5,30 12,22 25,14 38,6 55,2 66,8 78,6 92,15 97,28 93,40 86,50 72,54 60,58 52,62 42,62 30,54 18,48 8,42';
  const pts=island.split(' ').map(p=>{const [x,y]=p.split(',').map(Number);return `${x},${y*1.0}`}).join(' ');
@@ -124,29 +128,30 @@ function drawMap(){const v=V;
   h+=`<div class="tw ${t.bot?'bot':''} ${me?'me':''} ${SEL===t.t?'sel':''}" style="left:${t.x}%;top:${(t.y+4)/82*100}%" onclick="pick('${t.t}')"><div class="dot" style="background:${c}">${ABBR[t.t]||t.t.slice(0,3)}</div>${t.bot?'':`<div class="on">${esc(t.ownerName)}</div>`}${t.def>=3?'<span class="sh">🛡</span>':''}</div>`}
  $('map').innerHTML=h;
  const hold={};v.towns.forEach(t=>{if(!t.bot)hold[t.owner]=(hold[t.owner]||0)+1});
- $('legend').innerHTML=v.members.slice().sort((a,b)=>b.land-a.land).map(m=>`<span><i style="background:${colorOf(m.mid)}"></i>${esc(m.name)}${m.mid===v.you?' (you)':''} · ${m.land}</span>`).join('')+`<span><i style="background:#3b4a43"></i>House bots · ${v.towns.filter(t=>t.bot).length}</span>`}
+ $('legend').innerHTML=v.members.slice().sort((a,b)=>b.land-a.land).map(m=>`<span><i style="background:${colorOf(m.mid)}"></i>${esc(m.name)}${m.mid===v.you?' (you)':m.online?' 🟢':''} · ${m.land}</span>`).join('')+`<span><i style="background:#3b4a43"></i>House bots · ${v.towns.filter(t=>t.bot).length}</span>`}
 window.pick=t=>{SEL=t;drawMap();const T=V.towns.find(x=>x.t===t);const me=V.members.find(m=>m.mid===V.you);const mine=T.owner===V.you;
- const who=T.bot?`🤖 ${esc(T.ownerName)} (house bot)`:`${esc(T.ownerName)}${mine?' (you)':' — you\'ll face their 👻 ghost'}`;
+ const om=V.members.find(m=>m.mid===T.owner);const live=om&&om.online&&!mine;
+ const who=T.bot?`🤖 ${esc(T.ownerName)} (house bot)`:`${esc(T.ownerName)}${mine?' (you)':live?' — 🟢 online now':' — you\'ll face their 👻 ghost'}`;
  $('sheetIn').innerHTML=`<h2>${esc(t)}</h2><div class="small" style="margin-bottom:10px">Held by ${who}${T.def?` · defended ${T.def}×`:''}</div>
   ${mine?`<div class="small" style="margin:8px 0 14px">This is your town. Friends can attack it any time — your ghost defends it.</div>`:
   me&&me.duel?`<div class="small" style="margin:8px 0 14px">Finish your current duel first.</div>`:
   `<div class="small" style="margin:8px 0 14px">Duel: you and the defender start with ${V.bank.toLocaleString()} chips, every game is a fixed ${V.bet.toLocaleString()} bet, banker alternates (defender banks first). First to go bust loses — win and ${esc(t)} is yours.</div>`}
-  <div class="row">${!mine&&!(me&&me.duel)?`<button class="gold" onclick="attack('${t}')">⚔️ Attack ${esc(t)}</button>`:''}<button class="ghost" onclick="closeSheet()">Close</button></div>`;
+  ${!mine&&!(me&&me.duel)?(live?`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}',true)">⚔️ Challenge live</button><button class="green" onclick="attack('${t}')">👻 Fight ghost</button></div><div class="small" style="margin-bottom:10px">Live: ${esc(T.ownerName)} gets 45s to accept, else the ghost plays.</div>`:`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}')">⚔️ Attack ${esc(t)}</button></div>`):''}<div class="row"><button class="ghost" onclick="closeSheet()">Close</button></div>`;
  $('sheet').classList.add('on')};
 window.closeSheet=()=>{$('sheet').classList.remove('on');SEL=null;drawMap()};
 $('sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet()};
-window.attack=async t=>{try{const j=await api('lattack',{town:t});goRoom(j)}catch(e){toast(e.message)}};
+window.attack=async(t,live)=>{try{const j=await api('lattack',{town:t,live:!!live});goRoom(j)}catch(e){toast(e.message)}};
 function goRoom(j){localStorage.setItem('ct.session',JSON.stringify({code:j.room,pid:j.pid,token:j.token,name:j.name}));localStorage.setItem('ct.duel',JSON.stringify({room:j.room,pid:j.pid,token:j.token,name:j.name}));location.href='/'}
 window.resumeDuel=()=>{let d=null;try{d=JSON.parse(localStorage.getItem('ct.duel')||'null')}catch(e){}const me=V.members.find(m=>m.mid===V.you);
  if(d&&me&&d.room===me.duel){localStorage.setItem('ct.session',JSON.stringify({code:d.room,pid:d.pid,token:d.token,name:d.name}));location.href='/'}else toast('Duel was started on another device — forfeit or finish it there')};
 window.forfeit=async()=>{if(!confirm('Forfeit this duel? It counts as a loss.'))return;try{const j=await api('lforfeit');apply(j.view);toast('Duel forfeited')}catch(e){toast(e.message)}};
-function drawBoard(){const v=V;const L=v.members.slice().sort((a,b)=>b.land-a.land||b.net-a.net);
+function drawBoard(){const v=V;const L=v.members.slice().sort((a,b)=>b.land-a.land||(b.net+b.tnet)-(a.net+a.tnet));
  const top=(f)=>{const c=v.members.filter(m=>f(m)>0);return c.length?c.reduce((a,b)=>f(b)>f(a)?b:a):null};
  const wk=(o)=>{let best=null,n=0;for(const [k,x] of Object.entries(o||{}))if(x>n){n=x;best=k}return best?{m:v.members.find(m=>m.mid===best),n}:null};
  const T=[];const a=top(m=>m.land);if(a)T.push(['👑','Lord of the Land',a.name+' · '+a.land]);const c=wk(v.week.conq);if(c&&c.m)T.push(['⚔️','Conqueror of the week',c.m.name+' · '+c.n]);
- const d=wk(v.week.def);if(d&&d.m)T.push(['🛡','Wall of the week',d.m.name+' · '+d.n]);const n=top(m=>m.net);if(n)T.push(['💰','Top net',n.name+' · '+sgn(n.net)]);
+ const d=wk(v.week.def);if(d&&d.m)T.push(['🛡','Wall of the week',d.m.name+' · '+d.n]);const n=top(m=>m.net+(m.tnet||0));if(n)T.push(['💰','Top net',n.name+' · '+sgn(n.net+(n.tnet||0))]);
  $('titles').innerHTML=T.length?T.map(t=>`<div class="ttl"><b>${t[0]} ${t[1]}</b>${esc(t[2])}</div>`).join(''):'<div class="small">Titles appear after the first duels.</div>';
- $('board').innerHTML=`<tr><th>#</th><th>Player</th><th>🏙</th><th>W–L</th><th>Net</th></tr>`+L.map((m,i)=>`<tr class="${m.mid===v.you?'mine':''}"><td>${i===0&&m.land?'👑':i+1}</td><td>${esc(m.name)}${m.duel?' ⚔️':''}</td><td>${m.land}</td><td>${m.w}–${m.l}</td><td class="${m.net>0?'pos':m.net<0?'neg':''}">${sgn(m.net)}</td></tr>`).join('')}
+ $('board').innerHTML=`<tr><th>#</th><th>Player</th><th>🏙</th><th>W–L</th><th>Net</th></tr>`+L.map((m,i)=>`<tr class="${m.mid===v.you?'mine':''}"><td>${i===0&&m.land?'👑':i+1}</td><td>${esc(m.name)}${m.online&&m.mid!==v.you?' 🟢':''}${m.duel?' ⚔️':''}</td><td>${m.land}</td><td>${m.w}–${m.l}</td><td class="${m.net+m.tnet>0?'pos':m.net+m.tnet<0?'neg':''}">${sgn(m.net+m.tnet)}${m.tg?`<div class="small">${m.tg} table game${m.tg>1?'s':''}</div>`:''}</td></tr>`).join('')+`<tr><td colspan="5" class="small" style="text-align:left">Net = duels + league tables. To count a friends' table, the host enters league code <b>${v.code}</b> in room settings.</td></tr>`}
 function ago(t){const s=Math.max(0,(V.now-t)/1000);return s<60?'now':s<3600?Math.floor(s/60)+'m':s<86400?Math.floor(s/3600)+'h':Math.floor(s/86400)+'d'}
 function drawLog(){$('log').innerHTML=V.log.length?V.log.slice().reverse().map(x=>`<div><small>${ago(x.t)}</small>${esc(x.text)}</div>`).join(''):'<div class="small">No activity yet.</div>'}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});

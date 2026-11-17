@@ -84,7 +84,7 @@ $('rShare').onclick=async()=>{const url=location.origin+location.pathname+'?room
  try{if(navigator.share){await navigator.share({title:'Combo Table',text:txt,url});return}}catch(e){}
  try{await navigator.clipboard.writeText(txt);toast('Invite link copied')}catch(e){$('rShareNote').textContent=url}};
 $('sSave').onclick=()=>saveSettings(true);
-async function saveSettings(show_){const s={fast:$('sFast').value==='1',min:+$('sMin').value,max:+$('sMax').value,timer:+$('sTimer').value,bots:+$('sBots').value,arrange:$('sArr').value};if(V.gameNo===0)s.start=+$('sStart').value;
+async function saveSettings(show_){const s={league:$('sLeague').value.trim(),fast:$('sFast').value==='1',min:+$('sMin').value,max:+$('sMax').value,timer:+$('sTimer').value,bots:+$('sBots').value,arrange:$('sArr').value};if(V.gameNo===0)s.start=+$('sStart').value;
  try{await api('settings',{settings:s});if(show_)toast('Saved')}catch(e){$('rErr').textContent=e.message}}
 $('sStartBtn').onclick=async()=>{try{await saveSettings(false);await api('start',{banker:$('sBanker').value})}catch(e){$('rErr').textContent=e.message}};
 $('tBack').onclick=()=>{if(V.phase!=='game'||V.game.phase==='summary')renderRoom(true);else toast('Game in progress — room menu after this game')};
@@ -94,10 +94,10 @@ function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.
  $('rPlayers').innerHTML=v.players.map(p=>`<div class="prow"><span class="dot ${p.online?'on':''}"></span><span>${esc(p.name)}${p.pid===ME.pid?' <span class="tg">YOU</span>':''}${p.pid===v.host?' <span class="tg">HOST</span>':''}${p.bot?' <span class="tg">BOT</span>':''}${p.pid===v.banker&&v.phase==='game'?' <span class="tg bk">BANKER</span>':''}</span><span class="ch">${fmtc(p.chips)}</span>${isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost topup" onclick="topUp('${p.pid}')">＋💰</button>`:''}${isHost&&!p.bot&&p.pid!==ME.pid&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost" style="padding:3px 8px;font-size:11px" onclick="kick('${p.pid}')">✕</button>`:''}</div>`).join('')+(isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost resetall" onclick="resetChips()">🔄 Reset everyone's chips…</button>`:'');
  $('rHost').style.display=isHost?'block':'none';$('rGuest').style.display=isHost?'none':'block';
  const st=v.settings;
- if(isHost&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='SELECT'){$('sMin').value=st.min;$('sMax').value=st.max;$('sTimer').value=st.timer;$('sFast').value=st.fast?'1':'0';$('sArr').value=st.arrange==='manual'?'manual':'auto';$('sBots').value=st.bots;$('sStart').value=st.start;$('sStart').disabled=v.gameNo>0;
+ if(isHost&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='SELECT'){$('sMin').value=st.min;$('sMax').value=st.max;$('sTimer').value=st.timer;$('sLeague').value=st.league||'';$('sFast').value=st.fast?'1':'0';$('sArr').value=st.arrange==='manual'?'manual':'auto';$('sBots').value=st.bots;$('sStart').value=st.start;$('sStart').disabled=v.gameNo>0;
   const sel=$('sBanker'),cur=sel.value;sel.innerHTML=v.players.filter(p=>!p.bot).map(p=>`<option value="${p.pid}">${esc(p.name)}${p.pid===ME.pid?' (you)':''}</option>`).join('');if(cur&&v.players.some(p=>p.pid===cur))sel.value=cur;
   $('sStartBtn').textContent=v.gameNo?'Deal next game ▶':'Deal ▶'}
- $('rSettingsTxt').textContent=`Bets ${st.min}–${st.max} · timer ${st.timer?st.timer+'s':'off'} · ${st.fast?'⚡ Fast deal · ':''}start ${st.start} chips · Niu Niu manual · Combo auto`;
+ $('rSettingsTxt').textContent=`Bets ${st.min}–${st.max} · timer ${st.timer?st.timer+'s':'off'} · ${st.fast?'⚡ Fast deal · ':''}${st.league?'🏰 League '+st.league+' · ':''}start ${st.start} chips · Niu Niu manual · Combo auto`;
  $('rGuestTxt').textContent=v.phase==='game'&&v.game.phase!=='summary'?'A game is running — you will join the next one':'Waiting for the host to deal…';
  {const net=p=>p.chips-st.start-(p.buyin||0);const lb=[...v.players].sort((x,y)=>net(y)-net(x)).map((p,i)=>`<div class="lr ${p.pid===ME.pid?'me':''}"><span>${i==0?'🏆 ':''}${esc(p.name)}${p.buyin?` <span class="small">(bought in ${fmtc(p.buyin)})</span>`:''}</span><b class="${net(p)>0?'pos':net(p)<0?'neg':''}">${sgn(net(p))}</b></div>`).join('');
   let el=$('rLB');if(!el){el=document.createElement('div');el.className='card2';el.id='rLB';$('rLast').before(el)}el.innerHTML=v.gameNo?`<b>Leaderboard</b> <span class="small">(net chips · ${v.gameNo} game${v.gameNo>1?'s':''})</span><div class="lb">${lb}</div>`:'';el.style.display=v.gameNo?'block':'none'}
@@ -157,6 +157,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 function apply(v){v._recv=Date.now();const prev=V;V=v;document.body.classList.toggle('fast',!!(v.settings&&v.settings.fast));duelBar(v);if(prev&&prev.gameNo!==v.gameNo){roomOverride=false;$('sheet').classList.remove('on')}
  if(prev&&prev.game&&v.game&&prev.gameNo!==v.gameNo){SEEN=new Map();peeked=new Set()}
  if(v.gameNo!==peekGame){peekGame=v.gameNo;peeked=new Set();SEEN=new Map()}
+ if(v.duel&&v.phase==='lobby'){show('dwait');const left=Math.max(0,Math.ceil(((v.duel.wait||0)-(v.now+(Date.now()-v._recv)))/1000));$('dwaitIn').innerHTML=`<div style="font-size:40px">⚔️</div><h2 style="margin:6px 0">Challenging ${esc(v.duel.defName)}</h2><div class="small">for <b>${esc(v.duel.town)}</b> · waiting for them to accept…</div><div class="small" style="margin-top:10px">If they don't answer in ${left}s, their 👻 ghost plays instead.</div>`;clearTimeout(window._dwT);window._dwT=setTimeout(refresh,2000);return}
  const inGame=v.phase==='game'&&v.game&&(v.game.seats[ME.pid]||v.game.phase!=='summary');
  if(!inGame||roomOverride||(v.game.phase==='summary'&&!$('table').classList.contains('on')))renderRoom(roomOverride);else renderTable();
  // events → animations
