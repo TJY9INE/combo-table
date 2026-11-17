@@ -347,7 +347,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 </div>
 
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
-<script src="fx.js?v=2611172245"></script>
+<script src="fx.js?v=2611180020"></script>
 <script>
 
 /* ---------- cards ---------- */
@@ -714,7 +714,7 @@ async function round2(){
     if(!B.me){say(B,'Under 4 — banker draws · showdown with everyone',1300);await sleep(700);await deal(B)}else await bankerDrawFirstUI(B);
     drawIt=false}
    else if(!B.me){say(B,'Hmm… let me see',1200);await sleep(800);
-    for(const p of act){const a=plan.acts.get(p);if(a==='open'){say(B,'Open '+p.n.split(' ')[0]+'!',1000);await sleep(350);await doOpen(p);if(p.me)toast('Banker OPENED you')}else if(a==='skip'){say(B,'Skip '+p.n.split(' ')[0],1000);await doSkip(p);if(p.me)toast('Banker SKIPPED you — push')}}
+    for(const p of act){const a=plan.acts.get(p);if(a==='open'){say(B,'Open '+p.n.split(' ')[0]+'!',1000);await sleep(350);await doOpen(p);if(p.me)toast('Banker OPENED you')}}
     drawIt=plan.draw;await sleep(300);say(B,drawIt?'Banker draws':'Banker stands',1100);await sleep(500)}
    else drawIt=await bankerOpenSkipUI(B,act,plan,doOpen,doSkip);
    if(drawIt){await deal(B);if(B.me)await awaitMyFlips('Tap your third card 👆')}
@@ -734,11 +734,11 @@ function bkEV3(Bh,U,drew){const known=new Set([...Bh,U]);const rem=[...Array(52)
  return n?t/n:0}
 function bankerDrawFirstUI(B){return new Promise(res=>{let done=false;const go=async()=>{if(done)return;done=true;shoeOff();actions('');prompt('');await deal(B);await awaitMyFlips('Tap your third card 👆');res()};
  shoeOn(go);prompt('Under 4 — draw first');
- actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${b2(B.hand).p}</b>pts</div></div><div class="hint" style="margin-bottom:8px">Under 4 — you must <b>draw</b> and show down with <b>everyone</b>. No OPEN / SKIP.</div><div class="dbtns"><button class="dbig draw best" id="bkD1">🂠 DRAW<small>then show down with everyone</small></button></div></div>`);
+ actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${b2(B.hand).p}</b>pts</div></div><div class="hint" style="margin-bottom:8px">Under 4 — you must <b>draw</b> and show down with <b>everyone</b>. No OPEN.</div><div class="dbtns"><button class="dbig draw best" id="bkD1">🂠 DRAW<small>then show down with everyone</small></button></div></div>`);
  $('bkD1').onclick=go;if(G.fast)go()})}
-function soloPlan(B2,act){const forced=b2(B2).p<=3;const best=(p,d)=>forced?Math.max(0,p.ev2.dr):Math.max(0,p.ev2.st,d?p.ev2.dr:p.ev2.st);
+function soloPlan(B2,act){const forced=b2(B2).p<=3;const best=(p,d)=>forced?p.ev2.dr:Math.max(p.ev2.st,d?p.ev2.dr:p.ev2.st);
  const val=d=>act.reduce((x,p)=>x+p.bet*best(p,d),0);const dr=forced?true:val(true)>val(false);const acts=new Map();
- act.forEach(p=>{const e=p.ev2,fin=dr?e.dr:e.st;acts.set(p,(!forced&&e.st>=fin&&e.st>0)?'open':(!forced&&fin<=0&&e.st<=0)?'skip':'rest')});return {draw:dr,acts,forced}}
+ act.forEach(p=>{const e=p.ev2,fin=dr?e.dr:e.st;acts.set(p,(!forced&&e.st>fin)?'open':'rest')});return {draw:dr,acts,forced}}
 function bankerOpenSkipUI(B,act,plan,doOpen,doSkip){return new Promise(res=>{const forced=plan.forced;let busy=false;
  const pending=()=>act.filter(p=>p.open===undefined);
  const finish=d=>{shoeOff();act.forEach(p=>{const o=p.root.querySelector('.obtns');if(o)o.remove();const h=p.root.querySelector('.hintdot');if(h)h.remove();p.root.classList.remove('tapme')});G.onHint=null;actions('');prompt('');res(d)};
@@ -746,20 +746,19 @@ function bankerOpenSkipUI(B,act,plan,doOpen,doSkip){return new Promise(res=>{con
   act.forEach(p=>{let o=p.root.querySelector('.obtns'),h=p.root.querySelector('.hintdot');
    if(p.open!==undefined){if(o)o.remove();if(h)h.remove();p.root.classList.remove('tapme');return}
    p.root.classList.add('tapme');
-   if(!o){o=document.createElement('div');o.className='obtns';o.innerHTML=`<button class="obtn op">OPEN</button><button class="obtn sk">SKIP</button>`;p.root.appendChild(o);
-    o.children[0].onclick=async e=>{e.stopPropagation();if(busy)return;busy=true;await doOpen(p);busy=false;upd()};
-    o.children[1].onclick=async e=>{e.stopPropagation();if(busy)return;busy=true;await doSkip(p);busy=false;upd()}}
+   if(!o){o=document.createElement('div');o.className='obtns';o.innerHTML=`<button class="obtn op">OPEN</button>`;p.root.appendChild(o);
+    o.children[0].onclick=async e=>{e.stopPropagation();if(busy)return;busy=true;await doOpen(p);busy=false;upd()};}
    o.children[0].disabled=forced;
-   if(G.hints){const a=pl.acts.get(p);if(!h){h=document.createElement('div');h.className='hintdot';p.root.appendChild(h)}h.textContent=plan.after?`💡${a==='open'?'OPEN':'SKIP'}`:`💡${a==='open'?'OPEN +'+Math.round(p.ev2.st*100)+'%':a==='skip'?'SKIP':'WAIT'}`}else if(h)h.remove()});
+   if(G.hints){const a=pl.acts.get(p);if(!h){h=document.createElement('div');h.className='hintdot';p.root.appendChild(h)}h.textContent=`💡${a==='open'?'OPEN +'+Math.round(p.ev2.st*100)+'%':'WAIT'}`}else if(h)h.remove()});
   const left=pending().length,bp=b2(B.hand).p;
-  if(plan.after){const fp=bEval(B.hand).p;actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · 3 cards<b>${fp}</b>pts</div></div><div class="hint" style="margin-bottom:8px">Tap <b>OPEN</b> / <b>SKIP</b> on players' seats, then settle the rest vs your ${fp}.</div><div class="dbtns"><button class="dbig stand best" id="bkS">✅ SETTLE REST<small>${left?left+' vs '+fp:'done'}</small></button></div></div>`);$('bkS').onclick=()=>finish(false);return}
+  if(plan.after){const fp=bEval(B.hand).p;actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · 3 cards<b>${fp}</b>pts</div></div><div class="hint" style="margin-bottom:8px">Everyone shows down vs your ${fp}.</div><div class="dbtns"><button class="dbig stand best" id="bkS">✅ SETTLE REST<small>${left?left+' vs '+fp:'done'}</small></button></div></div>`);$('bkS').onclick=()=>finish(false);return}
   shoeOn(()=>finish(true));
-  actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div></div><div class="hint" style="margin-bottom:8px">${forced?'Under 4 — draw, then showdown with everyone.':`Tap <b>OPEN</b> / <b>SKIP</b> on players' seats.${G.hints?` 💡 Then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest.`:''}`}</div>
+  actions(`<div class="decide"><div class="dtop"><div class="dpts">🎩 Banker · you have<b>${bp}</b>pts</div></div><div class="hint" style="margin-bottom:8px">${forced?'Under 4 — draw, then showdown with everyone.':`Tap <b>OPEN</b> on a seat to settle it vs your 2 cards (optional).${G.hints?` 💡 Then <b>${pl.draw?'DRAW':'STAND'}</b> for the rest.`:''}`}</div>
   <div class="dbtns"><button class="dbig draw ${G.hints&&pl.draw?'best':''}" id="bkD">🂠 DRAW<small>${left?`then settle ${left} left`:'take a 3rd card'}</small></button>${forced?'':`<button class="dbig stand ${G.hints&&!pl.draw?'best':''}" id="bkS">✋ STAND<small>${left?`settle ${left} on ${bp}`:`keep ${bp}`}</small></button>`}</div></div>`);
   $('bkD').onclick=()=>finish(true);if($('bkS'))$('bkS').onclick=()=>finish(false);
   if(!left&&!forced){}};
- prompt('Tap OPEN or SKIP on each player');G.onHint=upd;upd();
- if(G.fast){(async()=>{for(const p of act){const a=plan.acts.get(p);if(a==='open'&&!forced&&!plan.after)await doOpen(p);else if(a==='skip')await doSkip(p)}finish(plan.draw)})()}})}
+ prompt('OPEN players (optional), then DRAW or STAND');G.onHint=upd;upd();
+ if(G.fast){(async()=>{for(const p of act){const a=plan.acts.get(p);if(a==='open'&&!forced&&!plan.after)await doOpen(p);}finish(plan.draw)})()}})}
 /* =================== ROUND 3: Sikipi =================== */
 async function round3(){
  const B=G.B,P=G.P;hud('Sikipi',3);banner('Sikipi','Bottom ≥ Top · win BOTH to win');
