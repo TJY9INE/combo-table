@@ -327,6 +327,7 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
 .titles{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0 10px}.ttl{background:#0f1411;border:1px solid #d4a23c55;border-radius:10px;padding:6px 8px;font-size:12px;line-height:1.3}.ttl b{display:block;color:#f6dc8f}.ttl span{color:#cfdcd5}
 .ach{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.ach span{font-size:12px;padding:5px 9px;border-radius:99px;background:#0f1411;color:#5d6a63;border:1px solid #26302b}.ach span.got{color:#2a1d00;background:linear-gradient(#f6dc8f,#d4a23c);border-color:#d4a23c}
 .newach{background:linear-gradient(#f6dc8f,#d4a23c);color:#2a1d00;border-radius:12px;padding:8px 10px;font-weight:800;text-align:center;margin:8px 0}
+.duelbar{margin:2px 10px 4px;padding:6px 10px;border-radius:10px;background:linear-gradient(90deg,#3a1414,#2a1a10);border:1px solid #7a2a2a;font-size:12.5px;display:flex;gap:8px;align-items:center;justify-content:space-between}.duelbar b{color:#f6dc8f}
 </style>
 </head>
 <body>
@@ -342,6 +343,7 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
     <div class="err" id="hErr"></div>
   </div>
   <div class="card2" style="text-align:center"><b>No friends online?</b><div class="small" style="margin:4px 0 10px">Play solo against computer players — your bank is saved on this phone.</div><a href="/solo" class="gold" style="display:block;text-decoration:none">⚡ Quick play</a></div>
+  <div class="card2" style="text-align:center"><b>🏰 Combo League</b><div class="small" style="margin:4px 0 10px">Conquer Singapore towns from your friends — duel their ghosts any time.</div><a href="/league" class="green" style="display:block;text-decoration:none">Open League</a></div>
   <div class="small" style="text-align:center">High Card · Thai Baccarat · Sikipi · Niu Niu · Combo Poker<br>For fun with play chips — no real money.</div><div class="small" style="text-align:center;margin-top:10px;line-height:1.5">🔒 <b style="color:#e9c46a">Fair &amp; random:</b> every deck is shuffled with a cryptographic random number generator (unbiased Fisher–Yates). Online games are shuffled on the server before any bets, so no player — and not the banker — can see or influence the cards.</div>
 </div></div>
 
@@ -375,6 +377,7 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
     <button class="ibtn" id="histBtn" aria-label="History">📜</button><button class="ibtn" id="seasonBtn" aria-label="Season">🏆</button><button class="ibtn" id="rulesBtn" aria-label="Rules">?</button><button class="ibtn" id="autoBtn" aria-label="Auto reveal">👁</button><button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
     <button class="ibtn" id="muteBtn" aria-label="Sound">🔊</button>
   </div>
+  <div class="duelbar" id="duelBar" style="display:none"></div>
   <div class="tbar" id="tbar"><i style="width:0"></i></div>
   <div class="felt" id="felt">
     <div class="tray"><i></i><i></i><i></i><i></i></div>
@@ -392,7 +395,7 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
 </div>
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="fx.js?v=2611180130"></script>
-<script src="core.js?v=2611180130"></script>
-<script src="app.js?v=2611180130"></script>
+<script src="fx.js?v=2611180215"></script>
+<script src="core.js?v=2611180215"></script>
+<script src="app.js?v=2611180215"></script>
 </body></html>

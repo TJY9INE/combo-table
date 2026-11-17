@@ -154,7 +154,7 @@ window.resetChips=()=>{const a=prompt("Reset EVERYONE's chips to how many? (lead
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
 /* ================= apply view ================= */
-function apply(v){v._recv=Date.now();const prev=V;V=v;document.body.classList.toggle('fast',!!(v.settings&&v.settings.fast));if(prev&&prev.gameNo!==v.gameNo){roomOverride=false;$('sheet').classList.remove('on')}
+function apply(v){v._recv=Date.now();const prev=V;V=v;document.body.classList.toggle('fast',!!(v.settings&&v.settings.fast));duelBar(v);if(prev&&prev.gameNo!==v.gameNo){roomOverride=false;$('sheet').classList.remove('on')}
  if(prev&&prev.game&&v.game&&prev.gameNo!==v.gameNo){SEEN=new Map();peeked=new Set()}
  if(v.gameNo!==peekGame){peekGame=v.gameNo;peeked=new Set();SEEN=new Map()}
  const inGame=v.phase==='game'&&v.game&&(v.game.seats[ME.pid]||v.game.phase!=='summary');
@@ -259,7 +259,7 @@ function renderActions(){if(window.__drag)return;const v=V,g=v.game,s=g.seats[ME
  case 'r4done':return wait('Niu Niu settled · next: Combo Poker');
  case 'r5show':return wait('🃏 Community cards dealt… revealing hands');
  case 'r5done':return wait('Final round settled…');
- case 'summary':return A(`<div class="arow"><button class="gold" onclick="showSummary()">Results</button><button class="green" onclick="renderRoom(true)">Room</button></div>${emoBar()}`);
+ case 'summary':if(v.duel)return A(`<div class="arow"><button class="gold" onclick="showSummary()">Results</button>${v.duel.over?`<button class="green" onclick="toLeague()">🏰 League</button>`:''}</div>${v.duel.over?'':'<div class="small" style="text-align:center;margin-top:6px">Next game deals automatically…</div>'}`);return A(`<div class="arow"><button class="gold" onclick="showSummary()">Results</button><button class="green" onclick="renderRoom(true)">Room</button></div>${emoBar()}`);
  }}
 const pdrawsC=cs=>{const v=b2(cs);return !v.pok&&(v.p<=3||playerShouldDraw(cs))};
 
@@ -352,6 +352,7 @@ function playEvents(evs){let mineTot=0,any=false,bestM=0,worstM=0;const nm=pid=>
  for(const e of evs){
   if(e.t==='ach'){if(e.pid===ME.pid){toast('🏆 '+e.keys.map(FX.achName).join(' · '),2600);FX.haptic(3)}else toast(`🏆 ${nm(e.pid)}: ${e.keys.map(FX.achName).join(' · ')}`,2200);continue}
   if(e.t==='season'){toast('🏆 New season started');continue}
+  if(e.t==='duelend'){const w=e.winner===ME.pid;if(w){FX.big&&FX.big('🏰 CONQUERED!','');FX.haptic(9)}else FX.big&&FX.big('🛡 DEFENDED','',true);continue}
   if(e.t==='emote'){const el=e.pid===ME.pid?$('me'):document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el){const d=document.createElement('div');d.className='emo';d.textContent=e.e;el.appendChild(d);setTimeout(()=>d.remove(),1900)}continue}
   if(e.t==='settle'){any=true;const el=document.querySelector(`.seat[data-pid="${e.pid}"]`)||(e.pid===ME.pid?$('me'):null);const bEl=V.banker===ME.pid?($('btray')||$('me')):document.querySelector(`.seat[data-pid="${V.banker}"]`);
    if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(8,e.m+2));else if(e.m<0)fly(el,bEl,Math.min(8,-e.m+2));floatOn(el,e.m>0?`+${e.m}× ${sgn(e.amt)}`:e.m<0?`${e.m}× ${sgn(e.amt)}`:'Push',e.m>0?'w':e.m<0?'l':'p')}
@@ -425,9 +426,15 @@ window.showSeason=()=>{const v=V;if(!v)return;const me=v.players.find(p=>p.pid==
 window.newSeason=async()=>{if(!confirmBox('Start a new season? Leaderboard and badges reset (chips unchanged).'))return;try{await api('season');showSeason()}catch(e){toast(e.message)}};
 function confirmBox(t){try{return window.confirm(t)}catch(e){return true}}
 function myNewAch(){const v=V;let i=v.events.length-1;const out=[];for(;i>=0;i--){const e=v.events[i];if(e.t==='start')break;if(e.t==='ach'&&e.pid===ME.pid)out.push(...e.keys)}return out}
+function duelBar(v){const el=$('duelBar');if(!el)return;const d=v.duel;if(!d){el.style.display='none';return}const A=v.players.find(p=>p.pid===d.attPid),D=v.players.find(p=>p.pid===d.defPid);if(!A||!D)return;
+ el.style.display='flex';el.innerHTML=`<span>⚔️ <b>${esc(d.town)}</b> · game ${Math.min(30,(d.games||0)+(d.over?0:1))}</span><span>You <b>${fmtc(A.chips)}</b> vs ${esc(D.name)} <b>${fmtc(D.chips)}</b></span>`}
+window.toLeague=()=>{ME=null;saveMe();location.href='/league'};
+function duelSummaryHTML(v){const d=v.duel;if(!d)return '';const A=v.players.find(p=>p.pid===d.attPid),D=v.players.find(p=>p.pid===d.defPid);
+ if(d.over){const won=d.over.winner==='att';return `<div class="newach" style="${won?'':'background:#4a1d1d;color:#ffd0cc'}">${won?`🏰 You conquered ${esc(d.town)}!`:`🛡 ${esc(d.defName)} held ${esc(d.town)}`} · ${d.over.games} game${d.over.games>1?'s':''}</div>`}
+ return `<div class="small" style="text-align:center;margin:8px 0">⚔️ Duel for <b>${esc(d.town)}</b> — You ${fmtc(A.chips)} vs ${esc(D.name)} ${fmtc(D.chips)} · next game deals automatically…</div>`}
 window.showSummary=()=>{const v=V;if(!v.game)return;const d=delta(ME.pid);
- $('sheetIn').innerHTML=`<h2>${d>0?'You win!':d<0?'Tough game':'Break even'}</h2><div class="big ${d>0?'pos':d<0?'neg':''}">${sgn(d)}</div>${myNewAch().map(k=>`<div class="newach">🏆 Badge unlocked: ${FX.achName(k)}</div>`).join('')}${summaryTable(v)}${breakdownHTML()}
- <div class="small" style="text-align:center;margin:10px 0">Your chips ${fmtc(v.players.find(p=>p.pid===ME.pid).chips)}</div><div class="arow"><button class="ghost" onclick="showHistory('cur')">📜 Replay</button><button class="ghost" onclick="showSeason()">🏆 Season</button><button class="gold" onclick="$('sheet').classList.remove('on');renderRoom(true)">Back to room</button></div>`;
+ $('sheetIn').innerHTML=`<h2>${d>0?'You win!':d<0?'Tough game':'Break even'}</h2><div class="big ${d>0?'pos':d<0?'neg':''}">${sgn(d)}</div>${duelSummaryHTML(v)}${myNewAch().map(k=>`<div class="newach">🏆 Badge unlocked: ${FX.achName(k)}</div>`).join('')}${summaryTable(v)}${breakdownHTML()}
+ <div class="small" style="text-align:center;margin:10px 0">Your chips ${fmtc(v.players.find(p=>p.pid===ME.pid).chips)}</div><div class="arow"><button class="ghost" onclick="showHistory('cur')">📜 Replay</button><button class="ghost" onclick="showSeason()">🏆 Season</button>${v.duel?(v.duel.over?`<button class="gold" onclick="toLeague()">🏰 Back to League</button>`:`<button class="gold" onclick="$('sheet').classList.remove('on')">Watch table</button>`):`<button class="gold" onclick="$('sheet').classList.remove('on');renderRoom(true)">Back to room</button>`}</div>`;
  $('sheet').classList.add('on');snd(d>0?'big':d<0?'lose':'chip')};
 
 /* ================= toggles & boot ================= */
