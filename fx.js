@@ -126,3 +126,16 @@ FX.peopleHTML=people=>`<div class="plist">${people.map(p=>`<div class="prow ${p.
 .prow.mine .pn{color:#7fd3ff;font-weight:800}.pn{font-size:14px}
 .pdots{display:flex;gap:3px}.pdots i{width:9px;height:9px;border-radius:50%;display:block}.pdots i.w{background:#3ccf7a}.pdots i.l{background:#e05a4f}.pdots i.p{background:#55625c}
 .float .fm{font-size:.72em;opacity:.85;margin-left:3px}`;document.head.appendChild(s)})();
+FX.glance=amts=>`<div class="glance">${['HC','BAC','SKP','NIU','CMB'].map((n,i)=>{const a=amts[i]||0;return `<span class="${a>0?'w':a<0?'l':'p'}"><b>${n}</b>${a?FX.money(a):'Push'}</span>`}).join('')}</div>`;
+FX.details=(inner,label)=>`<details class="rdet"><summary>${label||'Round details'}</summary>${inner}</details>`;
+(function(){const s=document.createElement('style');s.textContent=`
+.glance{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:8px 0 4px}
+.glance span{border-radius:9px;padding:5px 2px;text-align:center;font-size:11.5px;font-weight:800;line-height:1.25}
+.glance span b{display:block;font-size:9.5px;opacity:.75;letter-spacing:.4px}
+.glance .w{background:#16402a;color:#7ee2a8}.glance .l{background:#3d1717;color:#ff9a90}.glance .p{background:#232b27;color:#a9b8b0}
+.rdet{margin:8px 0 2px;border:1px solid #ffffff1a;border-radius:12px;padding:0 10px}
+.rdet summary{list-style:none;cursor:pointer;padding:11px 2px;font-weight:700;color:#cfdcd5;font-size:14px;display:flex;justify-content:space-between}
+.rdet summary::-webkit-details-marker{display:none}.rdet summary::after{content:'▾';opacity:.7}.rdet[open] summary::after{content:'▴'}
+.sfoot{position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom));margin:12px -14px calc(-18px - env(safe-area-inset-bottom));padding:14px 14px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(#151a1700,#151a17 22%);z-index:2}
+.sfoot .play{width:100%;font-size:20px;padding:17px 16px;border-radius:16px}
+.sfoot .sec{display:flex;gap:8px;margin-top:8px}.sfoot .sec button{flex:1;padding:10px 6px;font-size:13.5px}`;document.head.appendChild(s)})();

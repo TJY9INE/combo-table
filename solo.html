@@ -349,7 +349,7 @@ body.fast .slot,body.fast .cd,body.fast .card{transition-duration:.22s!important
 </div>
 
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
-<script src="fx.js?v=2611180220n"></script>
+<script src="fx.js?v=2611180225p"></script>
 <script>
 
 /* ---------- cards ---------- */
@@ -608,8 +608,9 @@ function floatOn(s,txt,cls){const f=document.createElement('div');f.className='f
 async function settle(p,m,ri){p.r[ri]=m;const amt=m*p.bet;
  if(G.me===p)G.bank+=amt;else if(G.me===G.B)G.bank-=amt;
  const bEl=(G.B.me&&$('btray'))||G.B.root,pEl=p.root;
- if(m>0){flyChips(bEl,pEl,Math.min(5,m+1),chipsFor(p.bet)[0]);floatOn(p,FX.money(amt)+`<span class="fm">×${m}</span>`,'w')}
- else if(m<0){flyChips(pEl,bEl,Math.min(5,-m+1),chipsFor(p.bet)[0]);floatOn(p,FX.money(amt)+`<span class="fm">×${-m}</span>`,'l')}
+ const iB=G.me===G.B,am=iB?-amt:amt,fc=am>0?'w':'l';
+ if(m>0){flyChips(bEl,pEl,Math.min(5,m+1),chipsFor(p.bet)[0]);floatOn(p,FX.money(am)+(m>1?`<span class="fm">×${m}</span>`:''),fc)}
+ else if(m<0){flyChips(pEl,bEl,Math.min(5,-m+1),chipsFor(p.bet)[0]);floatOn(p,FX.money(am)+(m<-1?`<span class="fm">×${-m}</span>`:''),fc)}
  else floatOn(p,'Push','p');
  G.brt=(G.brt||0)-amt;clearTimeout(G.brtT);G.brtT=setTimeout(()=>{const t=G.brt;G.brt=0;floatOn(G.B,(G.B.me?'Round ':'Banker ')+(t?FX.money(t):'even'),t>0?'w':t<0?'l':'p')},650);
  const mine=G.me===p?amt:G.me===G.B?-amt:null;
@@ -905,12 +906,11 @@ async function endGame(delta){
   :FX.roundsHTML(`Your rounds · bet $${me.bet.toLocaleString()}`,RN5.map((n,i)=>({n,mult:me.r[i],amt:me.r[i]*me.bet})),delta);
  const people=[{name:`${G.B.e} ${G.B.n}`,role:'Banker',net:bt,rs:bkR,me:isB},...G.P.map(p=>({name:`${p.e} ${p.n}`,role:`Bet $${p.bet.toLocaleString()}`,net:p.r.reduce((a,b)=>a+b,0)*p.bet,rs:p.r,me:p.me}))];
  $('sheetIn').innerHTML=`<h2>${delta>0?'You win!':delta<0?'Tough game':'Break even'}</h2><div class="big ${delta>0?'pos':delta<0?'neg':''}">${FX.money(delta)}</div>
+  <div style="text-align:center;font-size:13px;color:#a89a7a">${isB?'as Banker':'Bet $'+me.bet.toLocaleString()} · Bank ${money(G.bank)} · Streak ${s.streak}</div>
   ${got.map(g=>`<div class="newach">🏆 Badge unlocked: ${g}</div>`).join('')}
-  ${mine}<div class="rhead" style="margin-top:12px">Table</div>${FX.peopleHTML(people)}
-  <div style="text-align:center;font-size:13px;color:#a89a7a;margin:10px 0">Bank ${money(G.bank)} · Streak ${s.streak}</div>
-  <div class="arow" style="display:flex;gap:8px"><button class="gold" id="againBtn" style="flex:1">Play again</button><button class="green" id="swapBtn" style="flex:1">${isB?'Sit as Player':'Be the Banker'}</button></div>
-  <button class="ghost" id="lobbyBtn" style="width:100%;margin-top:8px">Lobby</button>`;
- $('sheet').classList.add('on');snd(delta>0?'big':delta<0?'lose':'push');
+  ${FX.glance(isB?bkR:me.r.map(x=>x*me.bet))}${FX.details(mine+`<div class="rhead" style="margin-top:12px">Table</div>`+FX.peopleHTML(people),'Round details & table')}
+  <div class="sfoot"><button class="gold play" id="againBtn">▶ Play again</button><div class="sec"><button class="ghost" id="swapBtn">${isB?'🪑 Sit as Player':'🎩 Be the Banker'}</button><button class="ghost" id="lobbyBtn">☰ Lobby</button></div></div>`;
+ $('sheet').classList.add('on');$('sheetIn').scrollTop=0;snd(delta>0?'big':delta<0?'lose':'push');
  return new Promise(res=>{const close=v=>{$('sheet').classList.remove('on');res(v)};
   $('againBtn').onclick=()=>close('again');$('swapBtn').onclick=()=>{G.role=isB?'player':'banker';const roster=rosterOrder();G.ai=roster.slice(0,G.role=='player'?G.N-1:G.N).map(r=>Object.assign({},r,{lastBet:0,lastRes:0}));close('swap')};
   $('lobbyBtn').onclick=()=>{G.abort=true;close('lobby');show('lobby');renderLobby()};
