@@ -312,7 +312,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
   <div class="card2">
     <div class="lrow"><div><label>Min bet ($)</label><input id="sMin" type="number" value="1" min="1" inputmode="numeric"></div><div><label>Max bet ($)</label><input id="sMax" type="number" value="10" min="1" inputmode="numeric"></div></div>
     <div class="lrow"><div><label>Players at table</label><select id="sN"></select></div><div><label>Hints</label><select id="sHint"><option value="1">On (💡)</option><option value="0">Off</option></select></div></div>
-    <div class="lrow"><div><label>Niu Niu arranging</label><select id="sArrS"><option value="auto">Auto (best hand)</option><option value="manual">Manual (you arrange)</option></select></div><div></div></div>
+    <div class="lrow" style="display:none"><div><select id="sArrS"><option value="manual">manual</option></select></div></div>
     <div class="rolebtns" style="margin-top:14px"><button class="gold" id="goPlayer">Sit as Player</button><button class="green" id="goBanker">Be the Banker</button></div>
   </div>
   <button class="ghost" style="width:100%;margin-top:4px" onclick="FX.rules()">📖 How to play &amp; payouts</button>
@@ -347,7 +347,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 </div>
 
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
-<script src="fx.js"></script>
+<script src="fx.js?v=2611172245"></script>
 <script>
 
 /* ---------- cards ---------- */
