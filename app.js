@@ -52,7 +52,7 @@ async function api(a,extra={}){
  const body=Object.assign({a},ME?{code:ME.code,pid:ME.pid,token:ME.token}:{},extra);
  const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY},body:JSON.stringify(body)});
  const j=await r.json().catch(()=>({error:'Network error'}));if(j.error)throw new Error(j.error);if(j.view&&ME)apply(j.view);return j}
-let pendingR=false;async function refresh(){if(!ME)return;if(busy){pendingR=true;return}busy=true;pendingR=false;try{await api('state')}catch(e){if(/Not in this room|Room not found/.test(e.message)){ME=null;saveMe();show('home')}}finally{busy=false;if(pendingR){pendingR=false;setTimeout(refresh,30)}}}
+let pendingR=false;async function refresh(){if(!ME)return;if(busy){pendingR=true;return}busy=true;pendingR=false;try{await api('state')}catch(e){if(/Not in this room|Room not found|removed you/.test(e.message)){if(/removed you/.test(e.message))setTimeout(()=>toast('The host removed you from the room',3500),300);ME=null;saveMe();show('home')}}finally{busy=false;if(pendingR){pendingR=false;setTimeout(refresh,30)}}}
 async function doAct(a,extra){snd('tap');try{await api(a,extra)}catch(e){toast(e.message)}}
 function subscribe(){try{if(chan){chan.unsubscribe();chan=null}const sb=supabase.createClient(SB_URL,SB_KEY);
  chan=sb.channel('rv_'+ME.code).on('postgres_changes',{event:'*',schema:'public',table:'room_ver',filter:'code=eq.'+ME.code},()=>refresh()).subscribe()}catch(e){}
@@ -87,11 +87,11 @@ $('sSave').onclick=()=>saveSettings(true);
 async function saveSettings(show_){const s={league:$('sLeague').value.trim(),fast:$('sFast').value==='1',min:+$('sMin').value,max:+$('sMax').value,timer:+$('sTimer').value,bots:+$('sBots').value,arrange:$('sArr').value};if(V.gameNo===0)s.start=+$('sStart').value;
  try{await api('settings',{settings:s});if(show_)toast('Saved')}catch(e){$('rErr').textContent=e.message}}
 $('sStartBtn').onclick=async()=>{try{await saveSettings(false);await api('start',{banker:$('sBanker').value})}catch(e){$('rErr').textContent=e.message}};
-$('tBack').onclick=()=>{if(V.phase!=='game'||V.game.phase==='summary')renderRoom(true);else toast('Game in progress — room menu after this game')};
+$('tBack').onclick=()=>{if(V.phase!=='game'||V.game.phase==='summary')renderRoom(true);else if(V.host===ME.pid)hostControls();else toast('Game in progress — room menu after this game')};
 let roomOverride=false;
 function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.host===ME.pid;if(isHost&&window._wasHost===false)toast('You are now the host');window._wasHost=isHost;
  $('rCode').textContent=v.code;$('rCount').textContent=`(${v.players.length}/8)`;
- $('rPlayers').innerHTML=v.players.map(p=>`<div class="prow"><span class="dot ${p.online?'on':''}"></span><span>${esc(p.name)}${p.pid===ME.pid?' <span class="tg">YOU</span>':''}${p.pid===v.host?' <span class="tg">HOST</span>':''}${p.bot?' <span class="tg">BOT</span>':''}${p.pid===v.banker&&v.phase==='game'?' <span class="tg bk">BANKER</span>':''}</span><span class="ch">${fmtc(p.chips)}</span>${isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost topup" onclick="topUp('${p.pid}')">＋💰</button>`:''}${isHost&&!p.bot&&p.pid!==ME.pid&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost" style="padding:3px 8px;font-size:11px" onclick="kick('${p.pid}')">✕</button>`:''}</div>`).join('')+(isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost resetall" onclick="resetChips()">🔄 Reset everyone's chips…</button>`:'');
+ $('rPlayers').innerHTML=v.players.map(p=>`<div class="prow"><span class="dot ${p.online?'on':''}"></span><span>${esc(p.name)}${p.pid===ME.pid?' <span class="tg">YOU</span>':''}${p.pid===v.host?' <span class="tg">HOST</span>':''}${p.bot?' <span class="tg">BOT</span>':''}${p.pid===v.banker&&v.phase==='game'?' <span class="tg bk">BANKER</span>':''}</span><span class="ch">${fmtc(p.chips)}</span>${isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost topup" onclick="topUp('${p.pid}')">＋💰</button>`:''}${isHost&&!p.bot&&p.pid!==ME.pid?`<button class="ghost" style="padding:4px 9px;font-size:12px;color:#ff9a90" onclick="kick('${p.pid}')">Kick</button>`:''}</div>`).join('')+(isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost resetall" onclick="resetChips()">🔄 Reset everyone's chips…</button>`:'');
  $('rHost').style.display=isHost?'block':'none';$('rGuest').style.display=isHost?'none':'block';
  const st=v.settings;
  if(isHost&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='SELECT'){$('sMin').value=st.min;$('sMax').value=st.max;$('sTimer').value=st.timer;$('sLeague').value=st.league||'';$('sFast').value=st.fast?'1':'0';$('sArr').value=st.arrange==='manual'?'manual':'auto';$('sBots').value=st.bots;$('sStart').value=st.start;$('sStart').disabled=v.gameNo>0;
@@ -134,7 +134,14 @@ window.niuDown=(e,i)=>{e.preventDefault();const el=e.currentTarget,sx=e.clientX,
  addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)};
 
 window.niuSend=none=>doAct('niu',{pick:none?[]:NIU.a.slice()});
-window.kick=pid=>doAct('kick',{target:pid});
+window.kick=pid=>{const p=V.players.find(x=>x.pid===pid);if(!p)return;const mid=V.phase==='game'&&V.game&&V.game.phase!=='summary'&&V.game.seats[pid];
+ if(!confirm(`Kick ${p.name}?${mid?' They\'ll be auto-played to the end of this game, then removed.':''} They can't rejoin this room.`))return;doAct('kick',{target:pid});toast(p.name+' removed')};
+window.setTimer=v=>{doAct('timer',{timer:+v});toast(+v?`⏱ ${v}s per decision`:'⏱ Timer off')};
+window.hostControls=()=>{const v=V;const opts=[10,15,20,30,45,60,90,0];
+ $('sheetIn').innerHTML=`<h2>Host controls</h2><div class="rhead" style="margin-top:6px">Decision timer (applies now)</div>
+ <div class="tchips">${opts.map(o=>`<button class="ghost ${v.settings.timer===o?'on':''}" onclick="setTimer(${o});setTimeout(hostControls,400)">${o?o+'s':'Off'}</button>`).join('')}</div>
+ <div class="rhead" style="margin-top:14px">Players</div>${v.players.filter(p=>!p.bot&&!p.kicked).map(p=>`<div class="prow" style="display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid #ffffff14"><span class="dot ${p.online?'on':''}"></span><span style="flex:1">${esc(p.name)}${p.pid===ME.pid?' <span class="tg">YOU</span>':''}${p.online?'':' <span class="small">· away</span>'}</span>${p.pid!==ME.pid?`<button class="ghost" style="padding:6px 12px;color:#ff9a90" onclick="kick('${p.pid}');setTimeout(hostControls,500)">Kick</button>`:''}</div>`).join('')}
+ <div class="sfoot"><button class="gold play" onclick="$('sheet').classList.remove('on')">Back to game</button></div>`;$('sheet').classList.add('on')};
 let ARR={key:'',sel:[]};
 function arrPanel(kind){const g=V.game,s=g.seats[ME.pid],cards=kind==='niu'?s.hand:[...s.hand,...g.comm],need=kind==='niu'?3:5,key=kind+V.gameNo;
  if(kind==='niu'){if(NIU.key!==key)NIU={key,a:[],b:[]};NIU_RR=renderActions;let hint='';if(hints){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}return niuHTML(cards,hint,'<div class="dclock" id="dclock"></div>')}
@@ -354,6 +361,8 @@ function playEvents(evs){BRT={};let mineTot=0,any=false,bestM=0,worstM=0;const n
  for(const e of evs){
   if(e.t==='ach'){if(e.pid===ME.pid){toast('🏆 '+e.keys.map(FX.achName).join(' · '),2600);FX.haptic(3)}else toast(`🏆 ${nm(e.pid)}: ${e.keys.map(FX.achName).join(' · ')}`,2200);continue}
   if(e.t==='season'){toast('🏆 New season started');continue}
+  if(e.t==='kick'){if(e.pid!==ME.pid)toast(`${e.name} was removed by the host`);continue}
+  if(e.t==='timer'){if(V.host!==ME.pid)toast(e.timer?`⏱ Host set ${e.timer}s per decision`:'⏱ Host turned the timer off');continue}
   if(e.t==='duelend'){const w=e.winner===ME.pid;if(w){FX.big&&FX.big('🏰 CONQUERED!','');FX.haptic(9)}else FX.big&&FX.big('🛡 DEFENDED','',true);continue}
   if(e.t==='emote'){const el=e.pid===ME.pid?$('me'):document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el){const d=document.createElement('div');d.className='emo';d.textContent=e.e;el.appendChild(d);setTimeout(()=>d.remove(),1900)}continue}
   if(e.t==='settle'){any=true;const el=document.querySelector(`.seat[data-pid="${e.pid}"]`)||(e.pid===ME.pid?$('me'):null);const bEl=V.banker===ME.pid?($('btray')||$('me')):document.querySelector(`.seat[data-pid="${V.banker}"]`);

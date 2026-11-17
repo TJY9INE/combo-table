@@ -52,6 +52,7 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
 .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#1d2622;border:1px solid #3a4a42;padding:10px 14px;border-radius:12px;z-index:90;font-size:14px}
 .tabs{display:flex;gap:6px;margin:6px 0 10px}.tabs button{flex:1;padding:9px;border-radius:10px;background:#0f1411;color:#a89a7a;border:1px solid #26302b;font-weight:700}.tabs button.on{background:#1a1408;color:var(--gold);border-color:#4a3a16}
 .lmap{width:100%;height:62vh;min-height:380px;border-radius:18px;overflow:hidden;border:1px solid #1f3b47;background:#0b1418}
+.osmdark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6)}
 .leaflet-container{background:#0b1418;font:inherit}
 .lm{display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-50%);width:max-content}
 .lm .dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#14110a;border:2px solid #000a;box-shadow:0 2px 6px #000a}
@@ -105,7 +106,10 @@ const GEO={'Woodlands':[1.4382,103.7890],'Sembawang':[1.4491,103.8185],'Yishun':
 let MAP=null,MLAYER=null,fitted=false;
 function initMap(){if(MAP||typeof window.L==='undefined')return !!MAP;$('map').style.display='none';
  MAP=window.L.map('lmap',{zoomControl:true,attributionControl:true,minZoom:10,maxZoom:16,maxBounds:[[1.13,103.55],[1.52,104.12]],maxBoundsViscosity:0.8,zoomSnap:0.25});
- window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(MAP);
+ const esri=u=>window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/'+u+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,attribution:'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors'});
+ const base=esri('World_Dark_Gray_Base').addTo(MAP),lbl=esri('World_Dark_Gray_Reference').addTo(MAP);let errs=0,swapped=false;
+ base.on('tileerror',()=>{if(swapped||++errs<4)return;swapped=true;MAP.removeLayer(base);MAP.removeLayer(lbl);$('lmap').classList.add('osmdark');
+  window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(MAP)});
  MLAYER=window.L.layerGroup().addTo(MAP);const zc=()=>{const z=MAP.getZoom();$('lmap').classList.toggle('zlo',z<11.6);$('lmap').classList.toggle('zhi',z>=13)};MAP.on('zoomend',zc);zc();return true}
 window.fitAll=()=>{if(MAP)MAP.fitBounds([[1.235,103.68],[1.46,103.99]],{padding:[10,10]})};
 window.fitMine=()=>{if(!MAP||!V)return;const pts=V.towns.filter(t=>t.owner===V.you).map(t=>GEO[t.t]).filter(Boolean);if(!pts.length)return toast('You hold no towns yet');if(pts.length===1)MAP.setView(pts[0],14);else MAP.fitBounds(pts,{padding:[40,40],maxZoom:14})};
