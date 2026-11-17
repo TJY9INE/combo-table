@@ -435,7 +435,7 @@ function p5(cs){const r=cs.map(c=>hv(rk(c))).sort((a,b)=>b-a);const cnt={};r.for
  const g=Object.entries(cnt).map(([k,v])=>[+k,v]).sort((a,b)=>b[1]-a[1]||b[0]-a[0]);const fl=cs.every(c=>st(c)==st(cs[0]));
  const u=[...new Set(r)];let s=null;if(u.length==5){if(u[0]-u[4]==4)s=u[0];else if(u.join()=='14,5,4,3,2')s=5}
  const sh=g.map(x=>x[1]),rs=g.map(x=>x[0]);
- if(s&&fl)return[8,s];if(sh[0]==4)return[7,...rs];if(sh[0]==3&&sh[1]==2)return[6,...rs];if(fl)return[5,...r];if(s)return[4,s];if(sh[0]==3)return[3,...rs];if(sh[0]==2&&sh[1]==2)return[2,...rs];if(sh[0]==2)return[1,...rs];return[0,...r]}
+ if(s&&fl)return[8,s];if(sh[0]==4)return[7,...rs];if(sh[0]==3&&sh[1]==2)return[6,...rs];if(fl)return[5,...r];if(s)return[4,s];if(sh[0]==3)return[3,...rs];if(sh[0]==2&&sh[1]==2)return[2,...rs];if(sh[0]==2)return[1,rs[0]];return[0,...r]}
 function niuKeyPick(cs,pick){if(!Array.isArray(pick)||pick.length!==3||new Set(pick).size!==3)return [0,0];
  const t=pick.map(i=>cs[i]);let ok=false;for(const x of nvals(t[0]))for(const y of nvals(t[1]))for(const z of nvals(t[2]))if((x+y+z)%10==0)ok=true;if(!ok)return [0,0];
  const two=[0,1,2,3,4].filter(i=>!pick.includes(i)).map(i=>cs[i]);

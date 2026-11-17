@@ -83,7 +83,7 @@ function p5(cs){const r=cs.map(c=>hv(rk(c))).sort((a,b)=>b-a);const cnt={};r.for
  const g=Object.entries(cnt).map(([k,v])=>[+k,v]).sort((a,b)=>b[1]-a[1]||b[0]-a[0]);const fl=cs.every(c=>st(c)==st(cs[0]));
  const u=[...new Set(r)];let s=null;if(u.length==5){if(u[0]-u[4]==4)s=u[0];else if(u.join()=='14,5,4,3,2')s=5}
  const sh=g.map(x=>x[1]),rs=g.map(x=>x[0]);
- if(s&&fl)return[8,s];if(sh[0]==4)return[7,...rs];if(sh[0]==3&&sh[1]==2)return[6,...rs];if(fl)return[5,...r];if(s)return[4,s];if(sh[0]==3)return[3,...rs];if(sh[0]==2&&sh[1]==2)return[2,...rs];if(sh[0]==2)return[1,...rs];return[0,...r]}
+ if(s&&fl)return[8,s];if(sh[0]==4)return[7,...rs];if(sh[0]==3&&sh[1]==2)return[6,...rs];if(fl)return[5,...r];if(s)return[4,s];if(sh[0]==3)return[3,...rs];if(sh[0]==2&&sh[1]==2)return[2,...rs];if(sh[0]==2)return[1,rs[0]];return[0,...r]}
 function best7(cs){let b=null;for(let a=0;a<7;a++)for(let c=a+1;c<7;c++){const h=cs.filter((_,i)=>i!=a&&i!=c);const k=p5(h);if(!b||cmpArr(k,b)>0)b=k}return b}
 const CN=['High card','Pair','Two pair','Trips','Straight','Flush','Full house','Quads','Straight flush'];
 const cMult=k=>k[0]==1?1:k[0]==2?2:k[0]==3?3:k[0]>=4?5:0;
