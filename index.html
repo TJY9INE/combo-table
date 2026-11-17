@@ -317,6 +317,12 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .atile .cd{filter:none!important;opacity:1!important;background:#fff!important}.atile.on .cd{box-shadow:0 0 0 3px var(--gold),0 8px 16px #000a}.atile{border:none!important}
 .nzones{display:flex;gap:8px;margin:4px 0}.nzone{border:2px dashed #ffffff40;border-radius:12px;padding:4px 4px 6px;min-height:84px;transition:background .15s,border-color .15s}.nzone.three{flex:3}.nzone.two{flex:2}.nzone.full{border-color:var(--gold);border-style:solid}.nzone.hot{background:#ffffff14;border-color:var(--gold)}.nzone.pool{border-style:solid;border-color:#ffffff1a;min-height:76px;margin-bottom:4px}.nzt{font-size:11px;font-weight:700;color:#cfe3d6;text-align:center;letter-spacing:.5px;margin-bottom:3px}.nzc{display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;min-height:66px;align-items:center}.ntile{touch-action:none;cursor:grab}.ntile .slot{width:44px;height:63px;margin:0!important}.ntile .cd{width:44px;height:63px;font-size:32px;background:#fff!important}.nghost{position:fixed;z-index:9999;pointer-events:none;transform:scale(1.12) rotate(-4deg);filter:drop-shadow(0 8px 12px #000a)}
 .slot.cunused{opacity:.32;filter:grayscale(.6)}.slot.cused .cd{box-shadow:0 0 0 2px var(--gold)}.cmn{color:var(--gold);font-weight:600}.cmuse{font-size:10px;color:var(--gold);text-align:center;margin-top:1px;width:100%}
+.hsrc{display:flex;gap:6px;justify-content:center;margin:2px 0 6px}.hsrc button{padding:5px 12px;font-size:12px;border-radius:999px;background:#ffffff14;color:#fff;border:1px solid #ffffff2a}.hsrc button.on{background:var(--gold);color:#222}
+.htabs{display:flex;gap:4px;justify-content:center;margin:4px 0}.htab{flex:1;padding:6px 0;font-size:12px;border-radius:8px;background:#ffffff12;color:#fff;border:1px solid #ffffff22}.htab.on{background:var(--gold);color:#222;font-weight:700}.htab[disabled]{opacity:.3}
+.hround{text-align:center;font-family:Georgia,serif;font-style:italic;color:var(--gold);font-size:18px;margin:4px 0}
+.hlist{max-height:52vh;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:6px 0}.hseat{background:#ffffff0c;border:1px solid #ffffff1a;border-radius:10px;padding:6px 8px}.hseat.me{border-color:var(--gold)}
+.hname{font-size:13px;font-weight:700;display:flex;gap:6px;align-items:baseline}.hres{margin-left:auto;font-size:13px}.hrow{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}.hgrp{display:inline-flex;align-items:center;gap:4px;margin-right:10px}.hz{font-size:10px;color:#cfe3d6}.hlab{font-size:12px;color:#cfe3d6;margin-top:3px}
+.slot.hs{width:30px;height:43px;margin:0!important}.slot.hs .cd{width:30px;height:43px;font-size:24px}.slot.hs.unused{opacity:.35}.slot.hs.used .cd{box-shadow:0 0 0 2px var(--gold)}.slot.hs.comm .cd{outline:1px solid #6cf}
 </style>
 </head>
 <body>
@@ -361,7 +367,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
     <button class="ibtn" id="tBack" aria-label="Room">☰</button>
     <div class="bank"><div class="k">Chips</div><div class="v" id="hBank">0</div></div>
     <div class="rnd" id="hRound"><small>ROOM</small>—</div>
-    <button class="ibtn" id="rulesBtn" aria-label="Rules">?</button><button class="ibtn" id="autoBtn" aria-label="Auto reveal">👁</button><button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
+    <button class="ibtn" id="histBtn" aria-label="History">📜</button><button class="ibtn" id="rulesBtn" aria-label="Rules">?</button><button class="ibtn" id="autoBtn" aria-label="Auto reveal">👁</button><button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
     <button class="ibtn" id="muteBtn" aria-label="Sound">🔊</button>
   </div>
   <div class="tbar" id="tbar"><i style="width:0"></i></div>

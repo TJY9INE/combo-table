@@ -100,7 +100,7 @@ function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.
  $('rGuestTxt').textContent=v.phase==='game'&&v.game.phase!=='summary'?'A game is running — you will join the next one':'Waiting for the host to deal…';
  {const net=p=>p.chips-st.start-(p.buyin||0);const lb=[...v.players].sort((x,y)=>net(y)-net(x)).map((p,i)=>`<div class="lr ${p.pid===ME.pid?'me':''}"><span>${i==0?'🏆 ':''}${esc(p.name)}${p.buyin?` <span class="small">(bought in ${fmtc(p.buyin)})</span>`:''}</span><b class="${net(p)>0?'pos':net(p)<0?'neg':''}">${sgn(net(p))}</b></div>`).join('');
   let el=$('rLB');if(!el){el=document.createElement('div');el.className='card2';el.id='rLB';$('rLast').before(el)}el.innerHTML=v.gameNo?`<b>Leaderboard</b> <span class="small">(net chips · ${v.gameNo} game${v.gameNo>1?'s':''})</span><div class="lb">${lb}</div>`:'';el.style.display=v.gameNo?'block':'none'}
- const last=v.game&&v.game.phase==='summary';$('rLast').style.display=last?'block':'none';if(last)$('rLast').innerHTML='<b>Last game</b>'+summaryTable(v)+breakdownHTML();
+ const last=v.game&&v.game.phase==='summary';$('rLast').style.display=last?'block':'none';if(last)$('rLast').innerHTML='<b>Last game</b> <button class="ghost" style="padding:3px 10px;font-size:12px;float:right" onclick="showHistory(\'cur\')">📜 Replay</button>'+summaryTable(v)+breakdownHTML();
  if(v.phase==='game'&&v.game.phase!=='summary'&&!force){roomOverride=false;renderTable()}}
 /* ---- Niu Niu drag-into-3-and-2 arranger (shared) ---- */
 let NIU={key:'',a:[],b:[]},NIU_RR=null,NIU_CARDS=[];
@@ -385,13 +385,44 @@ function breakdownHTML(){const g=V.game;if(!g)return '';const me=ME.pid,isB=V.ba
  if(!isB){const mine=roundHands(me),s=g.seats[me];if(!mine)return '';
   return `<div class="bd"><b>How you were paid</b> <span class="small">(bet ${s.bet})</span>${nm.map((n,i)=>`<div class="bdr"><div class="bdh"><b>${n}</b> ${i==1&&s.open===false?'<span class="zero">Skipped</span>':res(s.r[i])} <span class="small">${sgn(s.r[i]*s.bet)}</span></div><div class="small">You: ${mine[i]}</div><div class="small">Banker: ${bk[i]}</div></div>`).join('')}</div>`}
  return `<div class="bd"><b>Your banker hands</b>${nm.map((n,i)=>`<div class="bdr"><div class="bdh"><b>${n}</b></div><div class="small">${bk[i]}</div></div>`).join('')}</div>`}
+/* ================= History / replay ================= */
+const RDONE={bet:0,r1:1,r2turn:1,r2bank:1,r2done:2,r3set:2,r3done:3,r4peek:3,r4set:3,r4done:4,r5show:4,r5set:4,r5done:5,summary:5};
+let HIST={src:'cur',r:1};
+function hCard(c,cls=''){return c==null?`<div class="slot hs ${cls}"><div class="cd"><div class="bc"></div></div></div>`:`<div class="slot hs ${cls}"><div class="cd up"><div class="bc"></div>${cardFace(c)}</div></div>`}
+function hRow(cs,cls){return `<div class="hrow">${cs.map((c,i)=>hCard(c,cls?cls(i):'')).join('')}</div>`}
+function histRound(G,names,banker,r){const seats=[banker,...G.order].filter(p=>G.seats[p]);const bs=G.seats[banker];
+ const out=seats.map(pid=>{const s=G.seats[pid],h=s.hand||[],isB=pid===banker,known=cs=>cs.every(c=>c!=null);let cards='',lab='';
+  if(r===1){cards=hRow([h[0]]);}
+  else if(r===2){const bh=isB?(s.vis&&s.vis.length>=2?s.vis:h.slice(0,2)):h.slice(0,s.pok?2:(s.drew?3:2));cards=hRow(bh);
+   lab=(known(bh)?bEval(bh).lab:'')+(isB?'':s.pok?' · POK':s.open===false?' · SKIPPED':'')}
+  else if(r===3){const sk=h.slice(0,4);if(known(sk)&&s.si!=null){const sp=skSplits(sk)[s.si];cards=`<div class="hgrp"><span class="hz">Bottom</span>${hRow(sp.hi)}</div><div class="hgrp"><span class="hz">Top</span>${hRow(sp.lo)}</div>`;lab=allPic(sk)?'4 Picture':`${skLabN(sp.kh)} / ${skLab(sp.kl)}`}else cards=hRow(sk)}
+  else if(r===4){const nn=h.slice(0,5);if(known(nn)&&nn.length===5){const a=niuAw(nn);const np=s.np&&s.np.length===3?s.np:null;
+    cards=np?`<div class="hgrp">${hRow(np.map(i=>nn[i]))}</div><div class="hgrp">${hRow([0,1,2,3,4].filter(i=>!np.includes(i)).map(i=>nn[i]))}</div>`:hRow(nn);
+    lab=a.m?`${a.n} ×${a.m}`:niuLab(np?niuKeyPick(nn,np):(s.np&&s.np.length===0?[0,0]:niuKey(nn).k))}else cards=hRow(nn)}
+  else if(r===5){const nn=h.slice(0,5);if(known(nn)&&G.comm&&G.comm.length===2){const c7=[...nn,...G.comm],cp=new Set(s.cp||best7Pick(c7));cards=hRow(c7,i=>(cp.has(i)?'used':'unused')+(i>=5?' comm':''));lab=cLab(p5([...cp].map(i=>c7[i])))}else cards=hRow(nn)}
+  let res='';if(isB){const tot=G.order.reduce((a,q)=>a-(G.seats[q].r[r-1]||0)*G.seats[q].bet,0);res=`<b class="${tot>0?'pos':tot<0?'neg':''}">${sgn(tot)}</b>`}
+  else{const m=s.r[r-1]||0;res=r===2&&s.open===false?'<span class="zero">push</span>':`<b class="${m>0?'pos':m<0?'neg':''}">${m>0?'+':''}${m}× · ${sgn(m*s.bet)}</b>`}
+  return `<div class="hseat ${pid===ME.pid?'me':''}"><div class="hname">${isB?'🎩 ':''}${esc(names[pid]||'?')}${isB?' <span class="small">banker</span>':` <span class="small">bet ${s.bet}</span>`}<span class="hres">${res}</span></div>${cards}${lab?`<div class="hlab">${lab}</div>`:''}</div>`}).join('');
+ return out}
+function histRender(){const cur=V.game&&V.game.round>=1?{G:V.game,names:Object.fromEntries(V.players.map(p=>[p.pid,p.name])),banker:V.banker,done:RDONE[V.game.phase]||0,t:'This game'}:null;
+ const last=V.last?{G:V.last.game,names:V.last.names,banker:V.last.banker,done:5,t:'Last game'}:null;
+ let src=HIST.src==='last'&&last?last:(cur&&cur.done?cur:last);if(!src){$('sheetIn').innerHTML=`<h2>📜 History</h2><p class="small" style="text-align:center">Nothing to replay yet — finish a round first.</p><button class="ghost" style="width:100%" onclick="$('sheet').classList.remove('on')">Close</button>`;return}
+ HIST.src=src===last?'last':'cur';const r=Math.max(1,Math.min(HIST.r,src.done));HIST.r=r;
+ const tabs=[1,2,3,4,5].map(i=>`<button class="htab ${i===r?'on':''}" ${i>src.done?'disabled':''} onclick="HIST.r=${i};histRender()">${['High','Bacc','Siki','Niu','Combo'][i-1]}</button>`).join('');
+ const sw=(cur&&cur.done&&last)?`<div class="hsrc"><button class="${HIST.src==='cur'?'on':''}" onclick="HIST.src='cur';HIST.r=99;histRender()">This game</button><button class="${HIST.src==='last'?'on':''}" onclick="HIST.src='last';HIST.r=1;histRender()">Last game</button></div>`:`<div class="small" style="text-align:center">${src.t}</div>`;
+ $('sheetIn').innerHTML=`<h2>📜 History</h2>${sw}<div class="htabs">${tabs}</div><div class="hround">${['High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'][r-1]}</div>${r===5&&src.G.comm?`<div class="small" style="text-align:center">Community: ${ctxt(src.G.comm)}</div>`:''}
+  <div class="hlist">${histRound(src.G,src.names,src.banker,r)}</div>
+  <div class="arow"><button class="ghost" ${r<=1?'disabled':''} onclick="HIST.r--;histRender()">◀ Prev</button><button class="ghost" ${r>=src.done?'disabled':''} onclick="HIST.r++;histRender()">Next ▶</button><button class="gold" onclick="$('sheet').classList.remove('on')">Close</button></div>`}
+window.showHistory=(src)=>{HIST={src:src||'cur',r:src==='last'?1:99};histRender();$('sheet').classList.add('on')};
+window.HIST=HIST;
+
 window.showSummary=()=>{const v=V;if(!v.game)return;const d=delta(ME.pid);
  $('sheetIn').innerHTML=`<h2>${d>0?'You win!':d<0?'Tough game':'Break even'}</h2><div class="big ${d>0?'pos':d<0?'neg':''}">${sgn(d)}</div>${summaryTable(v)}${breakdownHTML()}
- <div class="small" style="text-align:center;margin:10px 0">Your chips ${fmtc(v.players.find(p=>p.pid===ME.pid).chips)}</div><button class="gold" style="width:100%" onclick="$('sheet').classList.remove('on');renderRoom(true)">Back to room</button>`;
+ <div class="small" style="text-align:center;margin:10px 0">Your chips ${fmtc(v.players.find(p=>p.pid===ME.pid).chips)}</div><div class="arow"><button class="ghost" onclick="showHistory('cur')">📜 Replay</button><button class="gold" onclick="$('sheet').classList.remove('on');renderRoom(true)">Back to room</button></div>`;
  $('sheet').classList.add('on');snd(d>0?'big':d<0?'lose':'chip')};
 
 /* ================= toggles & boot ================= */
-$('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classList.toggle('on',autoReveal);$('autoBtn').onclick=()=>{autoReveal=!autoReveal;localStorage.setItem('ct.auto',autoReveal?'1':'0');$('autoBtn').classList.toggle('on',autoReveal);toast(autoReveal?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON');if(V&&V.game)renderTable()};
+$('histBtn').onclick=()=>showHistory('cur');$('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classList.toggle('on',autoReveal);$('autoBtn').onclick=()=>{autoReveal=!autoReveal;localStorage.setItem('ct.auto',autoReveal?'1':'0');$('autoBtn').classList.toggle('on',autoReveal);toast(autoReveal?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON');if(V&&V.game)renderTable()};
 $('hintBtn').onclick=()=>{hints=!hints;localStorage.setItem('ct.hints',hints?'1':'0');toast(hints?'💡 Hints on':'Hints off');renderTable()};
 $('muteBtn').onclick=()=>{mute=!mute;localStorage.setItem('ct.mute',mute?'1':'0');$('muteBtn').textContent=mute?'🔇':'🔊'};
 if(ME){if(qs.get('room')&&qs.get('room').toUpperCase()!==ME.code){/* invited elsewhere */ME=null;saveMe()}else{subscribe();refresh()}}
