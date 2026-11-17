@@ -83,3 +83,26 @@ FX.rules=(round)=>{const d=document.createElement('div');d.className='rules';d.i
 })();
 
 FX.fit=()=>{};
+
+/* ---- achievements (shared by online + Quick play) ---- */
+FX.ACH=[['pok','🎴 Pok!','Pok 8/9 in Thai Baccarat'],['bac3','👑 Auto hand','Win ×3+ in Thai Baccarat'],['sk3','🀄 Sikipi ×3','Win ×3+ in Sikipi'],['sk5','💎 Sikipi pair','Win ×5+ in Sikipi'],
+ ['niu3','🐂 Niu Niu','Win ×3+ in Niu Niu'],['niu5','🐃 Niu special','Win ×5+ in Niu Niu'],['cmb5','🃏 Straight+','Win ×5 in Combo Poker'],['fh','🏠 Full house+','Full house or better in Combo'],
+ ['sweep','🧹 Clean sweep','Win all 5 rounds as a player'],['x10','💰 10× game','Win 10× your bet in one game'],['x20','🚀 20× game','Win 20× your bet in one game'],
+ ['bank1','🎩 House wins','Profit as banker'],['bankx','🏦 Bank breaker','Banker profit ≥3× total bets'],['str3','🔥 Hot streak','3 winning games in a row'],['g10','🪑 Regular','Play 10 games'],['g50','🏛 Veteran','Play 50 games']];
+FX.achName=k=>{const a=FX.ACH.find(x=>x[0]===k);return a?a[1]:k};
+FX.achKeys=o=>{const k=[];const r=o.r||[0,0,0,0,0];
+ if(o.pok)k.push('pok');if(r[1]>=3)k.push('bac3');if(r[2]>=3)k.push('sk3');if(r[2]>=5)k.push('sk5');if(r[3]>=3)k.push('niu3');if(r[3]>=5)k.push('niu5');if(r[4]>=5)k.push('cmb5');
+ if(o.ck&&o.ck[0]>=6)k.push('fh');if(!o.isB&&r.every(v=>v>0))k.push('sweep');if(!o.isB&&o.net>=10*o.bet)k.push('x10');if(!o.isB&&o.net>=20*o.bet)k.push('x20');
+ if(o.isB&&o.net>0)k.push('bank1');if(o.isB&&o.tot>0&&o.net>=3*o.tot)k.push('bankx');if(o.streak>=3)k.push('str3');if(o.games>=10)k.push('g10');if(o.games>=50)k.push('g50');return k};
+FX.badges=(have)=>`<div class="ach">${FX.ACH.map(([k,n,d])=>`<span class="${have&&have[k]?'got':''}" title="${d}">${have&&have[k]?'':'🔒 '}${n}${have&&have[k]>1?' ×'+have[k]:''}</span>`).join('')}</div>`;
+/* season titles from a {key:{name,net,games,bG,bNet,best,poks,bestStreak,ach}} map */
+FX.titles=(S)=>{const L=Object.values(S||{}).filter(x=>x.games>0);if(!L.length)return [];const top=(f,ok=()=>true)=>{const c=L.filter(ok);if(!c.length)return null;return c.reduce((a,b)=>f(b)>f(a)?b:a)};
+ const out=[];const add=(e,t,x,val)=>{if(x&&val(x)>0)out.push({e,t,name:x.name,v:val(x)})};
+ add('🐋','Top earner',top(x=>x.net),x=>x.net);add('🧊','Ice Cold Banker',top(x=>x.bNet,x=>x.bG>0),x=>x.bNet);add('🎴','Pok Master',top(x=>x.poks),x=>x.poks);
+ add('💥','Biggest hit',top(x=>x.best),x=>x.best);add('🔥','Longest streak',top(x=>x.bestStreak),x=>x.bestStreak);add('🏆','Badge hunter',top(x=>Object.keys(x.ach||{}).length),x=>Object.keys(x.ach||{}).length);return out};
+FX.seasonHTML=(S,meName,fmt)=>{const L=Object.values(S||{}).filter(x=>x.games>0).sort((a,b)=>b.net-a.net);fmt=fmt||(n=>(n>0?'+':'')+n);
+ if(!L.length)return '<div class="small" style="text-align:center;margin:14px 0">No games this season yet.</div>';
+ const T=FX.titles(S);const me=L.find(x=>x.name.toLowerCase()===String(meName||'').toLowerCase());
+ return `<div class="titles">${T.map(t=>`<div class="ttl"><b>${t.e} ${t.t}</b><span>${t.name}</span></div>`).join('')}</div>
+ <table class="t"><tr><th>#</th><th>Player</th><th>Games</th><th>Net</th><th>🏅</th></tr>${L.map((x,i)=>`<tr class="${me===x?'mine':''}"><td>${i===0?'👑':i+1}</td><td>${x.name}</td><td>${x.games}</td><td class="${x.net>0?'pos':x.net<0?'neg':''}"><b>${fmt(x.net)}</b></td><td>${Object.keys(x.ach||{}).length}/${FX.ACH.length}</td></tr>`).join('')}</table>
+ ${me?`<h3 style="margin:14px 0 4px">Your badges</h3>${FX.badges(me.ach)}`:''}`};

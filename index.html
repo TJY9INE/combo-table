@@ -324,6 +324,9 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .hname{font-size:13px;font-weight:700;display:flex;gap:6px;align-items:baseline}.hres{margin-left:auto;font-size:13px}.hrow{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}.hgrp{display:inline-flex;align-items:center;gap:4px;margin-right:10px}.hz{font-size:10px;color:#cfe3d6}.hlab{font-size:12px;color:#cfe3d6;margin-top:3px}
 .slot.hs{width:30px;height:43px;margin:0!important}.slot.hs .cd{width:30px;height:43px;font-size:24px}.slot.hs.unused{opacity:.35}.slot.hs.used .cd{box-shadow:0 0 0 2px var(--gold)}.slot.hs.comm .cd{outline:1px solid #6cf}
 body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition-duration:.3s}
+.titles{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0 10px}.ttl{background:#0f1411;border:1px solid #d4a23c55;border-radius:10px;padding:6px 8px;font-size:12px;line-height:1.3}.ttl b{display:block;color:#f6dc8f}.ttl span{color:#cfdcd5}
+.ach{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.ach span{font-size:12px;padding:5px 9px;border-radius:99px;background:#0f1411;color:#5d6a63;border:1px solid #26302b}.ach span.got{color:#2a1d00;background:linear-gradient(#f6dc8f,#d4a23c);border-color:#d4a23c}
+.newach{background:linear-gradient(#f6dc8f,#d4a23c);color:#2a1d00;border-radius:12px;padding:8px 10px;font-weight:800;text-align:center;margin:8px 0}
 </style>
 </head>
 <body>
@@ -359,6 +362,7 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
     <div class="err" id="rErr"></div>
   </div>
   <div class="card2" id="rGuest"><div class="wait" id="rGuestTxt">Waiting for the host to start…</div><div class="small" id="rSettingsTxt" style="text-align:center"></div></div>
+  <div class="card2"><button class="ghost" id="rSeasonBtn" style="width:100%">🏆 Season leaderboard &amp; badges</button></div>
   <div class="card2" id="rLast" style="display:none"></div>
 </div></div>
 
@@ -368,7 +372,7 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
     <button class="ibtn" id="tBack" aria-label="Room">☰</button>
     <div class="bank"><div class="k">Chips</div><div class="v" id="hBank">0</div></div>
     <div class="rnd" id="hRound"><small>ROOM</small>—</div>
-    <button class="ibtn" id="histBtn" aria-label="History">📜</button><button class="ibtn" id="rulesBtn" aria-label="Rules">?</button><button class="ibtn" id="autoBtn" aria-label="Auto reveal">👁</button><button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
+    <button class="ibtn" id="histBtn" aria-label="History">📜</button><button class="ibtn" id="seasonBtn" aria-label="Season">🏆</button><button class="ibtn" id="rulesBtn" aria-label="Rules">?</button><button class="ibtn" id="autoBtn" aria-label="Auto reveal">👁</button><button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
     <button class="ibtn" id="muteBtn" aria-label="Sound">🔊</button>
   </div>
   <div class="tbar" id="tbar"><i style="width:0"></i></div>
@@ -388,7 +392,7 @@ body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition
 </div>
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="fx.js?v=2611180045"></script>
-<script src="core.js?v=2611180045"></script>
-<script src="app.js?v=2611180045"></script>
+<script src="fx.js?v=2611180130"></script>
+<script src="core.js?v=2611180130"></script>
+<script src="app.js?v=2611180130"></script>
 </body></html>

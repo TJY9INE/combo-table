@@ -350,6 +350,8 @@ function bindDrag(el){const c=+el.dataset.c,zone=$('meZone');let sx=null,sy,drag
 /* ================= events → chips & sounds ================= */
 function playEvents(evs){let mineTot=0,any=false,bestM=0,worstM=0;const nm=pid=>(PN(pid)||'').replace(/ \S+$/,'')||PN(pid);
  for(const e of evs){
+  if(e.t==='ach'){if(e.pid===ME.pid){toast('🏆 '+e.keys.map(FX.achName).join(' · '),2600);FX.haptic(3)}else toast(`🏆 ${nm(e.pid)}: ${e.keys.map(FX.achName).join(' · ')}`,2200);continue}
+  if(e.t==='season'){toast('🏆 New season started');continue}
   if(e.t==='emote'){const el=e.pid===ME.pid?$('me'):document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el){const d=document.createElement('div');d.className='emo';d.textContent=e.e;el.appendChild(d);setTimeout(()=>d.remove(),1900)}continue}
   if(e.t==='settle'){any=true;const el=document.querySelector(`.seat[data-pid="${e.pid}"]`)||(e.pid===ME.pid?$('me'):null);const bEl=V.banker===ME.pid?($('btray')||$('me')):document.querySelector(`.seat[data-pid="${V.banker}"]`);
    if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(8,e.m+2));else if(e.m<0)fly(el,bEl,Math.min(8,-e.m+2));floatOn(el,e.m>0?`+${e.m}× ${sgn(e.amt)}`:e.m<0?`${e.m}× ${sgn(e.amt)}`:'Push',e.m>0?'w':e.m<0?'l':'p')}
@@ -417,13 +419,19 @@ function histRender(){const cur=V.game&&V.game.round>=1?{G:V.game,names:Object.f
 window.showHistory=(src)=>{HIST={src:src||'cur',r:src==='last'?1:99};histRender();$('sheet').classList.add('on')};
 window.HIST=HIST;
 
+window.showSeason=()=>{const v=V;if(!v)return;const me=v.players.find(p=>p.pid===ME.pid);const isHost=v.host===ME.pid;
+ $('sheetIn').innerHTML=`<h2>🏆 Season</h2>${FX.seasonHTML(v.season,me&&me.name,sgn)}<div class="arow" style="margin-top:12px">${isHost?`<button class="ghost" onclick="newSeason()">New season</button>`:''}<button class="gold" onclick="$('sheet').classList.remove('on')">Close</button></div>`;
+ $('sheet').classList.add('on')};
+window.newSeason=async()=>{if(!confirmBox('Start a new season? Leaderboard and badges reset (chips unchanged).'))return;try{await api('season');showSeason()}catch(e){toast(e.message)}};
+function confirmBox(t){try{return window.confirm(t)}catch(e){return true}}
+function myNewAch(){const v=V;let i=v.events.length-1;const out=[];for(;i>=0;i--){const e=v.events[i];if(e.t==='start')break;if(e.t==='ach'&&e.pid===ME.pid)out.push(...e.keys)}return out}
 window.showSummary=()=>{const v=V;if(!v.game)return;const d=delta(ME.pid);
- $('sheetIn').innerHTML=`<h2>${d>0?'You win!':d<0?'Tough game':'Break even'}</h2><div class="big ${d>0?'pos':d<0?'neg':''}">${sgn(d)}</div>${summaryTable(v)}${breakdownHTML()}
- <div class="small" style="text-align:center;margin:10px 0">Your chips ${fmtc(v.players.find(p=>p.pid===ME.pid).chips)}</div><div class="arow"><button class="ghost" onclick="showHistory('cur')">📜 Replay</button><button class="gold" onclick="$('sheet').classList.remove('on');renderRoom(true)">Back to room</button></div>`;
+ $('sheetIn').innerHTML=`<h2>${d>0?'You win!':d<0?'Tough game':'Break even'}</h2><div class="big ${d>0?'pos':d<0?'neg':''}">${sgn(d)}</div>${myNewAch().map(k=>`<div class="newach">🏆 Badge unlocked: ${FX.achName(k)}</div>`).join('')}${summaryTable(v)}${breakdownHTML()}
+ <div class="small" style="text-align:center;margin:10px 0">Your chips ${fmtc(v.players.find(p=>p.pid===ME.pid).chips)}</div><div class="arow"><button class="ghost" onclick="showHistory('cur')">📜 Replay</button><button class="ghost" onclick="showSeason()">🏆 Season</button><button class="gold" onclick="$('sheet').classList.remove('on');renderRoom(true)">Back to room</button></div>`;
  $('sheet').classList.add('on');snd(d>0?'big':d<0?'lose':'chip')};
 
 /* ================= toggles & boot ================= */
-$('histBtn').onclick=()=>showHistory('cur');$('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classList.toggle('on',autoReveal);$('autoBtn').onclick=()=>{autoReveal=!autoReveal;localStorage.setItem('ct.auto',autoReveal?'1':'0');$('autoBtn').classList.toggle('on',autoReveal);toast(autoReveal?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON');if(V&&V.game)renderTable()};
+$('histBtn').onclick=()=>showHistory('cur');$('seasonBtn').onclick=()=>showSeason();$('rSeasonBtn').onclick=()=>showSeason();$('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classList.toggle('on',autoReveal);$('autoBtn').onclick=()=>{autoReveal=!autoReveal;localStorage.setItem('ct.auto',autoReveal?'1':'0');$('autoBtn').classList.toggle('on',autoReveal);toast(autoReveal?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON');if(V&&V.game)renderTable()};
 $('hintBtn').onclick=()=>{hints=!hints;localStorage.setItem('ct.hints',hints?'1':'0');toast(hints?'💡 Hints on':'Hints off');renderTable()};
 $('muteBtn').onclick=()=>{mute=!mute;localStorage.setItem('ct.mute',mute?'1':'0');$('muteBtn').textContent=mute?'🔇':'🔊'};
 if(ME){if(qs.get('room')&&qs.get('room').toUpperCase()!==ME.code){/* invited elsewhere */ME=null;saveMe()}else{subscribe();refresh()}}
