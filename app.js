@@ -51,7 +51,7 @@ async function api(a,extra={}){
  const body=Object.assign({a},ME?{code:ME.code,pid:ME.pid,token:ME.token}:{},extra);
  const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY},body:JSON.stringify(body)});
  const j=await r.json().catch(()=>({error:'Network error'}));if(j.error)throw new Error(j.error);if(j.view&&ME)apply(j.view);return j}
-async function refresh(){if(!ME||busy)return;busy=true;try{await api('state')}catch(e){if(/Not in this room|Room not found/.test(e.message)){ME=null;saveMe();show('home')}}finally{busy=false}}
+let pendingR=false;async function refresh(){if(!ME)return;if(busy){pendingR=true;return}busy=true;pendingR=false;try{await api('state')}catch(e){if(/Not in this room|Room not found/.test(e.message)){ME=null;saveMe();show('home')}}finally{busy=false;if(pendingR){pendingR=false;setTimeout(refresh,30)}}}
 async function doAct(a,extra){snd('tap');try{await api(a,extra)}catch(e){toast(e.message)}}
 function subscribe(){try{if(chan){chan.unsubscribe();chan=null}const sb=supabase.createClient(SB_URL,SB_KEY);
  chan=sb.channel('rv_'+ME.code).on('postgres_changes',{event:'*',schema:'public',table:'room_ver',filter:'code=eq.'+ME.code},()=>refresh()).subscribe()}catch(e){}
@@ -60,7 +60,7 @@ function subscribe(){try{if(chan){chan.unsubscribe();chan=null}const sb=supabase
 let tickT=null;function tickTimer(){if(!V||!V.game)return;const g=V.game,skew=Date.now()-V._recv+V.now;const t=g.until||g.deadline;
  const bar=$('tbar').firstChild;if(g.deadline&&!g.until){const tot=(V.settings.timer||30)*1000,left=Math.max(0,g.deadline-skew);bar.style.width=(left/tot*100)+'%'}else bar.style.width='0';
  {const left=g.deadline&&!g.until?Math.max(0,g.deadline-skew):0,tot=(V.settings.timer||30)*1000;document.querySelectorAll('.cdring').forEach(r=>r.style.setProperty('--p',(left/tot*100)+'%'));const dc=$('dclock');if(dc&&g.deadline){const sec=Math.ceil(left/1000);dc.textContent=sec+'s';dc.classList.toggle('hurry',sec<=5)}}
- if(t&&skew>=t+300&&!tickT){tickT=setTimeout(()=>{tickT=null;refresh()},200)}}
+ if(t&&skew>=t+150&&!tickT){tickT=setTimeout(()=>{tickT=null;refresh()},60+Math.random()*180)}}
 setInterval(tickTimer,250);
 
 /* ================= home ================= */
