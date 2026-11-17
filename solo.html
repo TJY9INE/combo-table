@@ -349,7 +349,7 @@ body.fast .slot,body.fast .cd,body.fast .card{transition-duration:.22s!important
 </div>
 
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
-<script src="fx.js?v=2611180215r"></script>
+<script src="fx.js?v=2611180220n"></script>
 <script>
 
 /* ---------- cards ---------- */
@@ -430,7 +430,9 @@ function niuKey(cs){let best=[0,0],grp=null;const idx=[0,1,2,3,4];
  return{k:best,grp}}
 const niuMult=k=>k[0]==11?4:k[0]>=9?3:k[0]>=7?2:1;
 const niuLab=k=>k[0]==0?'No Niu':k[0]==11?`Pair ×4`:k[0]==10?'Niu Niu ×3':`Niu ${k[0]}${k[0]==9?' ×3':k[0]>=7?' ×2':''}`;
-function niuSettle(Pa,Pk,Da,Dk){if(Pa.m||Da.m)return Pa.m>Da.m?Pa.m:Da.m>Pa.m?-Da.m:0;if(Pk[0]==0&&Dk[0]==0)return 0;const c=cmpArr(Pk,Dk);return c>0?niuMult(Pk):c<0?-niuMult(Dk):0}
+function niuLabEff(a,k){return niuEff(a,k).t?`${a.n} ×${a.m}`:niuLab(k)}
+function niuEff(a,k){const n=k&&k[0]?niuMult(k):0;return a.m&&a.m>=n?{m:a.m,t:1,k:[]}:{m:n,t:0,k}}
+function niuSettle(Pa,Pk,Da,Dk){const X=niuEff(Pa,Pk),Y=niuEff(Da,Dk);if(!X.m&&!Y.m)return 0;if(X.m!==Y.m)return X.m>Y.m?X.m:-Y.m;if(X.t!==Y.t)return X.t>Y.t?X.m:-Y.m;if(X.t)return 0;const c=cmpArr(X.k,Y.k);return c>0?X.m:c<0?-Y.m:0}
 
 /* ---------- R5 Combo poker ---------- */
 function p5(cs){const r=cs.map(c=>hv(rk(c))).sort((a,b)=>b-a);const cnt={};r.forEach(x=>cnt[x]=(cnt[x]||0)+1);
@@ -820,7 +822,7 @@ function niuTile(c,i){return `<div class="ntile" data-i="${i}" onpointerdown="ni
 function niuHTML(cards,hint,timer){NIU_CARDS=cards;const pool=[0,1,2,3,4].filter(i=>!NIU.a.includes(i)&&!NIU.b.includes(i));
  const aw=niuAw(cards),full=NIU.a.length===3,k=full?niuKeyPick(cards,NIU.a):null;
  let lab=full?(k[0]===0?"❌ These 3 don't make 10 → No Niu":niuLab(k)):`Drag 3 cards that make 10 into the left box (${NIU.a.length}/3)`;
- if(aw.m)lab+=` · special ${aw.n} ×${aw.m} counts automatically`;
+ if(aw.m)lab+=(k&&k[0]&&niuMult(k)>aw.m)?` · beats your ${aw.n} ×${aw.m} ✓`:` · your ${aw.n} ×${aw.m} counts (or arrange something that pays more)`;
  return `<div class="decide"><div class="dtop"><div class="dpts">🐂 Arrange Niu Niu</div>${timer||''}</div>
  <div class="nzones"><div class="nzone three ${full?'full':''}" data-z="a"><div class="nzt">3 · make 10</div><div class="nzc">${NIU.a.map(i=>niuTile(cards[i],i)).join('')}</div></div>
  <div class="nzone two" data-z="b"><div class="nzt">2 · points</div><div class="nzc">${NIU.b.map(i=>niuTile(cards[i],i)).join('')}</div></div></div>
@@ -846,7 +848,7 @@ window.niuDown=(e,i)=>{e.preventDefault();const el=e.currentTarget,sx=e.clientX,
 
 function arrangePick(kind,cards){if(kind==='niu')return new Promise(res=>{NIU={key:'s',a:[],b:[]};let hint='';if(G.hints){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}NIU_RR=()=>actions(niuHTML(cards,hint));window.niuSend=none=>{actions('');NIU_RR=null;res(none?[]:NIU.a.slice())};NIU_RR()});
  return new Promise(res=>{const need=kind==='niu'?3:5;let sel=[];
- const draw_=()=>{let lab;if(kind==='niu'){const a=niuAw(cards);lab=sel.length===3?niuLab(niuKeyPick(cards,sel)):`Pick 3 cards that make 10 (${sel.length}/3)`;if(a.m)lab+=` · special ${a.n} ×${a.m} counts automatically`}else lab=sel.length===5?cLab(p5(sel.map(i=>cards[i]))):`Pick 5 cards (${sel.length}/5)`;
+ const draw_=()=>{let lab;if(kind==='niu'){const a=niuAw(cards);lab=sel.length===3?niuLab(niuKeyPick(cards,sel)):`Pick 3 cards that make 10 (${sel.length}/3)`;if(a.m)lab+=` · ${a.n} ×${a.m} counts unless this pays more`}else lab=sel.length===5?cLab(p5(sel.map(i=>cards[i]))):`Pick 5 cards (${sel.length}/5)`;
   let hint='';if(G.hints){if(kind==='niu'){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}else hint=`💡 Best: ${cLab(best7(cards))}`}
   const ok=sel.length===need;
   actions(`<div class="decide"><div class="dtop"><div class="dpts">${kind==='niu'?'🐂 Arrange Niu Niu':'🃏 Pick your 5'}</div></div><div class="atiles">${cards.map((c,i)=>`<div class="atile ${sel.includes(i)?'on':''} ${kind==='combo'&&i>=5?'comm':''}" data-i="${i}"><div class="slot"><div class="cd up"><div class="bc"></div>${cardFace(c)}</div></div></div>`).join('')}</div><div class="alab ${ok?'ok':''}">${lab}</div>${hint?`<div class="hint" style="margin:4px 0 6px">${hint}</div>`:''}<div class="dbtns">${kind==='niu'?`<button class="dbig stand" id="arrNone">🚫 NO NIU<small>can't make 10</small></button>`:''}<button class="dbig draw ${ok?'best':''}" id="arrOk" ${ok?'':'disabled'}>✅ CONFIRM<small>${ok?'lock it in':'select '+need}</small></button></div></div>`);
@@ -859,7 +861,7 @@ async function round4(){
  for(const s of [B,...P])await deal(s,{up:false});
  await awaitMyFlips('Tap your 5th card 👆');
  if(G.manual&&G.me&&!G.fast){const pick=await arrangePick('niu',G.me.hand.slice());const h=G.me.hand;G.me.nkm={k:niuKeyPick(h,pick),grp:pick.length===3?{three:pick.map(i=>h[i]),two:[0,1,2,3,4].filter(i=>!pick.includes(i)).map(i=>h[i])}:null}}
- const show_=async s=>{await flipAll(s,50);s.na=niuAw(s.hand);s.nk=s.nkm||niuKey(s.hand);s.nkm=null;if(!s.na.m&&s.nk.grp)regroup(s,[s.nk.grp.three,s.nk.grp.two]);setLab(s,s.na.m?`${s.na.n} ×${s.na.m}`:niuLab(s.nk.k))};
+ const show_=async s=>{await flipAll(s,50);s.na=niuAw(s.hand);s.nk=s.nkm||niuKey(s.hand);s.nkm=null;if(!s.na.m&&s.nk.grp)regroup(s,[s.nk.grp.three,s.nk.grp.two]);setLab(s,niuLabEff(s.na,s.nk.k))};
  await show_(G.me);await sleep(300);banner('Reveal');
  await show_(B);if(!B.me&&(B.na.m||B.nk.k[0]>=10))say(B,B.na.m?B.na.n+'!':'Niu Niu!');await sleep(300);
  for(const p of P){if(!p.me)await show_(p);await settle(p,niuSettle(p.na,p.nk.k,B.na,B.nk.k),3)}

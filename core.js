@@ -76,7 +76,9 @@ function niuKey(cs){let best=[0,0],grp=null;const idx=[0,1,2,3,4];
  return{k:best,grp}}
 const niuMult=k=>k[0]==11?4:k[0]>=9?3:k[0]>=7?2:1;
 const niuLab=k=>k[0]==0?'No Niu':k[0]==11?`Pair ×4`:k[0]==10?'Niu Niu ×3':`Niu ${k[0]}${k[0]==9?' ×3':k[0]>=7?' ×2':''}`;
-function niuSettle(Pa,Pk,Da,Dk){if(Pa.m||Da.m)return Pa.m>Da.m?Pa.m:Da.m>Pa.m?-Da.m:0;if(Pk[0]==0&&Dk[0]==0)return 0;const c=cmpArr(Pk,Dk);return c>0?niuMult(Pk):c<0?-niuMult(Dk):0}
+function niuLabEff(a,k){return niuEff(a,k).t?`${a.n} ×${a.m}`:niuLab(k)}
+function niuEff(a,k){const n=k&&k[0]?niuMult(k):0;return a.m&&a.m>=n?{m:a.m,t:1,k:[]}:{m:n,t:0,k}}
+function niuSettle(Pa,Pk,Da,Dk){const X=niuEff(Pa,Pk),Y=niuEff(Da,Dk);if(!X.m&&!Y.m)return 0;if(X.m!==Y.m)return X.m>Y.m?X.m:-Y.m;if(X.t!==Y.t)return X.t>Y.t?X.m:-Y.m;if(X.t)return 0;const c=cmpArr(X.k,Y.k);return c>0?X.m:c<0?-Y.m:0}
 
 /* ---------- R5 Combo poker ---------- */
 function p5(cs){const r=cs.map(c=>hv(rk(c))).sort((a,b)=>b-a);const cnt={};r.forEach(x=>cnt[x]=(cnt[x]||0)+1);

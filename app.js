@@ -109,7 +109,7 @@ function niuTile(c,i){return `<div class="ntile" data-i="${i}" onpointerdown="ni
 function niuHTML(cards,hint,timer){NIU_CARDS=cards;const pool=[0,1,2,3,4].filter(i=>!NIU.a.includes(i)&&!NIU.b.includes(i));
  const aw=niuAw(cards),full=NIU.a.length===3,k=full?niuKeyPick(cards,NIU.a):null;
  let lab=full?(k[0]===0?"❌ These 3 don't make 10 → No Niu":niuLab(k)):`Drag 3 cards that make 10 into the left box (${NIU.a.length}/3)`;
- if(aw.m)lab+=` · special ${aw.n} ×${aw.m} counts automatically`;
+ if(aw.m)lab+=(k&&k[0]&&niuMult(k)>aw.m)?` · beats your ${aw.n} ×${aw.m} ✓`:` · your ${aw.n} ×${aw.m} counts (or arrange something that pays more)`;
  return `<div class="decide"><div class="dtop"><div class="dpts">🐂 Arrange Niu Niu</div>${timer||''}</div>
  <div class="nzones"><div class="nzone three ${full?'full':''}" data-z="a"><div class="nzt">3 · make 10</div><div class="nzc">${NIU.a.map(i=>niuTile(cards[i],i)).join('')}</div></div>
  <div class="nzone two" data-z="b"><div class="nzt">2 · points</div><div class="nzc">${NIU.b.map(i=>niuTile(cards[i],i)).join('')}</div></div></div>
@@ -139,7 +139,7 @@ let ARR={key:'',sel:[]};
 function arrPanel(kind){const g=V.game,s=g.seats[ME.pid],cards=kind==='niu'?s.hand:[...s.hand,...g.comm],need=kind==='niu'?3:5,key=kind+V.gameNo;
  if(kind==='niu'){if(NIU.key!==key)NIU={key,a:[],b:[]};NIU_RR=renderActions;let hint='';if(hints){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}return niuHTML(cards,hint,'<div class="dclock" id="dclock"></div>')}
  if(ARR.key!==key)ARR={key,sel:[]};const sel=ARR.sel;
- let lab;if(kind==='niu'){const a=niuAw(cards);lab=sel.length===3?niuLab(niuKeyPick(cards,sel)):`Pick 3 cards that make 10 (${sel.length}/3)`;if(a.m)lab+=` · special ${a.n} ×${a.m} counts automatically`}
+ let lab;if(kind==='niu'){const a=niuAw(cards);lab=sel.length===3?niuLab(niuKeyPick(cards,sel)):`Pick 3 cards that make 10 (${sel.length}/3)`;if(a.m)lab+=` · ${a.n} ×${a.m} counts unless this pays more`}
  else lab=sel.length===5?cLab(p5(sel.map(i=>cards[i]))):`Pick 5 cards (${sel.length}/5)`;
  let hint='';if(hints){if(kind==='niu'){const b=bestNiuPick(cards);hint=`💡 Best: ${b.length?niuLab(niuKeyPick(cards,b)):'No Niu'}`}else hint=`💡 Best: ${cLab(best7(cards))}`}
  const tiles=cards.map((c,i)=>`<div class="atile ${sel.includes(i)?'on':''} ${kind==='combo'&&i>=5?'comm':''}" onclick="arrTap(${i},'${kind}')"><div class="slot"><div class="cd up"><div class="bc"></div>${cardFace(c)}</div></div></div>`).join('');
@@ -184,7 +184,7 @@ function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!
  if(g.round===1)return `${RN[rk(h[0])]}${SY[st(h[0])]}`;
  if(g.round===2)return bEval(h).lab;
  if(g.round===3){if(s.si==null)return g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';if(allPic(h))return '4 Picture ×7';const sp=skSplits(h)[s.si];return `${skLabN(sp.kh)} / ${skLab(sp.kl)}`}
- if(g.round===4){const st_=g.seats[pid];if(g.phase==='r4set')return pid===ME.pid?'':(st_.nset?'✓ arranged':'arranging…');if(g.phase==='r4peek'&&pid!==ME.pid)return '';const a=niuAw(h);return a.m?`${a.n} ×${a.m}`:niuLab(st_.np?niuKeyPick(h,st_.np):niuKey(h).k)}
+ if(g.round===4){const st_=g.seats[pid];if(g.phase==='r4set')return pid===ME.pid?'':(st_.nset?'✓ arranged':'arranging…');if(g.phase==='r4peek'&&pid!==ME.pid)return '';const a=niuAw(h);return niuLabEff(a,st_.np?niuKeyPick(h,st_.np):niuKey(h).k)}
  if(g.round===5){const st_=g.seats[pid];if(g.phase==='r5show')return pid===ME.pid?'':'…';if(g.phase==='r5set')return pid===ME.pid?'':(st_.cset?'✓ arranged':'arranging…');const c7=[...h,...g.comm];const cp=st_.cp||best7Pick(c7);const nc=cp.filter(i=>i>=5).length;return cLab(p5(cp.map(i=>c7[i])))+` · ${nc?'+'+nc+' comm':'own 5'}`}return ''}
 const PN=pid=>{const p=V.players.find(x=>x.pid===pid);return p?p.name:'?'};
 const RNM=['Bets','High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
@@ -385,7 +385,7 @@ function roundHands(pid){const g=V.game,s=g.seats[pid];if(!s)return null;const h
  const bac=isBk?(s.vis&&s.vis.length>=2?s.vis:h.slice(0,2)):h.slice(0,s.drew?3:2);const sk=h.slice(0,4),nn=h.slice(0,5);
  let skt='?';if(allPic(sk))skt='4 Picture';else if(s.si!=null){const sp=skSplits(sk)[s.si];skt=`Bottom ${ctxt(sp.hi)} ${skLabN(sp.kh)} · Top ${ctxt(sp.lo)} <b>${skLab(sp.kl)}</b>`}
  const a=niuAw(nn);
- return [`${ctxt([h[0]])}`,`${ctxt(bac)} ${bEval(bac).lab}`,skt,`${ctxt(nn)} ${a.m?a.n+' ×'+a.m:niuLab(s.np?niuKeyPick(nn,s.np):niuKey(nn).k)}`,`${(()=>{const c7=[...nn,...g.comm];return s.cp?ctxt(s.cp.map(i=>c7[i]))+' '+cLab(p5(s.cp.map(i=>c7[i]))):cLab(best7(c7))})()}`]}
+ return [`${ctxt([h[0]])}`,`${ctxt(bac)} ${bEval(bac).lab}`,skt,`${ctxt(nn)} ${niuLabEff(a,s.np?niuKeyPick(nn,s.np):niuKey(nn).k)}`,`${(()=>{const c7=[...nn,...g.comm];return s.cp?ctxt(s.cp.map(i=>c7[i]))+' '+cLab(p5(s.cp.map(i=>c7[i]))):cLab(best7(c7))})()}`]}
 const RN5=['High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
 function resultsHTML(v){const g=v.game,me=ME.pid,isB=v.banker===me,bk=roundHands(v.banker);let html='';
  if(!isB&&g.seats[me]){const s=g.seats[me],mine=roundHands(me);
@@ -414,7 +414,7 @@ function histRound(G,names,banker,r){const seats=[banker,...G.order].filter(p=>G
   else if(r===3){const sk=h.slice(0,4);if(known(sk)&&s.si!=null){const sp=skSplits(sk)[s.si];cards=`<div class="hgrp"><span class="hz">Bottom</span>${hRow(sp.hi)}</div><div class="hgrp"><span class="hz">Top</span>${hRow(sp.lo)}</div>`;lab=allPic(sk)?'4 Picture':`${skLabN(sp.kh)} / ${skLab(sp.kl)}`}else cards=hRow(sk)}
   else if(r===4){const nn=h.slice(0,5);if(known(nn)&&nn.length===5){const a=niuAw(nn);const np=s.np&&s.np.length===3?s.np:null;
     cards=np?`<div class="hgrp">${hRow(np.map(i=>nn[i]))}</div><div class="hgrp">${hRow([0,1,2,3,4].filter(i=>!np.includes(i)).map(i=>nn[i]))}</div>`:hRow(nn);
-    lab=a.m?`${a.n} ×${a.m}`:niuLab(np?niuKeyPick(nn,np):(s.np&&s.np.length===0?[0,0]:niuKey(nn).k))}else cards=hRow(nn)}
+    lab=niuLabEff(a,np?niuKeyPick(nn,np):(s.np&&s.np.length===0?[0,0]:niuKey(nn).k))}else cards=hRow(nn)}
   else if(r===5){const nn=h.slice(0,5);if(known(nn)&&G.comm&&G.comm.length===2){const c7=[...nn,...G.comm],cp=new Set(s.cp||best7Pick(c7));cards=hRow(c7,i=>(cp.has(i)?'used':'unused')+(i>=5?' comm':''));lab=cLab(p5([...cp].map(i=>c7[i])))}else cards=hRow(nn)}
   let res='';if(isB){const tot=G.order.reduce((a,q)=>a-(G.seats[q].r[r-1]||0)*G.seats[q].bet,0);res=`<b class="${tot>0?'pos':tot<0?'neg':''}">${sgn(tot)}</b>`}
   else{const m=s.r[r-1]||0;res=r===2&&s.open===false?'<span class="zero">push</span>':`<b class="${m>0?'pos':m<0?'neg':''}">${m>0?'+':''}${m}× · ${sgn(m*s.bet)}</b>`}

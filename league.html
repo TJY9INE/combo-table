@@ -95,6 +95,7 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
 <div class="sheet" id="sheet"><div class="sin" id="sheetIn"></div></div>
 <script>
 const SB_URL='https://zdikuwkuvnonlytaaera.supabase.co';
+const SB_KEY='sb_publishable_6z-CgA9sueQZ-mmN-nnG2w_5Xv2jOlp';
 const FN=SB_URL+'/functions/v1/game';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -118,7 +119,7 @@ const PAL=['#7fd3ff','#ff8a80','#7ee2a8','#c39bff','#ffb86b','#ff7eb6','#5eead4'
 let LG=null,V=null,SEL=null,pollT=null,tab='map';
 try{LG=JSON.parse(localStorage.getItem('ct.league')||'null')}catch(e){}
 function toast(t,ms=2000){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),ms)}
-async function api(a,extra={}){const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({a},LG?{league:LG.league,mid:LG.mid,token:LG.token}:{},extra))});const j=await r.json();if(j.error)throw new Error(j.error);return j}
+async function api(a,extra={}){const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY},body:JSON.stringify(Object.assign({a},LG?{league:LG.league,mid:LG.mid,token:LG.token}:{},extra))});let j;try{j=await r.json()}catch(e){throw new Error('Server busy — try again')}if(j.error||j.message&&!j.view)throw new Error(j.error||j.message);return j}
 function saveLG(){try{localStorage.setItem('ct.league',JSON.stringify(LG))}catch(e){}}
 const qs=new URLSearchParams(location.search);if(qs.get('code')){$('jCode').value=qs.get('code').toUpperCase();if(LG&&LG.league!==qs.get('code').toUpperCase())LG=null}
 $('jName').value=$('cName').value=localStorage.getItem('ct.name')||'';
