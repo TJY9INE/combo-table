@@ -174,7 +174,8 @@ function seatHand(pid,s,size,mine){const g=V.game;let groups=[s.hand.map((c,i)=>
  // regroup when splits/niu revealed
  if(g.round===3&&s.si!=null&&s.hand.every(c=>c!=null)&&(g.phase==='r3done'||mine)){const sp=skSplits(s.hand)[s.si];groups=[sp.hi.map(c=>s.hand.indexOf(c)),sp.lo.map(c=>s.hand.indexOf(c))]}
  if(g.round===4&&s.np&&s.np.length===3&&s.hand.every(c=>c!=null)&&g.phase!=='r4set'){groups=[s.np,[0,1,2,3,4].filter(i=>!s.np.includes(i))]}else if(g.round===4&&g.phase!=='r4peek'&&g.phase!=='r4set'&&s.hand.length===5&&s.hand.every(c=>c!=null)&&!niuAw(s.hand).m){const nk=niuKey(s.hand);if(nk.grp)groups=[nk.grp.three.map(c=>s.hand.indexOf(c)),nk.grp.two.map(c=>s.hand.indexOf(c))]}
- let k=0;return groups.map(gr=>`<div class="grp" style="display:flex">${gr.map(i=>{const c=s.hand[i];const face=c!=null&&(!mine||peeked.has(c));return cardEl(pid+':'+i,c,face,k++,mine&&c!=null&&!peeked.has(c))}).join('')}</div>`).join('<div class="gsep"></div>')}
+ let used=null;if(g.round===5&&s.hand.length===5&&s.hand.every(c=>c!=null)&&g.comm&&g.comm.length===2){const c7=[...s.hand,...g.comm];const cp=s.cp||best7Pick(c7);used=new Set(cp)}
+ let k=0;return groups.map(gr=>`<div class="grp" style="display:flex">${gr.map(i=>{const c=s.hand[i];const face=c!=null&&(!mine||peeked.has(c));const el=cardEl(pid+':'+i,c,face,k++,mine&&c!=null&&!peeked.has(c));return used?el.replace('class="slot','class="slot '+(used.has(i)?'cused':'cunused')):el}).join('')}</div>`).join('<div class="gsep"></div>')}
 function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!==ME.pid||h.every(c=>peeked.has(c)));
  if(g.round===2&&g.phase!=='r2done'&&!vis)return s.pok?'Pok!':(g.phase==='r2bank'||g.phase==='r2turn')&&s.drew?'3 cards':'';
  if(!vis&&g.round>=2)return g.round===3&&g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';
@@ -182,7 +183,7 @@ function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!
  if(g.round===2)return bEval(h).lab;
  if(g.round===3){if(s.si==null)return g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';if(allPic(h))return '4 Picture ×7';const sp=skSplits(h)[s.si];return `${skLabN(sp.kh)} / ${skLab(sp.kl)}`}
  if(g.round===4){const st_=g.seats[pid];if(g.phase==='r4set')return pid===ME.pid?'':(st_.nset?'✓ arranged':'arranging…');if(g.phase==='r4peek'&&pid!==ME.pid)return '';const a=niuAw(h);return a.m?`${a.n} ×${a.m}`:niuLab(st_.np?niuKeyPick(h,st_.np):niuKey(h).k)}
- if(g.round===5){const st_=g.seats[pid];if(g.phase==='r5set')return pid===ME.pid?'':(st_.cset?'✓ arranged':'arranging…');const c7=[...h,...g.comm];return cLab(st_.cp?p5(st_.cp.map(i=>c7[i])):best7(c7))}return ''}
+ if(g.round===5){const st_=g.seats[pid];if(g.phase==='r5set')return pid===ME.pid?'':(st_.cset?'✓ arranged':'arranging…');const c7=[...h,...g.comm];const cp=st_.cp||best7Pick(c7);const nc=cp.filter(i=>i>=5).length;return cLab(p5(cp.map(i=>c7[i])))+` · ${nc?'+'+nc+' comm':'own 5'}`}return ''}
 const PN=pid=>{const p=V.players.find(x=>x.pid===pid);return p?p.name:'?'};
 const RNM=['Bets','High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
 function renderTable(){show('table');const v=V,g=v.game;if(g&&(g.round+':'+v.gameNo)!==LOGR){LOGR=g.round+':'+v.gameNo;LOG=[]}clearGhosts();const isB=v.banker===ME.pid;const SPEC=!g.seats[ME.pid];const meS=g.seats[ME.pid]||{hand:[],r:[0,0,0,0,0],bet:0,pub:[]};if(autoReveal&&!SPEC)meS.hand.forEach(c=>{if(c!=null)peeked.add(c)});if(g.phase!=='r2bank'){BK=null}if(g.phase!=='r3set')arranging=null;
