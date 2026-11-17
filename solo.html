@@ -349,7 +349,7 @@ body.fast .slot,body.fast .cd,body.fast .card{transition-duration:.22s!important
 </div>
 
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
-<script src="fx.js?v=2611180200c"></script>
+<script src="fx.js?v=2611180215r"></script>
 <script>
 
 /* ---------- cards ---------- */
@@ -602,13 +602,14 @@ function regroup(s,groups,size){s.handEl.innerHTML='';s.els={};groups.forEach((g
 function flyChips(fromEl,toEl,n=3,val=5){const a=fromEl.getBoundingClientRect(),b=toEl.getBoundingClientRect();
  for(let i=0;i<n;i++){const c=document.createElement('span');c.className=`chip c${val} fly`;c.textContent=val;c.style.left=(a.left+a.width/2-12)+'px';c.style.top=(a.top+a.height/2-12)+'px';document.body.appendChild(c);
   setTimeout(()=>{c.style.transform=`translate(${b.left+b.width/2-a.left-a.width/2+(i-1)*6}px,${b.top+b.height/2-a.top-a.height/2}px)`;c.style.opacity='.9'},20+i*70);setTimeout(()=>c.remove(),700+i*70)}}
-function floatOn(s,txt,cls){const f=document.createElement('div');f.className='float '+cls;f.textContent=txt;s.root.appendChild(f);setTimeout(()=>f.remove(),1700)}
+function floatOn(s,txt,cls){const f=document.createElement('div');f.className='float '+cls;f.innerHTML=txt;s.root.appendChild(f);setTimeout(()=>f.remove(),1700)}
 async function settle(p,m,ri){p.r[ri]=m;const amt=m*p.bet;
  if(G.me===p)G.bank+=amt;else if(G.me===G.B)G.bank-=amt;
  const bEl=(G.B.me&&$('btray'))||G.B.root,pEl=p.root;
- if(m>0){flyChips(bEl,pEl,Math.min(5,m+1),chipsFor(p.bet)[0]);floatOn(p,`+${m}× ${money(amt)}`,'w')}
- else if(m<0){flyChips(pEl,bEl,Math.min(5,-m+1),chipsFor(p.bet)[0]);floatOn(p,`${m}× -${money(-amt)}`,'l')}
+ if(m>0){flyChips(bEl,pEl,Math.min(5,m+1),chipsFor(p.bet)[0]);floatOn(p,FX.money(amt)+`<span class="fm">×${m}</span>`,'w')}
+ else if(m<0){flyChips(pEl,bEl,Math.min(5,-m+1),chipsFor(p.bet)[0]);floatOn(p,FX.money(amt)+`<span class="fm">×${-m}</span>`,'l')}
  else floatOn(p,'Push','p');
+ G.brt=(G.brt||0)-amt;clearTimeout(G.brtT);G.brtT=setTimeout(()=>{const t=G.brt;G.brt=0;floatOn(G.B,(G.B.me?'Round ':'Banker ')+(t?FX.money(t):'even'),t>0?'w':t<0?'l':'p')},650);
  const mine=G.me===p?amt:G.me===G.B?-amt:null;
  if(mine!=null){if(mine>0){snd(m>=3?'big':'win')}else if(mine<0)snd('lose');else snd('push')}else snd('chip');
  if(!p.me&&m!==0&&Math.random()<0.55)say(p,m>0?pick(p.win):pick(p.lose));
@@ -896,11 +897,14 @@ async function endGame(delta){
   ks.forEach(k=>{if(!s.ach[k])got.push(FX.achName(k));s.ach[k]=(s.ach[k]||0)+1})}
  if(got.length&&FX.haptic)FX.haptic(3);
  save();
- const rows=G.P.map(p=>`<tr class="${p.me?'mine':''}"><td>${p.e} ${p.n} $${p.bet}</td>${p.r.map(v=>`<td class="${v>0?'pos':v<0?'neg':'zero'}">${v}</td>`).join('')}<td><b>${fmt(p.r.reduce((a,b)=>a+b,0)*p.bet)}</b></td></tr>`).join('');
- const bt=-G.P.reduce((a,p)=>a+p.bet*p.r.reduce((x,y)=>x+y,0),0);
- $('sheetIn').innerHTML=`<h2>${delta>0?'You win!':delta<0?'Tough game':'Break even'}</h2><div class="big ${delta>0?'pos':delta<0?'neg':''}">${fmt(delta)}</div>
+ const bt=-G.P.reduce((a,p)=>a+p.bet*p.r.reduce((x,y)=>x+y,0),0);const RN5=['High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
+ const bkR=[0,1,2,3,4].map(i=>-G.P.reduce((a,p)=>a+p.r[i]*p.bet,0));
+ const mine=isB?FX.roundsHTML('Your rounds as banker',RN5.map((n,i)=>({n,amt:bkR[i],detail:`beat ${G.P.filter(p=>p.r[i]<0).length} · lost to ${G.P.filter(p=>p.r[i]>0).length}`})),bt)
+  :FX.roundsHTML(`Your rounds · bet $${me.bet.toLocaleString()}`,RN5.map((n,i)=>({n,mult:me.r[i],amt:me.r[i]*me.bet})),delta);
+ const people=[{name:`${G.B.e} ${G.B.n}`,role:'Banker',net:bt,rs:bkR,me:isB},...G.P.map(p=>({name:`${p.e} ${p.n}`,role:`Bet $${p.bet.toLocaleString()}`,net:p.r.reduce((a,b)=>a+b,0)*p.bet,rs:p.r,me:p.me}))];
+ $('sheetIn').innerHTML=`<h2>${delta>0?'You win!':delta<0?'Tough game':'Break even'}</h2><div class="big ${delta>0?'pos':delta<0?'neg':''}">${FX.money(delta)}</div>
   ${got.map(g=>`<div class="newach">🏆 Badge unlocked: ${g}</div>`).join('')}
-  <table class="t"><tr><th>Seat</th><th>HC</th><th>Bac</th><th>SKP</th><th>Niu</th><th>Cmb</th><th>$</th></tr>${rows}<tr class="${isB?'mine':''}"><td>${G.B.e} <b>${G.B.n} (Banker)</b></td><td colspan="5"></td><td><b>${fmt(bt)}</b></td></tr></table>
+  ${mine}<div class="rhead" style="margin-top:12px">Table</div>${FX.peopleHTML(people)}
   <div style="text-align:center;font-size:13px;color:#a89a7a;margin:10px 0">Bank ${money(G.bank)} · Streak ${s.streak}</div>
   <div class="arow" style="display:flex;gap:8px"><button class="gold" id="againBtn" style="flex:1">Play again</button><button class="green" id="swapBtn" style="flex:1">${isB?'Sit as Player':'Be the Banker'}</button></div>
   <button class="ghost" id="lobbyBtn" style="width:100%;margin-top:8px">Lobby</button>`;

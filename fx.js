@@ -106,3 +106,23 @@ FX.seasonHTML=(S,meName,fmt)=>{const L=Object.values(S||{}).filter(x=>x.games>0)
  return `<div class="titles">${T.map(t=>`<div class="ttl"><b>${t.e} ${t.t}</b><span>${t.name}</span></div>`).join('')}</div>
  <table class="t"><tr><th>#</th><th>Player</th><th>Games</th><th>Net</th><th>🏅</th></tr>${L.map((x,i)=>`<tr class="${me===x?'mine':''}"><td>${i===0?'👑':i+1}</td><td>${x.name}</td><td>${x.games}</td><td class="${x.net>0?'pos':x.net<0?'neg':''}"><b>${fmt(x.net)}</b></td><td>${Object.keys(x.ach||{}).length}/${FX.ACH.length}</td></tr>`).join('')}</table>
  ${me?`<h3 style="margin:14px 0 4px">Your badges</h3>${FX.badges(me.ach)}`:''}`};
+
+/* ---- clean results ---- */
+FX.money=v=>{v=Math.round(v||0);return (v>0?'+':v<0?'−':'')+'$'+Math.abs(v).toLocaleString()};
+FX.pill=(amt,mult)=>amt>0?`<span class="rp w">${FX.money(amt)}${mult&&Math.abs(mult)>1?`<small>×${Math.abs(mult)}</small>`:''}</span>`:amt<0?`<span class="rp l">${FX.money(amt)}${mult&&Math.abs(mult)>1?`<small>×${Math.abs(mult)}</small>`:''}</span>`:'<span class="rp p">Push</span>';
+/* rounds:[{n,detail,amt,mult}] */
+FX.roundsHTML=(title,rounds,net)=>`<div class="rlist"><div class="rhead">${title}</div>${rounds.map(r=>`<div class="rrow"><div class="rl"><b>${r.n}</b>${r.detail?`<div class="rd">${r.detail}</div>`:''}</div>${FX.pill(r.amt,r.mult)}</div>`).join('')}<div class="rrow rtot"><div class="rl"><b>Total</b></div>${FX.pill(net)}</div></div>`;
+/* people:[{name,role,bet,net,rs:[mult...],me}] */
+FX.peopleHTML=people=>`<div class="plist">${people.map(p=>`<div class="prow ${p.me?'mine':''}"><div class="pn">${p.name}<div class="rd">${p.role}</div></div><div class="pdots">${(p.rs||[]).map(x=>`<i class="${x>0?'w':x<0?'l':'p'}"></i>`).join('')}</div>${FX.pill(p.net)}</div>`).join('')}</div>`;
+(function(){const s=document.createElement('style');s.textContent=`
+.rlist,.plist{margin:10px 0 4px;text-align:left}
+.rhead{font-size:12px;color:#a89a7a;margin:0 2px 4px;text-transform:uppercase;letter-spacing:.6px}
+.rrow,.prow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid #ffffff14}
+.rl,.pn{flex:1;min-width:0}.rl b{font-size:14.5px}.rd{font-size:11.5px;color:#9fb0a8;margin-top:2px;line-height:1.3;overflow:hidden;text-overflow:ellipsis}
+.rtot{border-top:2px solid #ffffff30}.rtot b{font-size:15.5px}
+.rp{font-weight:900;font-size:15px;padding:4px 10px;border-radius:10px;white-space:nowrap;min-width:78px;text-align:center}
+.rp small{font-size:10.5px;font-weight:700;opacity:.8;margin-left:4px}
+.rp.w{background:#16402a;color:#7ee2a8;border:1px solid #2b8a5a}.rp.l{background:#3d1717;color:#ff9a90;border:1px solid #8a2f2f}.rp.p{background:#232b27;color:#a9b8b0;border:1px solid #33403a;font-weight:700}
+.prow.mine .pn{color:#7fd3ff;font-weight:800}.pn{font-size:14px}
+.pdots{display:flex;gap:3px}.pdots i{width:9px;height:9px;border-radius:50%;display:block}.pdots i.w{background:#3ccf7a}.pdots i.l{background:#e05a4f}.pdots i.p{background:#55625c}
+.float .fm{font-size:.72em;opacity:.85;margin-left:3px}`;document.head.appendChild(s)})();

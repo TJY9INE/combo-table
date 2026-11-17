@@ -349,14 +349,15 @@ function bindDrag(el){const c=+el.dataset.c,zone=$('meZone');let sx=null,sy,drag
  el.onpointercancel=()=>{sx=null;window.__drag=false;if(ghost){ghost.remove();ghost=null}el.style.opacity=''}}
 
 /* ================= events → chips & sounds ================= */
-function playEvents(evs){let mineTot=0,any=false,bestM=0,worstM=0;const nm=pid=>(PN(pid)||'').replace(/ \S+$/,'')||PN(pid);
+let BRT={};
+function playEvents(evs){BRT={};let mineTot=0,any=false,bestM=0,worstM=0;const nm=pid=>(PN(pid)||'').replace(/ \S+$/,'')||PN(pid);
  for(const e of evs){
   if(e.t==='ach'){if(e.pid===ME.pid){toast('🏆 '+e.keys.map(FX.achName).join(' · '),2600);FX.haptic(3)}else toast(`🏆 ${nm(e.pid)}: ${e.keys.map(FX.achName).join(' · ')}`,2200);continue}
   if(e.t==='season'){toast('🏆 New season started');continue}
   if(e.t==='duelend'){const w=e.winner===ME.pid;if(w){FX.big&&FX.big('🏰 CONQUERED!','');FX.haptic(9)}else FX.big&&FX.big('🛡 DEFENDED','',true);continue}
   if(e.t==='emote'){const el=e.pid===ME.pid?$('me'):document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el){const d=document.createElement('div');d.className='emo';d.textContent=e.e;el.appendChild(d);setTimeout(()=>d.remove(),1900)}continue}
   if(e.t==='settle'){any=true;const el=document.querySelector(`.seat[data-pid="${e.pid}"]`)||(e.pid===ME.pid?$('me'):null);const bEl=V.banker===ME.pid?($('btray')||$('me')):document.querySelector(`.seat[data-pid="${V.banker}"]`);
-   if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(8,e.m+2));else if(e.m<0)fly(el,bEl,Math.min(8,-e.m+2));floatOn(el,e.m>0?`+${e.m}× ${sgn(e.amt)}`:e.m<0?`${e.m}× ${sgn(e.amt)}`:'Push',e.m>0?'w':e.m<0?'l':'p')}
+   if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(8,e.m+2));else if(e.m<0)fly(el,bEl,Math.min(8,-e.m+2));floatOn(el,e.m?FX.money(e.amt)+`<span class="fm">×${Math.abs(e.m)}</span>`:'Push',e.m>0?'w':e.m<0?'l':'p');if(V.banker!==ME.pid||true){BRT[e.ri]=(BRT[e.ri]||0)-e.amt}}
    if(e.pid===ME.pid&&e.ri===1&&V.game.seats[ME.pid]&&V.game.seats[ME.pid].pok&&e.m>0){FX.big('POK!',`+${e.m}×`);FX.flash('#ffd76a');FX.vibe(120);FX.haptic(2,90)}
    if(e.pid===ME.pid){mineTot+=e.amt;bestM=Math.max(bestM,e.m);worstM=Math.min(worstM,e.m)}if(V.banker===ME.pid){mineTot-=e.amt;bestM=Math.max(bestM,-e.m);worstM=Math.min(worstM,-e.m)}
    if(Math.abs(e.m)>=3&&V.game&&e.ri===V.game.round-1)LOG.push(`${nm(e.pid)} ${e.m>0?'wins':'loses'} ${Math.abs(e.m)}×`);continue}
@@ -368,11 +369,12 @@ function playEvents(evs){let mineTot=0,any=false,bestM=0,worstM=0;const nm=pid=>
  if(LOG.length>12)LOG=LOG.slice(-12);const ll=$('logline');if(ll)ll.textContent=LOG.slice(-2).join(' · ');
  if(any){if(mineTot>0)snd(bestM>=3?'big':'win');else if(mineTot<0)snd('lose');else snd('chip');
   if(bestM>=3)FX.celebrate(bestM,sgn(mineTot),$('me'));else if(worstM<=-5)FX.celebrate(worstM,'',$('me'))}
+ {const bEl=V.banker===ME.pid?$('me'):document.querySelector(`.seat[data-pid="${V.banker}"]`);const ks=Object.keys(BRT);if(bEl&&ks.length){const t=ks.reduce((x,k)=>x+BRT[k],0);setTimeout(()=>floatOn(bEl,(V.banker===ME.pid?'Round ':'Banker ')+(t?FX.money(t):'even'),t>0?'w':t<0?'l':'p'),450)}}
  if(V.game&&V.game.actor===ME.pid&&!window._turnPinged){window._turnPinged=true;snd('turn');FX.vibe([80,40,80])}
  if(V.game&&V.game.actor!==ME.pid)window._turnPinged=false}
 function fly(a_,b_,n){const a=a_.getBoundingClientRect(),b=b_.getBoundingClientRect();for(let i=0;i<n;i++){if(i<3)setTimeout(()=>snd('chip'),120+i*70);const c=document.createElement('span');c.className='chip c5 fly';c.textContent='';c.style.left=(a.left+a.width/2-12)+'px';c.style.top=(a.top+a.height/2-12)+'px';document.body.appendChild(c);
  setTimeout(()=>{c.style.transform=`translate(${b.left+b.width/2-a.left-a.width/2+(i-1)*6}px,${b.top+b.height/2-a.top-a.height/2}px)`;c.style.opacity='.9'},20+i*70);setTimeout(()=>c.remove(),700+i*70)}}
-function floatOn(el,txt,cls){const f=document.createElement('div');f.className='float '+cls;f.textContent=txt;el.appendChild(f);setTimeout(()=>f.remove(),1700)}
+function floatOn(el,txt,cls){const f=document.createElement('div');f.className='float '+cls;f.innerHTML=txt;el.appendChild(f);setTimeout(()=>f.remove(),1700)}
 function bubble(el,t){const b=document.createElement('div');b.className='bubble';b.textContent=t;el.appendChild(b);setTimeout(()=>b.remove(),1500)}
 
 /* ================= summary ================= */
@@ -384,6 +386,15 @@ function roundHands(pid){const g=V.game,s=g.seats[pid];if(!s)return null;const h
  let skt='?';if(allPic(sk))skt='4 Picture';else if(s.si!=null){const sp=skSplits(sk)[s.si];skt=`Bottom ${ctxt(sp.hi)} ${skLabN(sp.kh)} · Top ${ctxt(sp.lo)} <b>${skLab(sp.kl)}</b>`}
  const a=niuAw(nn);
  return [`${ctxt([h[0]])}`,`${ctxt(bac)} ${bEval(bac).lab}`,skt,`${ctxt(nn)} ${a.m?a.n+' ×'+a.m:niuLab(s.np?niuKeyPick(nn,s.np):niuKey(nn).k)}`,`${(()=>{const c7=[...nn,...g.comm];return s.cp?ctxt(s.cp.map(i=>c7[i]))+' '+cLab(p5(s.cp.map(i=>c7[i]))):cLab(best7(c7))})()}`]}
+const RN5=['High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
+function resultsHTML(v){const g=v.game,me=ME.pid,isB=v.banker===me,bk=roundHands(v.banker);let html='';
+ if(!isB&&g.seats[me]){const s=g.seats[me],mine=roundHands(me);
+  html+=FX.roundsHTML(`Your rounds · bet $${s.bet.toLocaleString()}`,RN5.map((n,i)=>({n,mult:s.r[i],amt:s.r[i]*s.bet,detail:mine&&bk?`You ${mine[i]}<br>Banker ${bk[i]}`:''})),delta(me))}
+ else if(isB){html+=FX.roundsHTML('Your rounds as banker',RN5.map((n,i)=>{const amt=-g.order.reduce((a,q)=>a+g.seats[q].r[i]*g.seats[q].bet,0);const w=g.order.filter(q=>g.seats[q].r[i]<0).length,l=g.order.filter(q=>g.seats[q].r[i]>0).length;
+  return {n,amt,detail:`${bk?bk[i]+'<br>':''}beat ${w} · lost to ${l}`}}),delta(me))}
+ const bkR=[0,1,2,3,4].map(i=>-g.order.reduce((a,q)=>a+g.seats[q].r[i]*g.seats[q].bet,0));
+ const people=[{name:esc(PN(v.banker)),role:'Banker',net:delta(v.banker),rs:bkR,me:isB},...g.order.map(q=>({name:esc(PN(q)),role:`Bet $${g.seats[q].bet.toLocaleString()}`,net:delta(q),rs:g.seats[q].r,me:q===me}))];
+ return html+`<div class="rhead" style="margin-top:12px">Table</div>`+FX.peopleHTML(people)}
 function breakdownHTML(){const g=V.game;if(!g)return '';const me=ME.pid,isB=V.banker===me,bk=roundHands(V.banker);if(!bk)return '';
  const res=x=>x>0?`<span class="pos">+${x}×</span>`:x<0?`<span class="neg">${x}×</span>`:'<span class="zero">Push</span>';
  const nm=['High Card','Baccarat','Sikipi','Niu Niu','Combo'];
@@ -434,7 +445,7 @@ function duelSummaryHTML(v){const d=v.duel;if(!d)return '';const A=v.players.fin
  if(d.over){const won=d.over.winner==='att';return `<div class="newach" style="${won?'':'background:#4a1d1d;color:#ffd0cc'}">${won?`🏰 You conquered ${esc(d.town)}!`:`🛡 ${esc(d.defName)} held ${esc(d.town)}`} · ${d.over.games} game${d.over.games>1?'s':''}</div>`}
  return `<div class="small" style="text-align:center;margin:8px 0">⚔️ Duel for <b>${esc(d.town)}</b> — You ${fmtc(A.chips)} vs ${esc(D.name)} ${fmtc(D.chips)} · next game deals automatically…</div>`}
 window.showSummary=()=>{const v=V;if(!v.game)return;const d=delta(ME.pid);
- $('sheetIn').innerHTML=`<h2>${d>0?'You win!':d<0?'Tough game':'Break even'}</h2><div class="big ${d>0?'pos':d<0?'neg':''}">${sgn(d)}</div>${duelSummaryHTML(v)}${myNewAch().map(k=>`<div class="newach">🏆 Badge unlocked: ${FX.achName(k)}</div>`).join('')}${summaryTable(v)}${breakdownHTML()}
+ $('sheetIn').innerHTML=`<h2>${d>0?'You win!':d<0?'Tough game':'Break even'}</h2><div class="big ${d>0?'pos':d<0?'neg':''}">${FX.money(d)}</div>${duelSummaryHTML(v)}${myNewAch().map(k=>`<div class="newach">🏆 Badge unlocked: ${FX.achName(k)}</div>`).join('')}${resultsHTML(v)}
  <div class="small" style="text-align:center;margin:10px 0">Your chips ${fmtc(v.players.find(p=>p.pid===ME.pid).chips)}</div><div class="arow"><button class="ghost" onclick="showHistory('cur')">📜 Replay</button><button class="ghost" onclick="showSeason()">🏆 Season</button>${v.duel?(v.duel.over?`<button class="gold" onclick="toLeague()">🏰 Back to League</button>`:`<button class="gold" onclick="$('sheet').classList.remove('on')">OK · next game ▶</button>`):`<button class="gold" onclick="$('sheet').classList.remove('on');renderRoom(true)">Back to room</button>`}</div>`;
  $('sheet').classList.add('on');snd(d>0?'big':d<0?'lose':'chip')};
 
