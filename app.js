@@ -90,7 +90,7 @@ $('sStartBtn').onclick=async()=>{try{await saveSettings(false);await api('start'
 $('tBack').onclick=()=>{if(V.phase!=='game'||V.game.phase==='summary')renderRoom(true);else if(V.host===ME.pid)hostControls();else toast('Game in progress — room menu after this game')};
 let roomOverride=false;
 function renderRoom(force){roomOverride=!!force;show('room');const v=V,isHost=v.host===ME.pid;if(isHost&&window._wasHost===false)toast('You are now the host');window._wasHost=isHost;
- $('rCode').textContent=v.code;$('rCount').textContent=`(${v.players.length}/8)`;
+ $('rCode').textContent=v.code;pushLabel();if(window.PUSH&&PUSH.state()==='on'&&window._pushRoom!==v.code){window._pushRoom=v.code;PUSH.resync(pushSend)}$('rCount').textContent=`(${v.players.length}/8)`;
  $('rPlayers').innerHTML=v.players.map(p=>`<div class="prow"><span class="dot ${p.online?'on':''}"></span><span>${esc(p.name)}${p.pid===ME.pid?' <span class="tg">YOU</span>':''}${p.pid===v.host?' <span class="tg">HOST</span>':''}${p.bot?' <span class="tg">BOT</span>':''}${p.pid===v.banker&&v.phase==='game'?' <span class="tg bk">BANKER</span>':''}</span><span class="ch">${fmtc(p.chips)}</span>${isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost topup" onclick="topUp('${p.pid}')">＋💰</button>`:''}${isHost&&!p.bot&&p.pid!==ME.pid?`<button class="ghost" style="padding:4px 9px;font-size:12px;color:#ff9a90" onclick="kick('${p.pid}')">Kick</button>`:''}</div>`).join('')+(isHost&&!(v.phase==='game'&&v.game.phase!=='summary')?`<button class="ghost resetall" onclick="resetChips()">🔄 Reset everyone's chips…</button>`:'');
  $('rHost').style.display=isHost?'block':'none';$('rGuest').style.display=isHost?'none':'block';
  const st=v.settings;
@@ -441,6 +441,11 @@ function histRender(){const cur=V.game&&V.game.round>=1?{G:V.game,names:Object.f
 window.showHistory=(src)=>{HIST={src:src||'cur',r:src==='last'?1:99};histRender();$('sheet').classList.add('on')};
 window.HIST=HIST;
 
+const pushSend=sub=>api('rsub',{sub});
+function pushLabel(){const st=window.PUSH?PUSH.state():'unsupported';const b=$('rPushBtn');if(b)b.textContent=st==='on'?'🔔 Alerts on':'🔕 Turn on alerts'}
+window.pushOn=async()=>{if(!window.PUSH)return;let st=PUSH.state();if(st==='on'){await PUSH.resync(pushSend);toast('🔔 Alerts are on for this room');return}
+ try{st=await PUSH.enable(pushSend)}catch(e){toast('Could not turn on alerts: '+e.message);return}
+ if(st==='on'){toast('🔔 Alerts on — we\'ll ping you when it\'s your turn');pushLabel()}else{$('sheetIn').innerHTML=PUSH.helpHTML(st)+`<div class="sfoot"><button class="gold play" onclick="$('sheet').classList.remove('on')">OK</button></div>`;$('sheet').classList.add('on')}};
 window.showSeason=()=>{const v=V;if(!v)return;const me=v.players.find(p=>p.pid===ME.pid);const isHost=v.host===ME.pid;
  $('sheetIn').innerHTML=`<h2>🏆 Season</h2>${FX.seasonHTML(v.season,me&&me.name,sgn)}<div class="arow" style="margin-top:12px">${isHost?`<button class="ghost" onclick="newSeason()">New season</button>`:''}<button class="gold" onclick="$('sheet').classList.remove('on')">Close</button></div>`;
  $('sheet').classList.add('on')};
@@ -465,7 +470,7 @@ window.showSummary=()=>{const v=V;if(!v.game)return;const d=delta(ME.pid),g=v.ga
 window.playAgain=async()=>{try{$('sheet').classList.remove('on');await api('start',{banker:V.banker})}catch(e){toast(e.message);renderRoom(true)}};
 
 /* ================= toggles & boot ================= */
-$('histBtn').onclick=()=>showHistory('cur');$('seasonBtn').onclick=()=>showSeason();$('rSeasonBtn').onclick=()=>showSeason();$('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classList.toggle('on',autoReveal);$('autoBtn').onclick=()=>{autoReveal=!autoReveal;localStorage.setItem('ct.auto',autoReveal?'1':'0');$('autoBtn').classList.toggle('on',autoReveal);toast(autoReveal?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON');if(V&&V.game)renderTable()};
+$('histBtn').onclick=()=>showHistory('cur');$('rPushBtn').onclick=()=>pushOn();$('seasonBtn').onclick=()=>showSeason();$('rSeasonBtn').onclick=()=>showSeason();$('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classList.toggle('on',autoReveal);$('autoBtn').onclick=()=>{autoReveal=!autoReveal;localStorage.setItem('ct.auto',autoReveal?'1':'0');$('autoBtn').classList.toggle('on',autoReveal);toast(autoReveal?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON');if(V&&V.game)renderTable()};
 $('hintBtn').onclick=()=>{hints=!hints;localStorage.setItem('ct.hints',hints?'1':'0');toast(hints?'💡 Hints on':'Hints off');renderTable()};
 $('muteBtn').onclick=()=>{mute=!mute;localStorage.setItem('ct.mute',mute?'1':'0');$('muteBtn').textContent=mute?'🔇':'🔊'};
 if(ME){if(qs.get('room')&&qs.get('room').toUpperCase()!==ME.code){/* invited elsewhere */ME=null;saveMe()}else{subscribe();refresh()}}
