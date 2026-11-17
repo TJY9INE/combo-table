@@ -59,7 +59,7 @@ function skBankerEV(D,P,M=300){const dset=new Set(D.hand);const ev=[0,0,0];
  return ev}
 function skRespond(){const D=S.dealer;S.players.forEach(p=>{p.ev=skEV(p,D.vis);if(!p.me)p.si=skEVBest(p.ev,p.spl)})}
 function skSettle(P,Ps,D,Ds){const pa=allPic(P),da=allPic(D);if(pa||da)return pa&&da?0:pa?7:-7;
- const h=cmpArr(Ps.kh,Ds.kh),l=cmpArr(Ps.kl,Ds.kl);if(h>0&&l>0)return skMult(Ps.kl);if(h<0&&l<0)return -skMult(Ds.kl);return 0}
+ const h=cmpArr(Ps.kh,Ds.kh),l=cmpArr(Ps.kl,Ds.kl);if(h>0&&l>=0||h>=0&&l>0)return skMult(Ps.kl);if(h<0&&l<=0||h<=0&&l<0)return -skMult(Ds.kl);return 0}
 
 /* ---------- R4 Niu Niu ---------- */
 const nv=c=>Math.min(rk(c)+1,10);const nvals=c=>{const v=nv(c);return(v==3||v==6)?[3,6]:[v]};

@@ -74,8 +74,8 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
   <div class="card"><b>Start a new league</b>
    <label>League name</label><input id="cLname" maxlength="24" placeholder="e.g. Kopi Kakis">
    <div class="row"><div><label>Your name</label><input id="cName" maxlength="16" placeholder="Name"></div><div style="flex:.6"><label>PIN (optional)</label><input id="cPin" maxlength="6" inputmode="numeric" type="password" placeholder="4–6 digits"></div></div><div class="small" style="margin-top:4px">A PIN lets you log back in on a new phone and stops others using your name.</div>
-   <div class="row"><div><label>Duel bankroll</label><input id="cBank" type="number" inputmode="numeric" value="1000"></div><div><label>Fixed bet</label><input id="cBet" type="number" inputmode="numeric" value="100"></div></div>
-   <div class="small" style="margin-top:6px">Each duel: both sides start with the bankroll, bet is fixed, banker alternates — play until someone can't cover a bet.</div>
+   <div class="row"><div><label>Duel bankroll</label><input id="cBank" type="number" inputmode="numeric" value="1000"></div><div><label>Starting bet</label><input id="cBet" type="number" inputmode="numeric" value="100"></div></div>
+   <div class="small" style="margin-top:6px">Each duel: both sides start with the bankroll, banker alternates, and the bet rises every game (1×, 2×, 3×…) until someone can't cover it.</div>
    <div style="margin-top:12px"><button class="green" id="cBtn">Create league</button></div></div>
   <div class="err" id="sErr"></div>
   <div style="text-align:center;margin-top:10px"><a href="/" style="color:#a89a7a;font-size:13px">← Back to tables</a></div>
@@ -136,7 +136,7 @@ async function refresh(){if(!LG)return;try{const j=await api('lstate');apply(j.v
 function colorOf(owner){if(!V)return '#56635c';if(owner===V.you)return '#e9c46a';if(String(owner).startsWith('bot:'))return '#3b4a43';const i=V.members.filter(m=>m.mid!==V.you).findIndex(m=>m.mid===owner);return PAL[(i<0?0:i)%PAL.length]}
 function apply(v){const prevLog=V?V.log.length&&V.log[V.log.length-1].t:0;V=v;$('start').style.display='none';$('main').style.display='';
  $('lName').textContent=v.name;$('lCode').textContent=v.code;const me=v.members.find(m=>m.mid===v.you);
- $('lSub').innerHTML=`${v.members.length} member${v.members.length>1?'s':''} · Duel: ${v.bank.toLocaleString()} bankroll, ${v.bet.toLocaleString()} bet${me?` · You hold <b style="color:var(--gold)">${me.land}</b> town${me.land===1?'':'s'}`:''}`;
+ $('lSub').innerHTML=`${v.members.length} member${v.members.length>1?'s':''} · Duel: ${v.bank.toLocaleString()} bankroll, bet ${v.bet.toLocaleString()} rising${me?` · You hold <b style="color:var(--gold)">${me.land}</b> town${me.land===1?'':'s'}`:''}`;
  // duel banner
  const iv=v.invite;const ivLeft=iv?Math.max(0,Math.ceil((iv.until-v.now)/1000)):0;
  $('duelBox').innerHTML=(iv?`<div class="duel" style="margin-bottom:8px;flex-wrap:wrap"><b>⚔️ ${esc(iv.fromName)} challenges you for ${esc(iv.town)}! <span class="small">${ivLeft}s</span></b><button class="gold" style="width:auto;padding:9px 14px" onclick="acceptInv()">Play live</button><button class="ghost" onclick="declineInv()">👻 Let ghost play</button></div>`:'')+(me&&me.duel?`<div class="duel"><b>⚔️ Duel in progress</b><button class="gold" style="width:auto;padding:9px 14px" onclick="resumeDuel()">Resume</button><button class="red" onclick="forfeit()">Forfeit</button></div>`:'');
@@ -162,7 +162,7 @@ window.pick=t=>{SEL=t;if(!MAP)drawMap();else if(GEO[t])MAP.panTo(GEO[t]);const T
  $('sheetIn').innerHTML=`<h2>${esc(t)}</h2><div class="small" style="margin-bottom:10px">Held by ${who}${T.def?` · defended ${T.def}×`:''}</div>
   ${mine?`<div class="small" style="margin:8px 0 14px">This is your town. Friends can attack it any time — your ghost defends it.</div>`:
   me&&me.duel?`<div class="small" style="margin:8px 0 14px">Finish your current duel first.</div>`:
-  `<div class="small" style="margin:8px 0 14px">Duel: you and the defender start with ${V.bank.toLocaleString()} chips, every game is a fixed ${V.bet.toLocaleString()} bet, banker alternates (defender banks first). First to go bust loses — win and ${esc(t)} is yours.</div>`}
+  `<div class="small" style="margin:8px 0 14px">Duel: you and the defender start with ${V.bank.toLocaleString()} chips, the bet rises every game — ${V.bet.toLocaleString()}, ${(V.bet*2).toLocaleString()}, ${(V.bet*3).toLocaleString()}… — banker alternates (defender banks first). First who can't cover the next bet loses (usually 2–4 games) — win and ${esc(t)} is yours.</div>`}
   ${!mine&&!(me&&me.duel)?(live?`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}',true)">⚔️ Challenge live</button><button class="green" onclick="attack('${t}')">👻 Fight ghost</button></div><div class="small" style="margin-bottom:10px">Live: ${esc(T.ownerName)} gets 45s to accept, else the ghost plays.</div>`:`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}')">⚔️ Attack ${esc(t)}</button></div>`):''}<div class="row"><button class="ghost" onclick="closeSheet()">Close</button></div>`;
  $('sheet').classList.add('on')};
 window.closeSheet=()=>{$('sheet').classList.remove('on');SEL=null;if(!MAP)drawMap()};

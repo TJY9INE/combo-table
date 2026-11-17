@@ -428,7 +428,7 @@ window.newSeason=async()=>{if(!confirmBox('Start a new season? Leaderboard and b
 function confirmBox(t){try{return window.confirm(t)}catch(e){return true}}
 function myNewAch(){const v=V;let i=v.events.length-1;const out=[];for(;i>=0;i--){const e=v.events[i];if(e.t==='start')break;if(e.t==='ach'&&e.pid===ME.pid)out.push(...e.keys)}return out}
 function duelBar(v){const el=$('duelBar');if(!el)return;const d=v.duel;if(!d){el.style.display='none';return}const A=v.players.find(p=>p.pid===d.attPid),D=v.players.find(p=>p.pid===d.defPid);if(!A||!D)return;
- el.style.display='flex';el.innerHTML=`<span>⚔️ <b>${esc(d.town)}</b> · game ${Math.min(30,(d.games||0)+(d.over?0:1))}</span><span>You <b>${fmtc(A.chips)}</b> vs ${esc(D.name)} <b>${fmtc(D.chips)}</b></span>`}
+ el.style.display='flex';el.innerHTML=`<span>⚔️ <b>${esc(d.town)}</b> · game ${Math.min(30,(d.games||0)+(d.over?0:1))} · bet <b>${fmtc(d.stake||d.bet)}</b></span><span>You <b>${fmtc(A.chips)}</b> vs ${esc(D.name)} <b>${fmtc(D.chips)}</b></span>`}
 window.toLeague=()=>{ME=null;saveMe();location.href='/league'};
 function duelSummaryHTML(v){const d=v.duel;if(!d)return '';const A=v.players.find(p=>p.pid===d.attPid),D=v.players.find(p=>p.pid===d.defPid);
  if(d.over){const won=d.over.winner==='att';return `<div class="newach" style="${won?'':'background:#4a1d1d;color:#ffd0cc'}">${won?`🏰 You conquered ${esc(d.town)}!`:`🛡 ${esc(d.defName)} held ${esc(d.town)}`} · ${d.over.games} game${d.over.games>1?'s':''}</div>`}
