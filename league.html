@@ -45,11 +45,11 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
 .pos{color:var(--win)}.neg{color:var(--lose)}
 .log div{font-size:12.5px;padding:6px 0;border-top:1px solid #1d2622;color:#cfdcd5}.log div:first-child{border-top:0}.log small{color:#6f7d76;margin-right:6px}
 /* sheet */
-.sheet{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;justify-content:center;z-index:50}.sheet.on{display:flex}
+.sheet{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;justify-content:center;z-index:2000}.sheet.on{display:flex}
 .sin{background:#121a16;border:1px solid #2e3b35;border-radius:20px 20px 0 0;padding:18px 16px max(18px,env(safe-area-inset-bottom));width:100%;max-width:520px;animation:up .2s}
 @keyframes up{from{transform:translateY(40px);opacity:0}}
 .sin h2{margin:0 0 4px;font-family:Georgia,serif;font-style:italic;color:var(--gold)}
-.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#1d2622;border:1px solid #3a4a42;padding:10px 14px;border-radius:12px;z-index:90;font-size:14px}
+.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#1d2622;border:1px solid #3a4a42;padding:10px 14px;border-radius:12px;z-index:3000;font-size:14px}
 .tabs{display:flex;gap:6px;margin:6px 0 10px}.tabs button{flex:1;padding:9px;border-radius:10px;background:#0f1411;color:#a89a7a;border:1px solid #26302b;font-weight:700}.tabs button.on{background:#1a1408;color:var(--gold);border-color:#4a3a16}
 .lmap{width:100%;height:58vh;min-height:360px;border-radius:18px;overflow:hidden;border:1px solid #1f3b47;background:#0b1418}
 .osmdark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6)}
@@ -63,6 +63,8 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
 .leaflet-control-attribution{font-size:9px!important;background:#0008!important;color:#aaa!important}.leaflet-control-attribution a{color:#ccc!important}
 .lm.inter .dot{border:2.5px solid #fff;box-shadow:0 0 0 2px #000a,0 2px 6px #000a}.lm.reach .dot{animation:rpulse 1.6s ease-in-out infinite}@keyframes rpulse{50%{box-shadow:0 0 0 6px #ff6b6b55,0 2px 6px #000a}}.lm .sw{position:absolute;top:-8px;left:-10px;font-size:11px}
 .lm .dot{width:30px;height:30px;font-size:9.5px}.zlo .lm .on{display:none}.zlo .lm .tn{display:none}.zlo .lm .dot{width:20px;height:20px;font-size:7px;border-width:1.5px}.zlo .lm .on{font-size:9px}.zhi .lm .dot{width:42px;height:42px;font-size:12px}.zhi .lm .tn{font-size:11px}
+.eco{display:flex;align-items:center;gap:8px;background:#121a16;border:1px solid #26302b;border-radius:14px;padding:9px 10px;margin:6px 0 8px}.eco .c{flex:1;font-size:13px;line-height:1.35}.eco .c b{color:#f6dc8f;font-size:15px}.stor{height:5px;background:#0b110e;border-radius:3px;margin-top:4px;overflow:hidden}.stor i{display:block;height:100%;background:linear-gradient(90deg,#b8892c,#f6dc8f)}
+.lm .wl{position:absolute;bottom:14px;right:-12px;font-size:10px;background:#0009;border-radius:6px;padding:0 3px;color:#fff}
 .mapbtns{display:flex;gap:6px;margin-top:8px}.mapbtns button{flex:1}
 </style></head><body>
 <div class="wrap">
@@ -87,9 +89,10 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
   <div class="top"><a href="/" class="ghost" style="text-decoration:none">☰</a><h1 id="lName">League</h1><button class="ghost" id="lPush" style="padding:7px 10px">🔕</button><span class="code" id="lCode" title="Tap to share">----</span></div>
   <div id="pushNag"></div>
   <div class="sub" id="lSub" style="text-align:left;margin:6px 0 4px"></div>
+  <div id="ecoBox"></div>
   <div id="duelBox"></div>
   <div class="tabs"><button class="on" data-t="map">🗺 Map</button><button data-t="board">🏆 Ranks</button><button data-t="log">📜 Activity</button></div>
-  <div id="tMap"><div class="lmap" id="lmap"></div><div class="map" id="map" style="display:none"></div><div class="mapbtns"><button class="ghost" onclick="fitAll()">🇸🇬 Whole island</button><button class="ghost" onclick="fitMine()">🏠 My land</button></div><div class="legend" id="legend"></div><div class="small" style="margin-top:8px">Pinch to zoom · ⚔️ pulsing stations are next to your land on an MRT line — attack those. ⭐ white-ring interchanges defend with 1.5× chips. You duel the owner's 👻 ghost (it plays for them while they're away). House bots hold unclaimed towns.</div></div>
+  <div id="tMap"><div class="lmap" id="lmap"></div><div class="map" id="map" style="display:none"></div><div class="mapbtns"><button class="ghost" onclick="fitAll()">🇸🇬 Whole island</button><button class="ghost" onclick="fitMine()">🏠 My land</button></div><div class="legend" id="legend"></div><div class="small" style="margin-top:8px">Pinch to zoom · ⚔️ pulsing stations are next to your land on an MRT line — attack those. ⭐ white-ring interchanges defend with 1.5× chips, 🧱 walls add +25% each. You duel the owner's 👻 ghost (it plays for them while they're away). House bots hold unclaimed towns.</div></div>
   <div id="tBoard" style="display:none"><div class="card"><div class="titles" id="titles"></div><table id="board"></table></div></div>
   <div id="tLog" style="display:none"><div class="card log" id="log"></div></div>
   <div style="text-align:center;margin-top:18px"><button class="ghost" id="leaveBtn" style="font-size:12px">Switch league</button></div>
@@ -124,7 +127,7 @@ function drawLeaflet(){const v=V,Lf=window.L;MLAYER.clearLayers();v.towns.forEac
  const anyMine=v.towns.some(t=>t.owner===v.you);
  for(const t of v.towns){const g=GEO[t.t];const c=colorOf(t.owner);const me=t.owner===v.you;const reach=t.reach&&anyMine;
   Lf.circle(g,{radius:t.inter?520:420,color:c,weight:me?2.5:reach?2:1,opacity:t.bot?(reach?.8:.3):.95,dashArray:reach&&!me?'4 4':null,fillColor:c,fillOpacity:t.bot?.07:me?.32:.24}).addTo(MLAYER).on('click',()=>pick(t.t));
-  const html=`<div class="lm ${t.bot?'bot':''} ${me?'me':''} ${reach?'reach':''} ${t.inter?'inter':''}"><div class="dot" style="background:${c}">${abbr(t.t)}</div><div class="tn">${esc(t.t)}</div>${t.bot?'':`<div class="on">${esc(t.ownerName)}</div>`}${t.def>=3?'<span class="sh">🛡</span>':''}${reach?'<span class="sw">⚔️</span>':''}</div>`;
+  const html=`<div class="lm ${t.bot?'bot':''} ${me?'me':''} ${reach?'reach':''} ${t.inter?'inter':''}"><div class="dot" style="background:${c}">${abbr(t.t)}</div><div class="tn">${esc(t.t)}</div>${t.bot?'':`<div class="on">${esc(t.ownerName)}</div>`}${t.wall?`<span class="wl">🧱${t.wall}</span>`:''}${reach?'<span class="sw">⚔️</span>':''}</div>`;
   Lf.marker(g,{icon:Lf.divIcon({className:'',html,iconSize:[0,0]})}).addTo(MLAYER).on('click',()=>pick(t.t))}
  if(!fitted){fitted=true;setTimeout(()=>{MAP.invalidateSize();if(v.towns.some(t=>t.owner===v.you))fitMine();else fitAll()},50)}}
 const PAL=['#7fd3ff','#ff8a80','#7ee2a8','#c39bff','#ffb86b','#ff7eb6','#5eead4','#a3e635','#fda4af','#93c5fd','#fcd34d','#d8b4fe'];
@@ -159,11 +162,23 @@ function apply(v){const prevLog=V?V.log.length&&V.log[V.log.length-1].t:0;V=v;$(
  $('lSub').innerHTML=`${v.members.length} member${v.members.length>1?'s':''} · Duel: ${v.bank.toLocaleString()} bankroll, ${v.bet.toLocaleString()} bet${me?` · You hold <b style="color:var(--gold)">${me.land}</b> town${me.land===1?'':'s'}`:''}`;
  // duel banner
  const iv=v.invite;const ivLeft=iv?Math.max(0,Math.ceil((iv.until-v.now)/1000)):0;
+ const E=v.eco;if(E){const fill=Math.min(100,Math.round(E.pending/Math.max(1,E.rate)*100));
+  $('ecoBox').innerHTML=`<div class="eco"><div class="c">🪙 <b>${E.coins.toLocaleString()}</b> coins${E.army?` · ⚔️ Army <b>+$${E.army.toLocaleString()}</b>`:''}<div class="small">Your stations make 🪙${E.rate.toLocaleString()}/day · storage ${fill}%${E.full?' — FULL':''}</div><div class="stor"><i style="width:${fill}%"></i></div></div>
+  <button class="gold" style="width:auto;padding:9px 11px;font-size:14px" ${E.pending<1?'disabled style="opacity:.5;width:auto;padding:9px 11px"':''} onclick="collect()">Collect +${E.pending.toLocaleString()}</button><button class="ghost" style="padding:9px 10px" onclick="armySheet()">⚔️</button></div>`}
  $('duelBox').innerHTML=(v.rentReady?`<div class="duel" style="background:linear-gradient(90deg,#2a2208,#1d1806);border-color:#b8892c;margin-bottom:8px"><b style="font-weight:600">🏦 Today's rent from your towns</b><button class="gold" style="width:auto;padding:9px 14px" onclick="collectRent()">Collect +$${v.rentAmt.toLocaleString()}</button></div>`:'')+(iv?`<div class="duel" style="margin-bottom:8px;flex-wrap:wrap"><b>⚔️ ${esc(iv.fromName)} challenges you for ${esc(iv.town)}! <span class="small">${ivLeft}s</span></b><button class="gold" style="width:auto;padding:9px 14px" onclick="acceptInv()">Play live</button><button class="ghost" onclick="declineInv()">👻 Let ghost play</button></div>`:'')+(me&&me.duel?`<div class="duel"><b>⚔️ Duel in progress</b><button class="gold" style="width:auto;padding:9px 14px" onclick="resumeDuel()">Resume</button><button class="red" onclick="forfeit()">Forfeit</button></div>`:'');
  if(iv&&!window._ivBuzz){window._ivBuzz=1;try{navigator.vibrate&&navigator.vibrate([80,60,80])}catch(e){}toast('⚔️ '+iv.fromName+' is attacking '+iv.town+'!',3000)}if(!iv)window._ivBuzz=0;
  drawMap();drawBoard();drawLog();
  const last=v.log.length?v.log[v.log.length-1]:null;if(prevLog&&last&&last.t!==prevLog)toast(last.text,2600);
  clearInterval(pollT);pollT=setInterval(refresh,document.hidden?15000:4000)}
+window.collect=async()=>{try{const j=await api('lcollect');apply(j.view);toast('🪙 +'+j.amt.toLocaleString()+' coins');try{navigator.vibrate&&navigator.vibrate(50)}catch(e){}}catch(e){toast(e.message)}};
+window.buildWall=async t=>{try{const j=await api('lwall',{town:t});apply(j.view);toast('🛡 Wall upgraded at '+t);pick(t)}catch(e){toast(e.message)}};
+window.hire=async amt=>{try{const j=await api('larmy',{amt});apply(j.view);toast('⚔️ Army +$'+amt.toLocaleString());armySheet()}catch(e){toast(e.message)}};
+window.armySheet=()=>{const E=V.eco||{coins:0,army:0};const b=V.bet,max=V.bank;const opts=[b,b*3,b*5].filter(x=>x<=max-E.army);
+ $('sheetIn').innerHTML=`<h2>⚔️ Army</h2><div class="small" style="margin-bottom:10px">Spend coins to bring extra chips into your <b>next attack</b> (1 coin = $1). Used up when you attack, win or lose. Max army: $${max.toLocaleString()}.</div>
+ <div style="font-size:15px;margin:6px 0">Army ready: <b style="color:#f6dc8f">+$${E.army.toLocaleString()}</b> · Coins: <b style="color:#f6dc8f">🪙${E.coins.toLocaleString()}</b></div>
+ <div class="row" style="margin:12px 0">${opts.map(x=>`<button class="gold" ${E.coins<x?'disabled style="opacity:.45"':''} onclick="hire(${x})">+$${x.toLocaleString()}</button>`).join('')||'<div class="small">Army is at max.</div>'}</div>
+ <div class="small">How to get coins: stations produce them daily (⭐ interchanges ×2.5). Win duels to loot 20% of the loser's coins.</div>
+ <div class="row" style="margin-top:12px"><button class="ghost" onclick="closeSheet()">Close</button></div>`;$('sheet').classList.add('on')};
 window.collectRent=async()=>{try{const j=await api('lrent');apply(j.view);toast('🏦 +$'+j.amt.toLocaleString()+' rent collected');try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}}catch(e){toast(e.message)}};
 window.acceptInv=async()=>{try{const j=await api('laccept');goRoom(j)}catch(e){toast(e.message);refresh()}};
 window.declineInv=async()=>{try{const j=await api('ldecline');apply(j.view);toast('Your ghost is defending 👻')}catch(e){toast(e.message);refresh()}};
@@ -182,10 +197,10 @@ window.pick=t=>{SEL=t;if(!MAP)drawMap();else if(GEO[t])MAP.panTo(GEO[t]);const T
  const linesHTML=`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 8px">${T.lines.map(l=>`<span style="background:${(LN[l]||['',''])[1]};color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800">${(LN[l]||[l])[0]}</span>`).join('')}${T.inter?'<span style="background:#fff;color:#111;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800">⭐ Interchange · defends with 1.5× chips</span>':''}</div>`;
  const blocked=!mine&&anyMine&&!T.reach;
  const who=T.bot?`🤖 ${esc(T.ownerName)} (house bot)`:`${esc(T.ownerName)}${mine?' (you)':live?' — 🟢 online now':' — you\'ll face their 👻 ghost'}`;
- $('sheetIn').innerHTML=`<h2>${esc(t)}</h2>${linesHTML}<div class="small" style="margin-bottom:10px">Held by ${who}${T.def?` · defended ${T.def}×`:''}</div>
-  ${mine?`<div class="small" style="margin:8px 0 14px">This is your town. Friends can attack it any time — your ghost defends it.</div>`:
+ $('sheetIn').innerHTML=`<h2>${esc(t)}</h2>${linesHTML}<div class="small" style="margin-bottom:6px">🧱 Wall level <b>${T.wall}/3</b> · defender starts with <b>$${T.defBank.toLocaleString()}</b> chips</div><div class="small" style="margin-bottom:10px">Held by ${who}${T.def?` · defended ${T.def}×`:''}</div>
+  ${mine?`<div class="small" style="margin:8px 0 10px">This is your station. Friends can attack it any time — your ghost defends it. Each wall level adds +25% to your starting chips.</div>${T.wallCost?`<button class="gold" style="margin-bottom:10px" ${(V.eco&&V.eco.coins<T.wallCost)?'disabled style="opacity:.5;margin-bottom:10px"':''} onclick="buildWall('${t}')">🛡 Upgrade wall to Lv${T.wall+1} · 🪙${T.wallCost.toLocaleString()}</button>`:'<div class="small" style="margin-bottom:10px">🧱 Max wall.</div>'}`:
   me&&me.duel?`<div class="small" style="margin:8px 0 14px">Finish your current duel first.</div>`:
-  `<div class="small" style="margin:8px 0 14px">Duel: you and the defender start with ${V.bank.toLocaleString()} chips, every game is a fixed ${V.bet.toLocaleString()} bet, banker alternates (defender banks first). First who can't cover a bet loses — win and ${esc(t)} is yours.</div>`}
+  `<div class="small" style="margin:8px 0 14px">Duel: you start with $${(V.bank+(V.eco?V.eco.army:0)).toLocaleString()}${V.eco&&V.eco.army?` (incl. ⚔️ army +$${V.eco.army.toLocaleString()})`:''}, the defender with $${T.defBank.toLocaleString()} chips. Win → loot 20% of their 🪙 coins. Every game is a fixed ${V.bet.toLocaleString()} bet, banker alternates (defender banks first). First who can't cover a bet loses — win and ${esc(t)} is yours.</div>`}
   ${blocked?`<div class="small" style="margin:8px 0 14px;color:#ff9a90">🚇 Not connected to your land. Take a station next to it on an MRT line first (pulsing ⚔️ stations).</div>`:''}${!mine&&!blocked&&!(me&&me.duel)?(live?`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}',true)">⚔️ Challenge live</button><button class="green" onclick="attack('${t}')">👻 Fight ghost</button></div><div class="small" style="margin-bottom:10px">Live: ${esc(T.ownerName)} gets 45s to accept, else the ghost plays.</div>`:`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}')">⚔️ Attack ${esc(t)}</button></div>`):''}<div class="row"><button class="ghost" onclick="closeSheet()">Close</button></div>`;
  $('sheet').classList.add('on')};
 window.closeSheet=()=>{$('sheet').classList.remove('on');SEL=null;if(!MAP)drawMap()};
@@ -202,7 +217,7 @@ function drawBoard(){const v=V;const L=v.members.slice().sort((a,b)=>b.land-a.la
  const d=wk(v.week.def);if(d&&d.m)T.push(['🛡','Wall of the week',d.m.name+' · '+d.n]);const n=top(m=>m.net+(m.tnet||0)+(m.rent||0));if(n)T.push(['💰','Top net',n.name+' · '+sgn(n.net+(n.tnet||0)+(n.rent||0))]);
  (v.lineOwn||[]).forEach(o=>T.push(['🚇',o.line+' Tycoon',o.name]));
  $('titles').innerHTML=T.length?T.map(t=>`<div class="ttl"><b>${t[0]} ${t[1]}</b>${esc(t[2])}</div>`).join(''):'<div class="small">Titles appear after the first duels.</div>';
- $('board').innerHTML=`<tr><th>#</th><th>Player</th><th>🏙</th><th>W–L</th><th>Net</th></tr>`+L.map((m,i)=>`<tr class="${m.mid===v.you?'mine':''}"><td>${i===0&&m.land?'👑':i+1}</td><td>${esc(m.name)}${m.online&&m.mid!==v.you?' 🟢':''}${m.duel?' ⚔️':''}</td><td>${m.land}</td><td>${m.w}–${m.l}</td><td class="${m.net+m.tnet+m.rent>0?'pos':m.net+m.tnet+m.rent<0?'neg':''}">${sgn(m.net+m.tnet+m.rent)}${m.tg?`<div class="small">${m.tg} table game${m.tg>1?'s':''}</div>`:''}</td></tr>`).join('')+`<tr><td colspan="5" class="small" style="text-align:left">Net = duels + league tables + rent. Collect rent once a day: $${Math.max(1,Math.round(v.bet*0.2))} per town, $${Math.max(1,Math.round(v.bet*0.5))} per ⭐ interchange. To count a friends' table, the host enters league code <b>${v.code}</b> in room settings.</td></tr>`}
+ $('board').innerHTML=`<tr><th>#</th><th>Player</th><th>🏙</th><th>W–L</th><th>Net</th></tr>`+L.map((m,i)=>`<tr class="${m.mid===v.you?'mine':''}"><td>${i===0&&m.land?'👑':i+1}</td><td>${esc(m.name)}${m.online&&m.mid!==v.you?' 🟢':''}${m.duel?' ⚔️':''}</td><td>${m.land}</td><td>${m.w}–${m.l}</td><td class="${m.net+m.tnet+m.rent>0?'pos':m.net+m.tnet+m.rent<0?'neg':''}">${sgn(m.net+m.tnet+m.rent)}${m.tg?`<div class="small">${m.tg} table game${m.tg>1?'s':''}</div>`:''}</td></tr>`).join('')+`<tr><td colspan="5" class="small" style="text-align:left">Net = duels + league tables. 🪙 Coins: stations make 🪙${v.bet} a day (⭐ interchanges 🪙${Math.round(v.bet*2.5)}), storage holds 1 day — collect daily. Spend on 🛡 walls and ⚔️ army. Win duels to loot 20% of the loser's coins. To count a friends' table, the host enters league code <b>${v.code}</b> in room settings.</td></tr>`}
 function ago(t){const s=Math.max(0,(V.now-t)/1000);return s<60?'now':s<3600?Math.floor(s/60)+'m':s<86400?Math.floor(s/3600)+'h':Math.floor(s/86400)+'d'}
 function drawLog(){$('log').innerHTML=V.log.length?V.log.slice().reverse().map(x=>`<div><small>${ago(x.t)}</small>${esc(x.text)}</div>`).join(''):'<div class="small">No activity yet.</div>'}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
