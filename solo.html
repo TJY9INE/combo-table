@@ -475,6 +475,7 @@ const ACH=[['pok','Pok 9'],['niuniu','Niu Niu+'],['pic4','4 Pictures'],['combo5'
 let G={bank:200,startBank:200,mute:false,hints:true,fast:false,st:{games:0,pG:0,pPl:0,bG:0,bPl:0,biggest:0,streak:0,best:0,ach:{}}};
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){G.bank=d.bank??200;G.startBank=d.startBank??200;G.st=Object.assign(G.st,d.st||{});G.mute=!!d.mute}}catch(e){}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify({bank:G.bank,startBank:G.startBank,st:G.st,mute:G.mute}))}catch(e){}}
+function rosterOrder(){const fav=['Chirag','Auntie Mag'];return [...fav.map(n=>ROSTER.find(r=>r.n===n)),...ROSTER.filter(r=>!fav.includes(r.n)).sort(()=>Math.random()-.5)]}
 const ROSTER=[
  {n:'Ah Seng',e:'🐯',style:'high',win:['Huat ah! 🧧','Easy money 😎','Steady lah'],lose:['Wah lau…','Sian 😩','Cannot be…']},
  {n:'Auntie Mag',e:'👵',style:'low',win:['Heng ah!','Ho seh liao','Aiyah, small win'],lose:['Aiyo…','Like that also can?','My kopi money!']},
@@ -511,7 +512,7 @@ function toast(t,ms=1600){const d=document.createElement('div');d.className='toa
 
 /* =================== table building =================== */
 function startTable(){G.abort=false;G.token={};show('table');$('hintBtn').classList.toggle('on',G.hints);$('muteBtn').textContent=G.mute?'🔇':'🔊';
- const roster=[...ROSTER].sort(()=>Math.random()-.5);
+ const roster=rosterOrder();
  G.ai=roster.slice(0,G.role=='player'?G.N-1:G.N).map(r=>Object.assign({},r,{lastBet:0,lastRes:0}));
  runLoop()}
 async function runLoop(){while(!G.abort){const r=await playGame();if(r=='lobby'||G.abort)break}}
@@ -896,7 +897,7 @@ async function endGame(delta){
   <button class="ghost" id="lobbyBtn" style="width:100%;margin-top:8px">Lobby</button>`;
  $('sheet').classList.add('on');snd(delta>0?'big':delta<0?'lose':'push');
  return new Promise(res=>{const close=v=>{$('sheet').classList.remove('on');res(v)};
-  $('againBtn').onclick=()=>close('again');$('swapBtn').onclick=()=>{G.role=isB?'player':'banker';const roster=[...ROSTER].sort(()=>Math.random()-.5);G.ai=roster.slice(0,G.role=='player'?G.N-1:G.N).map(r=>Object.assign({},r,{lastBet:0,lastRes:0}));close('swap')};
+  $('againBtn').onclick=()=>close('again');$('swapBtn').onclick=()=>{G.role=isB?'player':'banker';const roster=rosterOrder();G.ai=roster.slice(0,G.role=='player'?G.N-1:G.N).map(r=>Object.assign({},r,{lastBet:0,lastRes:0}));close('swap')};
   $('lobbyBtn').onclick=()=>{G.abort=true;close('lobby');show('lobby');renderLobby()};
   if(G.fast)setTimeout(()=>close('again'),0)})}
 
