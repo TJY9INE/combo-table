@@ -300,6 +300,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .atiles{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0 6px}.atile{border-radius:8px;padding:2px;transition:transform .12s}.atile .slot{width:46px;height:66px;margin:0!important}.atile .cd{width:46px;height:66px;font-size:34px;filter:none!important;opacity:1!important;background:#fff!important}.atile.on{transform:translateY(-8px)}.atile.on .cd{box-shadow:0 0 0 3px var(--gold),0 8px 16px #000a}.atile.comm{box-shadow:0 0 0 1px #6cf inset}.alab{text-align:center;font-weight:700;font-size:15px;color:#cfe3d6;margin:2px 0}.alab.ok{color:var(--gold)}.dbig[disabled]{opacity:.45}
 .nzones{display:flex;gap:8px;margin:4px 0}.nzone{border:2px dashed #ffffff40;border-radius:12px;padding:4px 4px 6px;min-height:84px;transition:background .15s,border-color .15s}.nzone.three{flex:3}.nzone.two{flex:2}.nzone.full{border-color:var(--gold);border-style:solid}.nzone.hot{background:#ffffff14;border-color:var(--gold)}.nzone.pool{border-style:solid;border-color:#ffffff1a;min-height:76px;margin-bottom:4px}.nzt{font-size:11px;font-weight:700;color:#cfe3d6;text-align:center;letter-spacing:.5px;margin-bottom:3px}.nzc{display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;min-height:66px;align-items:center}.ntile{touch-action:none;cursor:grab}.ntile .slot{width:44px;height:63px;margin:0!important}.ntile .cd{width:44px;height:63px;font-size:32px;background:#fff!important}.nghost{position:fixed;z-index:9999;pointer-events:none;transform:scale(1.12) rotate(-4deg);filter:drop-shadow(0 8px 12px #000a)}
 .slot.cunused{opacity:.32;filter:grayscale(.6)}.slot.cused .cd{box-shadow:0 0 0 2px var(--gold)}.cmuse{font-size:10px;color:var(--gold);text-align:center;margin-top:1px;width:100%}
+body.fast .slot,body.fast .cd,body.fast .card{transition-duration:.22s!important}
 </style>
 </head>
 <body>
@@ -312,6 +313,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
   <div class="card2">
     <div class="lrow"><div><label>Min bet ($)</label><input id="sMin" type="number" value="50" min="1" inputmode="numeric"></div><div><label>Max bet ($)</label><input id="sMax" type="number" value="100" min="1" inputmode="numeric"></div></div>
     <div class="lrow"><div><label>Players at table</label><select id="sN"></select></div><div><label>Hints</label><select id="sHint"><option value="1">On (💡)</option><option value="0">Off</option></select></div></div>
+    <div class="lrow"><div><label>Deal speed</label><select id="sQuick"><option value="0">Normal</option><option value="1">⚡ Fast (2×)</option></select></div></div>
     <div class="lrow" style="display:none"><div><select id="sArrS"><option value="manual">manual</option></select></div></div>
     <div class="rolebtns" style="margin-top:14px"><button class="gold" id="goPlayer">Sit as Player</button><button class="green" id="goBanker">Be the Banker</button></div>
   </div>
@@ -328,7 +330,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
     <button class="ibtn" id="homeBtn" aria-label="Lobby">☰</button>
     <div class="bank"><div class="k">Bank</div><div class="v" id="hBank">$0</div></div>
     <div class="rnd" id="hRound"><small>GAME</small>Bets</div>
-    <button class="ibtn" id="rulesBtn" aria-label="Rules">?</button><button class="ibtn" id="autoBtn" aria-label="Auto reveal">👁</button><button class="ibtn" id="hintBtn" aria-label="Hints">💡</button>
+    <button class="ibtn" id="rulesBtn" aria-label="Rules">?</button><button class="ibtn" id="autoBtn" aria-label="Auto reveal">👁</button><button class="ibtn" id="hintBtn" aria-label="Hints">💡</button><button class="ibtn" id="quickBtn" aria-label="Fast deal">⚡</button>
     <button class="ibtn" id="muteBtn" aria-label="Sound">🔊</button>
   </div>
   <div class="felt" id="felt">
@@ -347,7 +349,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 </div>
 
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
-<script src="fx.js?v=2611180020"></script>
+<script src="fx.js?v=2611180045"></script>
 <script>
 
 /* ---------- cards ---------- */
@@ -471,7 +473,7 @@ function snd(k){if(G.mute)return;try{
 
 /* =================== state & storage =================== */
 const $=id=>document.getElementById(id);
-const sleep=ms=>new Promise(r=>{const t=G.token;setTimeout(()=>{if(G.token===t)r()},ms*(G.fast?0.02:1))});
+const sleep=ms=>new Promise(r=>{const t=G.token;setTimeout(()=>{if(G.token===t)r()},ms*(G.fast?0.02:G.quick?0.5:1))});
 const fmt=v=>(v<0?'-':v>0?'+':'')+'$'+Math.abs(Math.round(v*100)/100);
 const money=v=>(v<0?'-':'')+'$'+Math.abs(Math.round(v*100)/100);
 const KEY='comboTable.v2';
@@ -503,12 +505,15 @@ function renderLobby(){{const o=[...$('sBankAmt').options].find(x=>x.value==Stri
 }
 $('setBank').onclick=()=>{let v=$('sBankAmt').value;if(v==='c'){v=prompt('Starting bank amount ($):',String(G.startBank||200));if(v==null)return}const n=Math.round(+v);if(!(n>=10&&n<=10000000)){toast('Enter 10 – 10,000,000');return}G.bank=n;G.startBank=n;save();renderLobby();toast('Bank set to $'+n.toLocaleString())};
 $('resetStats').onclick=()=>{G.bank=G.startBank||200;G.st={games:0,pG:0,pPl:0,bG:0,bPl:0,biggest:0,streak:0,best:0,ach:{}};save();renderLobby()};
-function readSettings(){G.min=Math.max(1,Math.round(+$('sMin').value||1));G.max=Math.max(G.min,Math.round(+$('sMax').value||G.min));G.N=+$('sN').value;G.hints=$('sHint').value=='1';G.manual=$('sArrS').value==='manual'}
+function readSettings(){G.min=Math.max(1,Math.round(+$('sMin').value||1));G.max=Math.max(G.min,Math.round(+$('sMax').value||G.min));G.N=+$('sN').value;G.hints=$('sHint').value=='1';G.manual=$('sArrS').value==='manual';setQuick($('sQuick').value==='1')}
 $('goPlayer').onclick=()=>{readSettings();G.role='player';startTable()};
 $('goBanker').onclick=()=>{readSettings();G.role='banker';startTable()};
 $('homeBtn').onclick=()=>{G.token={};$('sheet').classList.remove('on');G.abort=true;show('lobby');renderLobby()};
 function confirmLeave(){return true}
 G.autoRev=localStorage.getItem('ct.auto')==='1';$('rulesBtn').onclick=()=>FX.rules(G.round||0);$('autoBtn').classList.toggle('on',G.autoRev);$('autoBtn').onclick=()=>{G.autoRev=!G.autoRev;localStorage.setItem('ct.auto',G.autoRev?'1':'0');$('autoBtn').classList.toggle('on',G.autoRev);toast(G.autoRev?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON')};
+function setQuick(on){G.quick=!!on;document.body.classList.toggle('fast',G.quick);$('quickBtn').classList.toggle('on',G.quick);$('sQuick').value=G.quick?'1':'0';try{localStorage.setItem('ct.quick',G.quick?'1':'0')}catch(e){}}
+setQuick(localStorage.getItem('ct.quick')==='1');
+$('quickBtn').onclick=()=>{setQuick(!G.quick);toast(G.quick?'⚡ Fast deal on':'Normal speed')};
 $('hintBtn').onclick=()=>{G.hints=!G.hints;$('hintBtn').classList.toggle('on',G.hints);toast(G.hints?'💡 Hints on':'Hints off');if(G.onHint)G.onHint()};
 $('muteBtn').onclick=()=>{G.mute=!G.mute;$('muteBtn').textContent=G.mute?'🔇':'🔊';save()};
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==id));window.scrollTo(0,0)}

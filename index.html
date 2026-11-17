@@ -323,6 +323,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .hlist{max-height:52vh;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:6px 0}.hseat{background:#ffffff0c;border:1px solid #ffffff1a;border-radius:10px;padding:6px 8px}.hseat.me{border-color:var(--gold)}
 .hname{font-size:13px;font-weight:700;display:flex;gap:6px;align-items:baseline}.hres{margin-left:auto;font-size:13px}.hrow{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}.hgrp{display:inline-flex;align-items:center;gap:4px;margin-right:10px}.hz{font-size:10px;color:#cfe3d6}.hlab{font-size:12px;color:#cfe3d6;margin-top:3px}
 .slot.hs{width:30px;height:43px;margin:0!important}.slot.hs .cd{width:30px;height:43px;font-size:24px}.slot.hs.unused{opacity:.35}.slot.hs.used .cd{box-shadow:0 0 0 2px var(--gold)}.slot.hs.comm .cd{outline:1px solid #6cf}
+body.fast .slot,body.fast .cd{transition-duration:.22s}body.fast .fly{transition-duration:.3s}
 </style>
 </head>
 <body>
@@ -350,7 +351,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
   <div class="card2" id="rHost">
     <b>Table settings</b> <span class="small">(host)</span>
     <div class="lrow"><div><label>Min bet</label><input id="sMin" type="number" inputmode="numeric"></div><div><label>Max bet</label><input id="sMax" type="number" inputmode="numeric"></div></div>
-    <div class="lrow"><div><label>Decision timer</label><select id="sTimer"><option value="0">Off</option><option value="15">15 s</option><option value="30">30 s</option><option value="60">60 s</option></select></div>
+    <div class="lrow"><div><label>Decision timer</label><select id="sTimer"><option value="0">Off</option><option value="15">15 s</option><option value="30">30 s</option><option value="60">60 s</option></select></div><div><label>Deal speed</label><select id="sFast"><option value="0">Normal</option><option value="1">⚡ Fast (2×)</option></select></div>
      <div><label>Computer players</label><select id="sBots"><option value="0">None</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div></div>
     <div class="lrow" style="display:none"><div><select id="sArr"><option value="manual">manual</option></select></div></div>
     <div class="lrow"><div><label>Starting chips</label><input id="sStart" type="number" inputmode="numeric"></div><div><label>Banker this game</label><select id="sBanker"></select></div></div>
@@ -387,7 +388,7 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 </div>
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="fx.js?v=2611180020"></script>
-<script src="core.js?v=2611180020"></script>
-<script src="app.js?v=2611180020"></script>
+<script src="fx.js?v=2611180045"></script>
+<script src="core.js?v=2611180045"></script>
+<script src="app.js?v=2611180045"></script>
 </body></html>
