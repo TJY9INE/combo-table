@@ -310,6 +310,7 @@ body.fast .slot,body.fast .cd,body.fast .card{transition-duration:.22s!important
   <div class="tag">High Card · Thai Baccarat · Sikipi · Niu Niu · Combo Poker</div><div class="small" style="text-align:center;margin-top:10px;line-height:1.5">🔒 <b style="color:#e9c46a">Fair &amp; random:</b> every deck is shuffled with a cryptographic random number generator (unbiased Fisher–Yates). Neither the banker nor the players are favoured.</div>
   <div class="bankbig">Your bank<b id="lBank">$200</b></div>
   <div class="setbank"><span>Set bank</span><select id="sBankAmt"><option>1000</option><option>2000</option><option>5000</option><option>10000</option><option>20000</option><option>50000</option><option value="c">Custom…</option></select><button class="ghost" id="setBank">Set</button></div>
+  <div id="gold"></div><div class="card2" id="dailyCard"></div>
   <div class="card2">
     <div class="lrow"><div><label>Min bet ($)</label><input id="sMin" type="number" value="50" min="1" inputmode="numeric"></div><div><label>Max bet ($)</label><input id="sMax" type="number" value="100" min="1" inputmode="numeric"></div></div>
     <div class="lrow"><div><label>Players at table</label><select id="sN"></select></div><div><label>Hints</label><select id="sHint"><option value="1">On (💡)</option><option value="0">Off</option></select></div></div>
@@ -349,7 +350,7 @@ body.fast .slot,body.fast .cd,body.fast .card{transition-duration:.22s!important
 </div>
 
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
-<script src="fx.js?v=2611180240m"></script>
+<script src="fx.js?v=2611180300d"></script>
 <script>
 
 /* ---------- cards ---------- */
@@ -481,8 +482,8 @@ const money=v=>(v<0?'-':'')+'$'+Math.abs(Math.round(v*100)/100);
 const KEY='comboTable.v2';
 const ACH=FX.ACH;
 let G={bank:5000,startBank:5000,mute:false,hints:true,fast:false,st:{games:0,pG:0,pPl:0,bG:0,bPl:0,biggest:0,streak:0,best:0,ach:{}}};
-function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){G.bank=d.bank??5000;G.startBank=d.startBank??5000;G.st=Object.assign(G.st,d.st||{});G.mute=!!d.mute}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({bank:G.bank,startBank:G.startBank,st:G.st,mute:G.mute}))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){G.bank=d.bank??5000;G.startBank=d.startBank??5000;G.st=Object.assign(G.st,d.st||{});G.mute=!!d.mute;G.dy=d.dy||null}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({bank:G.bank,startBank:G.startBank,st:G.st,mute:G.mute,dy:G.dy}))}catch(e){}}
 function rosterOrder(){const fav=['Chirag','Auntie Mag'];return [...fav.map(n=>ROSTER.find(r=>r.n===n)),...ROSTER.filter(r=>!fav.includes(r.n)).sort(()=>Math.random()-.5)]}
 const ROSTER=[
  {n:'Ah Seng',e:'🐯',style:'high',win:['Huat ah! 🧧','Easy money 😎','Steady lah'],lose:['Wah lau…','Sian 😩','Cannot be…']},
@@ -499,7 +500,7 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 
 /* =================== lobby =================== */
 for(let i=1;i<=8;i++){const o=document.createElement('option');o.value=i;o.textContent=i;if(i==4)o.selected=true;$('sN').appendChild(o)}
-function renderLobby(){{const o=[...$('sBankAmt').options].find(x=>x.value==String(G.startBank));if(o)$('sBankAmt').value=o.value};
+function renderLobby(){try{if(G.dy&&G.dy.cd!==sgDay()){const b=dailyInit();if(b)setTimeout(()=>showDailyBonus(b),300)}renderDaily()}catch(e){};{const o=[...$('sBankAmt').options].find(x=>x.value==String(G.startBank));if(o)$('sBankAmt').value=o.value};
  $('lBank').textContent=money(G.bank);$('lBank').className=G.bank<0?'neg':'';
  const s=G.st;
  $('statGrid').innerHTML=[['Games played',s.games],['Best streak',s.best],['As player P&L',fmt(s.pPl)+` <small style="font-size:11px;color:#a89a7a">(${s.pG})</small>`],['As banker P&L',fmt(s.bPl)+` <small style="font-size:11px;color:#a89a7a">(${s.bG})</small>`],['Biggest game win',money(s.biggest)],['Current streak',s.streak]].map(([k,v])=>`<div class="sbox"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
@@ -899,6 +900,7 @@ async function endGame(delta){
   const ks=FX.achKeys({isB,r:isB?null:me.r,pok:b2(me.hand.slice(0,2)).pok,ck,net:delta,bet:me.bet||1,tot,streak:s.streak,games:s.games});
   ks.forEach(k=>{if(!s.ach[k])got.push(FX.achName(k));s.ach[k]=(s.ach[k]||0)+1})}
  if(got.length&&FX.haptic)FX.haptic(3);
+ const dres=dailyAfterGame({isB,delta,r:isB?null:me.r,ks:(()=>{try{return FX.achKeys({isB,r:isB?null:me.r,pok:b2(me.hand.slice(0,2)).pok,ck:best7([...me.hand.slice(0,5),...G.comm]),net:delta,bet:me.bet||1,tot:1,streak:0,games:0})}catch(e){return []}})()});
  save();
  const bt=-G.P.reduce((a,p)=>a+p.bet*p.r.reduce((x,y)=>x+y,0),0);const RN5=['High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];
  const bkR=[0,1,2,3,4].map(i=>-G.P.reduce((a,p)=>a+p.r[i]*p.bet,0));
@@ -907,7 +909,7 @@ async function endGame(delta){
  const people=[{name:`${G.B.e} ${G.B.n}`,role:'Banker',net:bt,rs:bkR,me:isB},...G.P.map(p=>({name:`${p.e} ${p.n}`,role:`Bet $${p.bet.toLocaleString()}`,net:p.r.reduce((a,b)=>a+b,0)*p.bet,rs:p.r,me:p.me}))];
  $('sheetIn').innerHTML=`<h2>${delta>0?'You win!':delta<0?'Tough game':'Break even'}</h2><div class="big ${delta>0?'pos':delta<0?'neg':''}">${FX.money(delta)}</div>
   <div style="text-align:center;font-size:13px;color:#a89a7a">${isB?'as Banker':'Bet $'+me.bet.toLocaleString()} · Bank ${money(G.bank)} · Streak ${s.streak}</div>
-  ${got.map(g=>`<div class="newach">🏆 Badge unlocked: ${g}</div>`).join('')}
+  ${dres.gold?`<div class="newach" style="background:linear-gradient(#ffe9a8,#e9b949)">🌟 Golden Hour bonus +${money(dres.gold)}</div>`:''}${dres.got.map(g=>`<div class="newach" style="background:linear-gradient(#bff3cf,#5fcf8a)">🎯 ${g}</div>`).join('')}${got.map(g=>`<div class="newach">🏆 Badge unlocked: ${g}</div>`).join('')}
   ${FX.glance(isB?bkR:me.r.map(x=>x*me.bet))}${FX.details(mine+`<div class="rhead" style="margin-top:12px">Table</div>`+FX.peopleHTML(people),'Round details & table')}
   <div class="sfoot"><button class="gold play" id="againBtn">▶ Play again</button><div class="sec"><button class="ghost" id="swapBtn">${isB?'🪑 Sit as Player':'🎩 Be the Banker'}</button><button class="ghost" id="lobbyBtn">☰ Lobby</button></div></div>`;
  $('sheet').classList.add('on');$('sheetIn').scrollTop=0;snd(delta>0?'big':delta<0?'lose':'push');
@@ -916,6 +918,30 @@ async function endGame(delta){
   $('lobbyBtn').onclick=()=>{G.abort=true;close('lobby');show('lobby');renderLobby()};
   if(G.fast)setTimeout(()=>close('again'),0)})}
 
-load();renderLobby();
+/* ===== daily bonus · streak · challenges · golden hour ===== */
+const sgDay=(t=Date.now())=>new Date(t+8*3600e3).toISOString().slice(0,10);
+const sgHour=()=>new Date(Date.now()+8*3600e3).getUTCHours();
+const isGolden=()=>sgHour()===21;
+const unitBet=()=>Math.max(10,Math.round(+($('sMax')&&$('sMax').value)||100));
+const DAYB=[3,5,8,10,15,20,30];
+const CHAL=[{id:'play3',t:'Play 3 games',n:3,u:5,f:c=>1},{id:'win2',t:'Win 2 games',n:2,u:6,f:c=>c.delta>0?1:0},{id:'bank',t:'Win a game as Banker',n:1,u:8,f:c=>c.isB&&c.delta>0?1:0},
+ {id:'pok',t:'Get a Pok (8 or 9)',n:1,u:6,f:c=>c.ks.includes('pok')?1:0},{id:'niu3',t:'Win Niu Niu ×3 or better',n:1,u:8,f:c=>c.ks.includes('niu3')?1:0},{id:'sk3',t:'Win Sikipi ×3 or better',n:1,u:8,f:c=>c.ks.includes('sk3')?1:0},
+ {id:'cmb',t:'Win Combo with a Straight+',n:1,u:10,f:c=>c.ks.includes('cmb5')?1:0},{id:'sweep',t:'Win all 5 rounds',n:1,u:15,f:c=>c.ks.includes('sweep')?1:0},{id:'big',t:'Win 10× your bet in one game',n:1,u:12,f:c=>c.ks.includes('x10')?1:0},
+ {id:'hc3',t:'Win High Card 3 times',n:3,u:5,f:c=>!c.isB&&c.r&&c.r[0]>0?1:0}];
+function seedPick(day,k){let h=0;for(const ch of day)h=(h*31+ch.charCodeAt(0))>>>0;const ids=CHAL.map(c=>c.id),out=[];while(out.length<k){h=(h*1103515245+12345)>>>0;const id=ids[h%ids.length];if(!out.includes(id))out.push(id)}return out}
+function dailyInit(){const today=sgDay();G.dy=G.dy||{last:null,streak:0,cd:null,ch:[]};const d=G.dy;let bonus=null;
+ if(d.last!==today){d.streak=d.last===sgDay(Date.now()-864e5)?d.streak+1:1;d.last=today;const amt=DAYB[Math.min(d.streak,7)-1]*unitBet();G.bank+=amt;bonus={amt,day:d.streak}}
+ if(d.cd!==today){d.cd=today;d.ch=seedPick(today,3).map(id=>({id,p:0,done:false}))}save();return bonus}
+function dailyAfterGame(ctx){const d=G.dy;if(!d)return [];const got=[];for(const c of d.ch){if(c.done)continue;const def=CHAL.find(x=>x.id===c.id);c.p=Math.min(def.n,c.p+def.f(ctx));if(c.p>=def.n){c.done=true;const amt=def.u*unitBet();G.bank+=amt;got.push(`✅ ${def.t} · +${money(amt)}`)}}
+ let gold=null;if(isGolden()&&ctx.delta>0){gold=Math.round(ctx.delta*0.5);G.bank+=gold}save();return {got,gold}}
+function renderDaily(){const d=G.dy;if(!d)return;const left=d.ch.filter(c=>!c.done).length;
+ $('dailyCard').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><b>🎯 Today's challenges</b><span class="small">🔥 ${d.streak}-day streak</span></div>
+ ${d.ch.map(c=>{const def=CHAL.find(x=>x.id===c.id);const pct=Math.round(c.p/def.n*100);return `<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>${c.done?'✅':'⬜'} ${def.t}</span><b style="color:${c.done?'#7ee2a8':'#e9c46a'}">${c.done?'Paid':'+'+money(def.u*unitBet())}</b></div><div style="height:6px;background:#0f1411;border-radius:4px;margin-top:4px;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${c.done?'#3ccf7a':'#e9c46a'}"></i></div></div>`}).join('')}
+ <div class="small" style="margin-top:8px">${left?'New challenges every day at midnight. Come back tomorrow to grow your streak 🔥':'All done today! Come back tomorrow for new ones and a bigger streak bonus 🔥'}</div>`;
+ $('gold').innerHTML=isGolden()?`<div class="card2" style="background:linear-gradient(90deg,#3a2a08,#2a1d06);border-color:#e9c46a;text-align:center"><b style="color:#f6dc8f">🌟 Golden Hour is ON (9–10pm)</b><div class="small">Every winning game pays a +50% bonus</div></div>`:`<div class="small" style="text-align:center;margin:4px 0">🌟 Golden Hour every night 9–10pm — winning games pay +50%</div>`}
+function showDailyBonus(b){const d=G.dy;$('sheetIn').innerHTML=`<h2>🎁 Daily bonus</h2><div class="big pos">+${money(b.amt)}</div><div class="small" style="text-align:center">Day ${b.day} streak 🔥 — come back tomorrow for more</div>
+ <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:14px 0">${DAYB.map((m,i)=>`<div style="text-align:center;padding:6px 0;border-radius:9px;font-size:11px;font-weight:800;${i<Math.min(b.day,7)?'background:#16402a;color:#7ee2a8':'background:#1a2420;color:#6f7d76'}">D${i+1}<br>${money(m*unitBet())}</div>`).join('')}</div>
+ <div class="small" style="text-align:center">Miss a day and the streak resets to Day 1.</div><div class="sfoot"><button class="gold play" onclick="$('sheet').classList.remove('on')">Collect</button></div>`;$('sheet').classList.add('on');snd('big');try{FX.confetti(innerWidth/2,innerHeight/3,70)}catch(e){}}
+load();{const b=dailyInit();renderLobby();if(b)setTimeout(()=>showDailyBonus(b),400)}
 </script><script>addEventListener('pointerup',()=>setTimeout(()=>document.querySelectorAll('body>.dragging').forEach(x=>x.remove()),60),true);addEventListener('pointercancel',()=>setTimeout(()=>document.querySelectorAll('body>.dragging').forEach(x=>x.remove()),60),true)</script>
 </body></html>
