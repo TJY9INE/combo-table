@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0b0f0d"><meta name="apple-mobile-web-app-capable" content="yes"><title>Combo Table · League</title>
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css"><script src="/vendor/leaflet/leaflet.js"></script>
 <style>
 :root{--gold:#e9c46a;--gold2:#b8892c;--win:#7ee2a8;--lose:#ff8a80}
 *{box-sizing:border-box;-webkit-user-select:none;user-select:none}
@@ -50,6 +51,17 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
 .sin h2{margin:0 0 4px;font-family:Georgia,serif;font-style:italic;color:var(--gold)}
 .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#1d2622;border:1px solid #3a4a42;padding:10px 14px;border-radius:12px;z-index:90;font-size:14px}
 .tabs{display:flex;gap:6px;margin:6px 0 10px}.tabs button{flex:1;padding:9px;border-radius:10px;background:#0f1411;color:#a89a7a;border:1px solid #26302b;font-weight:700}.tabs button.on{background:#1a1408;color:var(--gold);border-color:#4a3a16}
+.lmap{width:100%;height:62vh;min-height:380px;border-radius:18px;overflow:hidden;border:1px solid #1f3b47;background:#0b1418}
+.leaflet-container{background:#0b1418;font:inherit}
+.lm{display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-50%);width:max-content}
+.lm .dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#14110a;border:2px solid #000a;box-shadow:0 2px 6px #000a}
+.lm.bot .dot{color:#dfe8e3}.lm.me .dot{box-shadow:0 0 0 3px #f6dc8faa,0 2px 8px #000}
+.lm .on{font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 3px #000,0 0 2px #000;white-space:nowrap;margin-top:1px}
+.lm .tn{font-size:9px;color:#cfdcd5;text-shadow:0 1px 2px #000;white-space:nowrap}
+.lm .sh{position:absolute;top:-6px;right:-8px;font-size:11px}
+.leaflet-control-attribution{font-size:9px!important;background:#0008!important;color:#aaa!important}.leaflet-control-attribution a{color:#ccc!important}
+.zlo .lm .tn{display:none}.zlo .lm .dot{width:26px;height:26px;font-size:8.5px}.zlo .lm .on{font-size:9px}.zhi .lm .dot{width:42px;height:42px;font-size:12px}.zhi .lm .tn{font-size:11px}
+.mapbtns{display:flex;gap:6px;margin-top:8px}.mapbtns button{flex:1}
 </style></head><body>
 <div class="wrap">
  <!-- start -->
@@ -74,7 +86,7 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
   <div class="sub" id="lSub" style="text-align:left;margin:6px 0 4px"></div>
   <div id="duelBox"></div>
   <div class="tabs"><button class="on" data-t="map">🗺 Map</button><button data-t="board">🏆 Ranks</button><button data-t="log">📜 Activity</button></div>
-  <div id="tMap"><div class="map" id="map"></div><div class="legend" id="legend"></div><div class="small" style="margin-top:8px">Tap a town to attack it. You duel the owner's 👻 ghost (it plays for them while they're away). House bots hold unclaimed towns.</div></div>
+  <div id="tMap"><div class="lmap" id="lmap"></div><div class="map" id="map" style="display:none"></div><div class="mapbtns"><button class="ghost" onclick="fitAll()">🇸🇬 Whole island</button><button class="ghost" onclick="fitMine()">🏠 My land</button></div><div class="legend" id="legend"></div><div class="small" style="margin-top:8px">Pinch to zoom · tap a town to attack it. You duel the owner's 👻 ghost (it plays for them while they're away). House bots hold unclaimed towns.</div></div>
   <div id="tBoard" style="display:none"><div class="card"><div class="titles" id="titles"></div><table id="board"></table></div></div>
   <div id="tLog" style="display:none"><div class="card log" id="log"></div></div>
   <div style="text-align:center;margin-top:18px"><button class="ghost" id="leaveBtn" style="font-size:12px">Switch league</button></div>
@@ -88,6 +100,20 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const sgn=v=>(v>0?'+':v<0?'-':'')+Math.abs(Math.round(v)).toLocaleString();
 const ABBR={'Woodlands':'WDL','Sembawang':'SBW','Yishun':'YSN','Punggol':'PGL','Sengkang':'SKG','Pasir Ris':'PSR','Choa Chu Kang':'CCK','Bukit Panjang':'BKP','Ang Mo Kio':'AMK','Hougang':'HGN','Tampines':'TMP','Jurong West':'JRW','Bukit Batok':'BBT','Serangoon':'SRG','Jurong East':'JRE','Bishan':'BSH','Bedok':'BDK','Clementi':'CLE','Toa Payoh':'TPY','Geylang':'GEY','Queenstown':'QTN','Orchard':'ORC','Bukit Merah':'BKM','Sentosa':'STS'};
+const GEO={'Woodlands':[1.4382,103.7890],'Sembawang':[1.4491,103.8185],'Yishun':[1.4304,103.8354],'Punggol':[1.4043,103.9022],'Sengkang':[1.3868,103.8914],'Pasir Ris':[1.3721,103.9474],'Choa Chu Kang':[1.3840,103.7470],'Bukit Panjang':[1.3774,103.7719],'Ang Mo Kio':[1.3691,103.8454],'Hougang':[1.3612,103.8863],'Tampines':[1.3496,103.9568],'Jurong West':[1.3404,103.7090],'Bukit Batok':[1.3590,103.7637],'Serangoon':[1.3554,103.8679],'Jurong East':[1.3329,103.7436],'Bishan':[1.3526,103.8352],'Bedok':[1.3236,103.9273],'Clementi':[1.3162,103.7649],'Toa Payoh':[1.3343,103.8563],'Geylang':[1.3201,103.8918],'Queenstown':[1.2942,103.7861],'Orchard':[1.3048,103.8318],'Bukit Merah':[1.2819,103.8239],'Sentosa':[1.2494,103.8303]};
+let MAP=null,MLAYER=null,fitted=false;
+function initMap(){if(MAP||typeof window.L==='undefined')return !!MAP;$('map').style.display='none';
+ MAP=window.L.map('lmap',{zoomControl:true,attributionControl:true,minZoom:10,maxZoom:16,maxBounds:[[1.13,103.55],[1.52,104.12]],maxBoundsViscosity:0.8,zoomSnap:0.25});
+ window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(MAP);
+ MLAYER=window.L.layerGroup().addTo(MAP);const zc=()=>{const z=MAP.getZoom();$('lmap').classList.toggle('zlo',z<11.6);$('lmap').classList.toggle('zhi',z>=13)};MAP.on('zoomend',zc);zc();return true}
+window.fitAll=()=>{if(MAP)MAP.fitBounds([[1.235,103.68],[1.46,103.99]],{padding:[10,10]})};
+window.fitMine=()=>{if(!MAP||!V)return;const pts=V.towns.filter(t=>t.owner===V.you).map(t=>GEO[t.t]).filter(Boolean);if(!pts.length)return toast('You hold no towns yet');if(pts.length===1)MAP.setView(pts[0],14);else MAP.fitBounds(pts,{padding:[40,40],maxZoom:14})};
+function drawLeaflet(){const v=V,Lf=window.L;MLAYER.clearLayers();
+ for(const t of v.towns){const g=GEO[t.t];if(!g)continue;const c=colorOf(t.owner);const me=t.owner===v.you;
+  Lf.circle(g,{radius:1300,color:c,weight:me?2.5:1.2,opacity:t.bot?.35:.9,fillColor:c,fillOpacity:t.bot?.08:me?.28:.22}).addTo(MLAYER).on('click',()=>pick(t.t));
+  const html=`<div class="lm ${t.bot?'bot':''} ${me?'me':''}"><div class="dot" style="background:${c}">${ABBR[t.t]||t.t.slice(0,3)}</div><div class="tn">${esc(t.t)}</div>${t.bot?'':`<div class="on">${esc(t.ownerName)}</div>`}${t.def>=3?'<span class="sh">🛡</span>':''}</div>`;
+  Lf.marker(g,{icon:Lf.divIcon({className:'',html,iconSize:[0,0]})}).addTo(MLAYER).on('click',()=>pick(t.t))}
+ if(!fitted){fitted=true;setTimeout(()=>{MAP.invalidateSize();fitAll()},50)}}
 const PAL=['#7fd3ff','#ff8a80','#7ee2a8','#c39bff','#ffb86b','#ff7eb6','#5eead4','#a3e635','#fda4af','#93c5fd','#fcd34d','#d8b4fe'];
 let LG=null,V=null,SEL=null,pollT=null,tab='map';
 try{LG=JSON.parse(localStorage.getItem('ct.league')||'null')}catch(e){}
@@ -101,7 +127,7 @@ $('jBtn').onclick=async()=>{const code=$('jCode').value.trim().toUpperCase(),nam
 $('cBtn').onclick=async()=>{const name=$('cName').value.trim();if(!name)return $('sErr').textContent='Enter your name';
  try{LG=null;const j=await api('lcreate',{lname:$('cLname').value.trim()||'Kopi Kakis',name,bank:+$('cBank').value,bet:+$('cBet').value,pin:$('cPin').value});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view);setTimeout(share,400)}catch(e){$('sErr').textContent=e.message}};
 $('leaveBtn').onclick=()=>{LG=null;saveLG();clearInterval(pollT);$('main').style.display='none';$('start').style.display=''};
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('tMap').style.display=tab==='map'?'':'none';$('tBoard').style.display=tab==='board'?'':'none';$('tLog').style.display=tab==='log'?'':'none'});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('tMap').style.display=tab==='map'?'':'none';$('tBoard').style.display=tab==='board'?'':'none';$('tLog').style.display=tab==='log'?'':'none';if(tab==='map'&&MAP)setTimeout(()=>MAP.invalidateSize(),30)});
 async function share(){const url=location.origin+'/league?code='+LG.league;const txt=`Join my Combo League "${V?V.name:''}" — code ${LG.league}\n${url}`;
  try{if(navigator.share){await navigator.share({title:'Combo League',text:txt,url});return}}catch(e){return}
  try{await navigator.clipboard.writeText(txt);toast('Invite link copied')}catch(e){toast('Code: '+LG.league)}}
@@ -120,16 +146,17 @@ function apply(v){const prevLog=V?V.log.length&&V.log[V.log.length-1].t:0;V=v;$(
  clearInterval(pollT);pollT=setInterval(refresh,document.hidden?15000:4000)}
 window.acceptInv=async()=>{try{const j=await api('laccept');goRoom(j)}catch(e){toast(e.message);refresh()}};
 window.declineInv=async()=>{try{const j=await api('ldecline');apply(j.view);toast('Your ghost is defending 👻')}catch(e){toast(e.message);refresh()}};
-function drawMap(){const v=V;
+function drawMap(){const v=V;if(initMap()){drawLeaflet();drawLegend();return}$('map').style.display='';drawLegend();
  const island='5,30 12,22 25,14 38,6 55,2 66,8 78,6 92,15 97,28 93,40 86,50 72,54 60,58 52,62 42,62 30,54 18,48 8,42';
  const pts=island.split(' ').map(p=>{const [x,y]=p.split(',').map(Number);return `${x},${y*1.0}`}).join(' ');
  let h=`<svg viewBox="0 0 100 82" preserveAspectRatio="none"><polygon points="${pts}" fill="#1c3b2c" stroke="#2f5b45" stroke-width=".6"/><ellipse cx="50" cy="73" rx="7" ry="3" fill="#1c3b2c" stroke="#2f5b45" stroke-width=".5"/></svg>`;
  for(const t of v.towns){const c=colorOf(t.owner);const me=t.owner===v.you;
   h+=`<div class="tw ${t.bot?'bot':''} ${me?'me':''} ${SEL===t.t?'sel':''}" style="left:${t.x}%;top:${(t.y+4)/82*100}%" onclick="pick('${t.t}')"><div class="dot" style="background:${c}">${ABBR[t.t]||t.t.slice(0,3)}</div>${t.bot?'':`<div class="on">${esc(t.ownerName)}</div>`}${t.def>=3?'<span class="sh">🛡</span>':''}</div>`}
- $('map').innerHTML=h;
+ $('map').innerHTML=h}
+function drawLegend(){const v=V;
  const hold={};v.towns.forEach(t=>{if(!t.bot)hold[t.owner]=(hold[t.owner]||0)+1});
  $('legend').innerHTML=v.members.slice().sort((a,b)=>b.land-a.land).map(m=>`<span><i style="background:${colorOf(m.mid)}"></i>${esc(m.name)}${m.mid===v.you?' (you)':m.online?' 🟢':''} · ${m.land}</span>`).join('')+`<span><i style="background:#3b4a43"></i>House bots · ${v.towns.filter(t=>t.bot).length}</span>`}
-window.pick=t=>{SEL=t;drawMap();const T=V.towns.find(x=>x.t===t);const me=V.members.find(m=>m.mid===V.you);const mine=T.owner===V.you;
+window.pick=t=>{SEL=t;if(!MAP)drawMap();else if(GEO[t])MAP.panTo(GEO[t]);const T=V.towns.find(x=>x.t===t);const me=V.members.find(m=>m.mid===V.you);const mine=T.owner===V.you;
  const om=V.members.find(m=>m.mid===T.owner);const live=om&&om.online&&!mine;
  const who=T.bot?`🤖 ${esc(T.ownerName)} (house bot)`:`${esc(T.ownerName)}${mine?' (you)':live?' — 🟢 online now':' — you\'ll face their 👻 ghost'}`;
  $('sheetIn').innerHTML=`<h2>${esc(t)}</h2><div class="small" style="margin-bottom:10px">Held by ${who}${T.def?` · defended ${T.def}×`:''}</div>
@@ -138,7 +165,7 @@ window.pick=t=>{SEL=t;drawMap();const T=V.towns.find(x=>x.t===t);const me=V.memb
   `<div class="small" style="margin:8px 0 14px">Duel: you and the defender start with ${V.bank.toLocaleString()} chips, every game is a fixed ${V.bet.toLocaleString()} bet, banker alternates (defender banks first). First to go bust loses — win and ${esc(t)} is yours.</div>`}
   ${!mine&&!(me&&me.duel)?(live?`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}',true)">⚔️ Challenge live</button><button class="green" onclick="attack('${t}')">👻 Fight ghost</button></div><div class="small" style="margin-bottom:10px">Live: ${esc(T.ownerName)} gets 45s to accept, else the ghost plays.</div>`:`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}')">⚔️ Attack ${esc(t)}</button></div>`):''}<div class="row"><button class="ghost" onclick="closeSheet()">Close</button></div>`;
  $('sheet').classList.add('on')};
-window.closeSheet=()=>{$('sheet').classList.remove('on');SEL=null;drawMap()};
+window.closeSheet=()=>{$('sheet').classList.remove('on');SEL=null;if(!MAP)drawMap()};
 $('sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet()};
 window.attack=async(t,live)=>{try{const j=await api('lattack',{town:t,live:!!live});goRoom(j)}catch(e){toast(e.message)}};
 function goRoom(j){localStorage.setItem('ct.session',JSON.stringify({code:j.room,pid:j.pid,token:j.token,name:j.name}));localStorage.setItem('ct.duel',JSON.stringify({room:j.room,pid:j.pid,token:j.token,name:j.name}));location.href='/'}
