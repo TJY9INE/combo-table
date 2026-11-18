@@ -301,6 +301,10 @@ table.t td:first-child,table.t th:first-child{text-align:left}table.t tr.mine td
 .nzones{display:flex;gap:8px;margin:4px 0}.nzone{border:2px dashed #ffffff40;border-radius:12px;padding:4px 4px 6px;min-height:84px;transition:background .15s,border-color .15s}.nzone.three{flex:3}.nzone.two{flex:2}.nzone.full{border-color:var(--gold);border-style:solid}.nzone.hot{background:#ffffff14;border-color:var(--gold)}.nzone.pool{border-style:solid;border-color:#ffffff1a;min-height:76px;margin-bottom:4px}.nzt{font-size:11px;font-weight:700;color:#cfe3d6;text-align:center;letter-spacing:.5px;margin-bottom:3px}.nzc{display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;min-height:66px;align-items:center}.ntile{touch-action:none;cursor:grab}.ntile .slot{width:44px;height:63px;margin:0!important}.ntile .cd{width:44px;height:63px;font-size:32px;background:#fff!important}.nghost{position:fixed;z-index:9999;pointer-events:none;transform:scale(1.12) rotate(-4deg);filter:drop-shadow(0 8px 12px #000a)}
 .slot.cunused{opacity:.32;filter:grayscale(.6)}.slot.cused .cd{box-shadow:0 0 0 2px var(--gold)}.cmuse{font-size:10px;color:var(--gold);text-align:center;margin-top:1px;width:100%}
 body.fast .slot,body.fast .cd,body.fast .card{transition-duration:.22s!important}body.turbo .slot,body.turbo .cd,body.turbo .card{transition-duration:.12s!important}body.turbo .banner{animation-duration:.5s!important}
+.nzones .nzone{height:90px;min-height:0;box-sizing:border-box}.nzone.pool{height:76px;min-height:0;box-sizing:border-box}.nzone .alab,.decide .alab{min-height:38px;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1.25;text-align:center}
+.screen.fit{display:none}.screen.fit.on{display:block}
+#table.fit.fill{overflow:hidden}#table.fit.fill .felt{min-height:0!important;box-sizing:border-box}
+#table.fit.fill .actions{position:absolute;left:0;right:0;bottom:0}#table.fit .actions>*{max-width:520px;width:100%;margin-left:auto;margin-right:auto;box-sizing:border-box}
 </style>
 </head>
 <body>
@@ -519,7 +523,14 @@ setSpeed(+(localStorage.getItem('ct.speed')||(localStorage.getItem('ct.quick')==
 $('quickBtn').onclick=()=>{setSpeed((G.speed+1)%3);toast(['Normal speed','⚡ Fast (2×)','⚡⚡ Turbo (4×)'][G.speed])};
 $('hintBtn').onclick=()=>{G.hints=!G.hints;$('hintBtn').classList.toggle('on',G.hints);toast(G.hints?'💡 Hints on':'Hints off');if(G.onHint)G.onHint()};
 $('muteBtn').onclick=()=>{G.mute=!G.mute;$('muteBtn').textContent=G.mute?'🔇':'🔊';save()};
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==id));window.scrollTo(0,0)}
+/* fit the table to the screen */
+let FITK='';function fitTable(force){const t=$('table');if(!t||!t.classList.contains('on'))return;const k=innerWidth+'x'+innerHeight+'|'+$('top').style.height;if(!force&&k===FITK)return;FITK=k;
+ const f=$('felt');t.classList.add('fit');t.classList.remove('fill');t.style.zoom=1;t.style.maxWidth='';t.style.height='';f.style.height='';
+ const fNat=f.offsetHeight;let other=0;for(const c of t.children){if(c===f||c.id==='actions')continue;const cs=getComputedStyle(c);if(cs.display==='none'||cs.position==='fixed'||cs.position==='absolute')continue;other+=c.offsetHeight+parseFloat(cs.marginTop)+parseFloat(cs.marginBottom)}other+=parseFloat(getComputedStyle(f).marginTop)+parseFloat(getComputedStyle(f).marginBottom);const N=other+fNat,W=innerWidth,H=innerHeight;
+ let z=W<=480?Math.min(1,H/N):Math.min(H/N,W/480,1.8);z=Math.max(.85,z);t.style.zoom=z;t.style.maxWidth=(W>560&&W>H*.7)?Math.round(Math.min(W/z-16,820))+'px':'';
+ const fill=H/z-other;if(fill>=fNat-2){f.style.height=Math.floor(fill)+'px';t.style.height=Math.floor(H/z)+'px';t.classList.add('fill')}}
+addEventListener('resize',()=>fitTable(true));addEventListener('orientationchange',()=>setTimeout(()=>fitTable(true),300));
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==id));window.scrollTo(0,0);if(id==='table')setTimeout(()=>fitTable(true),30)}
 function toast(t,ms=1600){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),ms)}
 
 /* =================== table building =================== */
@@ -557,7 +568,7 @@ function buildSeats(){
  const P=[];
  if(G.role=='player')P.push({n:'You',e:'🙂',me:true,hand:[],r:[0,0,0,0,0],els:{}});
  G.ai.forEach(a=>P.push(Object.assign(a,{me:false,hand:[],r:[0,0,0,0,0],els:{},open:undefined,drew:false,vis:null,shownB:false,spl:null,si:null})));
- const others=P.filter(p=>!p.me);const RL=ringLayout(others,B.me?null:B);top.style.height=RL.H+'px';$('centre').style.top=RL.cy+'px';
+ const others=P.filter(p=>!p.me);const RL=ringLayout(others,B.me?null:B);top.style.height=RL.H+'px';$('centre').style.top=RL.cy+'px';setTimeout(()=>fitTable(),0);
  RL.out.forEach(o=>{const el=seatEl(o.p);el.style.left=o.x+'%';el.style.top=o.y+'px';top.appendChild(el)});
  const me=B.me?B:P[0];meEl(me);
  G.B=B;G.P=P;G.me=me;G.comm=[];
@@ -625,7 +636,7 @@ function bankerQuip(total){if(G.B.me)return;if(total!==0)say(G.B,total<0?pick(BA
 function shoeOn(fn){const sh=$('shoe');sh.classList.add('active');sh.onclick=()=>{snd('tap');fn()};if(!$('shoetag')){const t=document.createElement('div');t.className='shoetag';t.id='shoetag';t.textContent='👆 TAP SHOE TO DRAW';$('felt').appendChild(t)}}
 function shoeOff(){const sh=$('shoe');sh.classList.remove('active');sh.onclick=null;const t=$('shoetag');if(t)t.remove()}
 /* =================== action bar =================== */
-function actions(h){$('actions').innerHTML=h}
+function actions(h){const el=$('actions');const pv=el.querySelector('.decide .dpts');const pt=pv&&pv.textContent;el.innerHTML=h;const d=el.querySelector('.decide');if(d&&pt){const q=d.querySelector('.dpts');if(q&&q.textContent===pt)d.style.animation='none'}}
 function decide(pts,best,hint,forced){return new Promise(res=>{const done=v=>{shoeOff();G.onHint=null;actions('');snd('tap');res(v)};shoeOn(()=>done(true));snd('turn');FX.vibe([60,30,60]);
  const draw_=()=>{actions(`<div class="decide"><div class="dtop"><div class="dpts">Your turn · you have<b>${pts}</b>pts</div></div>${G.hints?`<div class="hint" style="margin-bottom:8px">💡 ${hint}</div>`:''}
   <div class="dbtns"><button class="dbig draw ${G.hints&&best?'best':''}" id="dD">🂠 DRAW<small>${forced?'must take a 3rd card':'take a 3rd card · or tap the shoe'}</small></button>${forced?'':`<button class="dbig stand ${G.hints&&!best?'best':''}" id="dS">✋ STAND<small>keep ${pts} pts</small></button>`}</div></div>`);
@@ -823,8 +834,8 @@ let NIU={key:'',a:[],b:[]},NIU_RR=null,NIU_CARDS=[];
 function niuTile(c,i){return `<div class="ntile" data-i="${i}" onpointerdown="niuDown(event,${i})"><div class="slot"><div class="cd up"><div class="bc"></div>${cardFace(c)}</div></div></div>`}
 function niuHTML(cards,hint,timer){NIU_CARDS=cards;const pool=[0,1,2,3,4].filter(i=>!NIU.a.includes(i)&&!NIU.b.includes(i));
  const aw=niuAw(cards),full=NIU.a.length===3,k=full?niuKeyPick(cards,NIU.a):null;
- let lab=full?(k[0]===0?"❌ These 3 don't make 10 → No Niu":niuLab(k)):`Drag 3 cards that make 10 into the left box (${NIU.a.length}/3)`;
- if(aw.m)lab+=(k&&k[0]&&niuMult(k)>aw.m)?` · beats your ${aw.n} ×${aw.m} ✓`:` · your ${aw.n} ×${aw.m} counts (or arrange something that pays more)`;
+ let lab=full?(k[0]===0?"❌ These 3 don't make 10 → No Niu":niuLab(k)):`Tap or drag 3 cards that make 10 (${NIU.a.length}/3)`;
+ if(aw.m)lab+=(k&&k[0]&&niuMult(k)>aw.m)?` · beats your ${aw.n} ×${aw.m} ✓`:` · ${aw.n} ×${aw.m} counts`;
  return `<div class="decide"><div class="dtop"><div class="dpts">🐂 Arrange Niu Niu</div>${timer||''}</div>
  <div class="nzones"><div class="nzone three ${full?'full':''}" data-z="a"><div class="nzt">3 · make 10</div><div class="nzc">${NIU.a.map(i=>niuTile(cards[i],i)).join('')}</div></div>
  <div class="nzone two" data-z="b"><div class="nzt">2 · points</div><div class="nzc">${NIU.b.map(i=>niuTile(cards[i],i)).join('')}</div></div></div>

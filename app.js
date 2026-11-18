@@ -27,7 +27,7 @@ let V=null;             // latest view
 let autoReveal=localStorage.getItem('ct.auto')==='1';let lastSeq=0,busy=false,pollT=null,chan=null,hints=true,mute=false,peeked=new Set(),peekGame=0;
 try{const s=JSON.parse(localStorage.getItem('ct.session')||'null');if(s)ME=s;hints=localStorage.getItem('ct.hints')!=='0';mute=localStorage.getItem('ct.mute')==='1'}catch(e){}
 function saveMe(){try{localStorage.setItem('ct.session',JSON.stringify(ME))}catch(e){}}
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==id));}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==id));if(id==='table')setTimeout(()=>fitTable(true),30)}
 const FASTD=()=>!!(typeof V!=='undefined'&&V&&V.settings&&V.settings.fast);
 function toast(t,ms=1800){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),ms)}
 
@@ -108,8 +108,8 @@ let NIU={key:'',a:[],b:[]},NIU_RR=null,NIU_CARDS=[];
 function niuTile(c,i){return `<div class="ntile" data-i="${i}" onpointerdown="niuDown(event,${i})"><div class="slot"><div class="cd up"><div class="bc"></div>${cardFace(c)}</div></div></div>`}
 function niuHTML(cards,hint,timer){NIU_CARDS=cards;const pool=[0,1,2,3,4].filter(i=>!NIU.a.includes(i)&&!NIU.b.includes(i));
  const aw=niuAw(cards),full=NIU.a.length===3,k=full?niuKeyPick(cards,NIU.a):null;
- let lab=full?(k[0]===0?"❌ These 3 don't make 10 → No Niu":niuLab(k)):`Drag 3 cards that make 10 into the left box (${NIU.a.length}/3)`;
- if(aw.m)lab+=(k&&k[0]&&niuMult(k)>aw.m)?` · beats your ${aw.n} ×${aw.m} ✓`:` · your ${aw.n} ×${aw.m} counts (or arrange something that pays more)`;
+ let lab=full?(k[0]===0?"❌ These 3 don't make 10 → No Niu":niuLab(k)):`Tap or drag 3 cards that make 10 (${NIU.a.length}/3)`;
+ if(aw.m)lab+=(k&&k[0]&&niuMult(k)>aw.m)?` · beats your ${aw.n} ×${aw.m} ✓`:` · ${aw.n} ×${aw.m} counts`;
  return `<div class="decide"><div class="dtop"><div class="dpts">🐂 Arrange Niu Niu</div>${timer||''}</div>
  <div class="nzones"><div class="nzone three ${full?'full':''}" data-z="a"><div class="nzt">3 · make 10</div><div class="nzc">${NIU.a.map(i=>niuTile(cards[i],i)).join('')}</div></div>
  <div class="nzone two" data-z="b"><div class="nzt">2 · points</div><div class="nzc">${NIU.b.map(i=>niuTile(cards[i],i)).join('')}</div></div></div>
@@ -235,7 +235,14 @@ function doFlips(){let n=0,f=0;document.querySelectorAll('[data-flip]').forEach(
 /* ================= actions panel ================= */
 let arranging=null,bankUI=null;
 function setH(el,h){if(!el||el._h===h)return false;el._h=h;el.innerHTML=h;return true}
-function A(h){const el=$('actions');if(el._h===h)return;el._h=h;el.innerHTML=h}
+function A(h){const el=$('actions');if(el._h===h)return;const pv=el.querySelector('.decide .dpts');const pt=pv&&pv.textContent;el._h=h;el.innerHTML=h;const d=el.querySelector('.decide');if(d&&pt){const q=d.querySelector('.dpts');if(q&&q.textContent===pt)d.style.animation='none'}fitTable()}
+/* fit the table to the screen: no scrolling, scale up on big screens */
+let FITK='';function fitTable(force){const t=$('table');if(!t||!t.classList.contains('on'))return;const db=$('duelBar');const k=innerWidth+'x'+innerHeight+(db&&db.style.display)+'|'+$('top').style.height;if(!force&&k===FITK)return;FITK=k;
+ const f=$('felt');t.classList.add('fit');t.classList.remove('fill');t.style.zoom=1;t.style.maxWidth='';t.style.height='';f.style.height='';
+ const fNat=f.offsetHeight;let other=0;for(const c of t.children){if(c===f||c.id==='actions')continue;const cs=getComputedStyle(c);if(cs.display==='none'||cs.position==='fixed'||cs.position==='absolute')continue;other+=c.offsetHeight+parseFloat(cs.marginTop)+parseFloat(cs.marginBottom)}other+=parseFloat(getComputedStyle(f).marginTop)+parseFloat(getComputedStyle(f).marginBottom);const N=other+fNat,W=innerWidth,H=innerHeight;
+ let z=W<=480?Math.min(1,H/N):Math.min(H/N,W/480,1.8);z=Math.max(.85,z);t.style.zoom=z;t.style.maxWidth=(W>560&&W>H*.7)?Math.round(Math.min(W/z-16,820))+'px':'';
+ const fill=H/z-other;if(fill>=fNat-2){f.style.height=Math.floor(fill)+'px';t.style.height=Math.floor(H/z)+'px';t.classList.add('fill')}}
+addEventListener('resize',()=>fitTable(true));addEventListener('orientationchange',()=>setTimeout(()=>fitTable(true),300));
 function unpeekedMine(){const s=V.game.seats[ME.pid];return s.hand.filter(c=>c!=null&&!peeked.has(c)).length}
 const EMO=['😂','🔥','😭','🧧','😱','👏'];
 function emoBar(){return `<div class="emobar">${EMO.map(e=>`<button onclick="sendEmo('${e}')">${e}</button>`).join('')}</div>`}
