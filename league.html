@@ -198,7 +198,7 @@ function apply(v){const prevLog=V?V.log.length&&V.log[V.log.length-1].t:0;V=v;$(
  clearInterval(pollT);pollT=setInterval(refresh,document.hidden?15000:4000)}
 
 /* ---- log helpers, next move, away digest, duel result ---- */
-function evInfo(x){if(x.k)return x;const m=/^⚔️ (.+) conquered (.+) from (.+?) \(/.exec(x.text||'');if(!m)return x;const f=n=>(V.members.find(q=>q.name===n)||{}).mid;return Object.assign({k:'conq',town:m[2],att:f(m[1]),def:f(m[3])},x)}
+function evInfo(x){if(x.k)return x;const m=/^⚔️ (.+) conquered (.+) from (.+?) \(/.exec(x.text||'');const f=n=>(V.members.find(q=>q.name===n)||{}).mid;if(m)return Object.assign({k:'conq',town:m[2],att:f(m[1]),def:f(m[3])},x);const d=/^🛡 (.+?)(?: \(ghost\))? defended (.+) against (.+?)(?: · |$)/.exec(x.text||'');if(d)return Object.assign({k:'def',town:d[2],att:f(d[3]),def:f(d[1])},x);return x}
 const townOf=t=>V.towns.find(x=>x.t===t);const nameOf=mid=>(V.members.find(m=>m.mid===mid)||{}).name||'A rival';
 const chanceOf=T=>Math.round(100*myChips(T)/(myChips(T)+T.defBank));
 function lostTowns(){const seen={},out=[];for(const x of V.log.slice().reverse().map(evInfo)){if(x.k!=='conq'||seen[x.town])continue;seen[x.town]=1;const T=townOf(x.town);if(x.def===V.you&&T&&T.owner===x.att&&T.owner!==V.you)out.push({x,T})}return out}
