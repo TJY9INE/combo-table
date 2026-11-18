@@ -21,7 +21,7 @@ input,select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #2
 .red{background:#4a1d1d;color:#ffd0cc;border:1px solid #6b2a2a;border-radius:12px;padding:10px 12px;font-weight:600}
 .err{color:var(--lose);font-size:13px;min-height:16px;margin-top:6px;text-align:center}
 .small{font-size:12px;color:#a89a7a}
-.top{display:flex;align-items:center;gap:8px}.top h1{flex:1;text-align:left;font-size:24px;margin:0}
+.top{display:flex;align-items:center;gap:8px}.top h1{flex:1;text-align:left;font-size:22px;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .code{font-weight:800;letter-spacing:2px;color:var(--gold);background:#1a1408;border:1px solid #4a3a16;border-radius:10px;padding:6px 10px;font-size:14px}
 /* map */
 .map{position:relative;width:100%;padding-bottom:82%;border-radius:18px;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#0f2f3d,#08161d 75%);border:1px solid #1f3b47}
@@ -51,7 +51,7 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
 .sin h2{margin:0 0 4px;font-family:Georgia,serif;font-style:italic;color:var(--gold)}
 .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#1d2622;border:1px solid #3a4a42;padding:10px 14px;border-radius:12px;z-index:3000;font-size:14px}
 .tabs{display:flex;gap:6px;margin:6px 0 10px}.tabs button{flex:1;padding:9px;border-radius:10px;background:#0f1411;color:#a89a7a;border:1px solid #26302b;font-weight:700}.tabs button.on{background:#1a1408;color:var(--gold);border-color:#4a3a16}
-.lmap{width:100%;height:58vh;min-height:360px;border-radius:18px;overflow:hidden;border:1px solid #1f3b47;background:#0b1418}
+.lmap{width:100%;height:calc(100vh - 300px);height:calc(100dvh - 300px);min-height:380px;border-radius:18px;overflow:hidden;border:1px solid #1f3b47;background:#0b1418}
 .osmdark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6)}
 .leaflet-container{background:#0b1418;font:inherit}
 .lm{display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-50%);width:max-content}
@@ -67,6 +67,11 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
 .lm .wl{position:absolute;bottom:14px;right:-12px;font-size:10px;background:#0009;border-radius:6px;padding:0 3px;color:#fff}
 .mapbtns{display:flex;gap:6px;margin-top:8px}.mapbtns button{flex:1}
 .rules h3{margin:12px 0 4px;font-size:15px;color:var(--gold)}.rules h3:first-child{margin-top:0}.rules p{margin:4px 0}.rules ul{margin:4px 0;padding-left:20px}
+.next{display:flex;align-items:center;gap:8px;background:#141d2a;border:1px solid #2c4a6e;border-radius:14px;padding:9px 10px;margin:0 0 8px;font-size:13.5px;line-height:1.3}.next>div{flex:1}.next button{width:auto;padding:9px 12px;font-size:13.5px;white-space:nowrap}.next.rev{background:#2a1414;border-color:#7a2a2a}
+.pulse{animation:pls 1.4s infinite}@keyframes pls{0%,100%{box-shadow:0 0 0 0 #e9c46a88}50%{box-shadow:0 0 0 8px #e9c46a00}}
+.stk{display:flex;gap:10px;font-size:13.5px;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:10px;margin:4px 0}.stk b{min-width:62px}
+.rw{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.rw span{background:rgba(255,255,255,.07);border-radius:999px;padding:6px 12px;font-size:14px}.rw b{color:var(--gold)}
+.log .mineev{border-left:3px solid var(--gold);padding-left:8px}.log>div[onclick]{cursor:pointer}
 </style></head><body>
 <div class="wrap">
  <!-- start -->
@@ -90,9 +95,9 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
   <div class="top"><a href="/" class="ghost" style="text-decoration:none">☰</a><h1 id="lName">League</h1><button class="ghost" id="lPush" style="padding:7px 10px">🔕</button><span class="code" id="lCode" title="Tap to share">----</span></div>
   <div id="pushNag"></div>
   <div class="sub" id="lSub" style="text-align:left;margin:6px 0 4px"></div>
-  <button class="gold" id="shareBtn" style="width:100%;margin:4px 0 8px" onclick="share()">📤 Invite friends</button>
-  <div id="ecoBox"></div>
+    <div id="ecoBox"></div>
   <div id="duelBox"></div>
+  <div id="nextBox"></div>
   <div class="tabs"><button class="on" data-t="map">🗺 Map</button><button data-t="board">🏆 Ranks</button><button data-t="log">📜 Activity</button><button data-t="rules">📖 Rules</button></div>
   <div id="tMap"><div class="lmap" id="lmap"></div><div class="map" id="map" style="display:none"></div><div class="mapbtns"><button class="ghost" onclick="fitAll()">🇸🇬 Whole island</button><button class="ghost" onclick="fitMine()">🏠 My land</button></div><div class="legend" id="legend"></div><div class="small" style="margin-top:8px">Pinch to zoom · ⚔️ pulsing stations are next to your land on an MRT line — attack those. ⭐ white-ring interchanges defend with 1.25× chips, 🧱 walls add +10% each. You duel the owner's 👻 ghost (it plays for them while they're away). House bots hold unclaimed towns.</div></div>
   <div id="tBoard" style="display:none"><div class="card"><div class="titles" id="titles"></div><table id="board"></table></div></div>
@@ -171,7 +176,7 @@ async function share(){const url=location.origin+'/league?code='+LG.league;const
 $('lCode').onclick=share;
 const lpSend=sub=>api('lsub',{sub});
 function lpLabel(){const st=window.PUSH?PUSH.state():'unsupported';$('lPush').textContent=st==='on'?'🔔':'🔕';
- $('pushNag').innerHTML=st==='on'||localStorage.getItem('ct.pushNag')==='x'?'':`<div class="duel" style="background:linear-gradient(90deg,#1a2a1f,#14201a);border-color:#2b8a5a;margin:6px 0"><b style="font-weight:600;font-size:13.5px">🔔 Get alerted when someone attacks your towns</b><button class="gold" style="width:auto;padding:8px 12px;font-size:14px" onclick="lpOn()">Turn on</button><button class="ghost" style="padding:6px 9px" onclick="localStorage.setItem('ct.pushNag','x');lpLabel()">✕</button></div>`}
+ $('pushNag').innerHTML=st==='on'||localStorage.getItem('ct.pushNag')==='x'?'':`<div class="duel" style="background:linear-gradient(90deg,#1a2a1f,#14201a);border-color:#2b8a5a;margin:6px 0"><b style="font-weight:600;font-size:13.5px">🔔 Get alerted when someone attacks your stations</b><button class="gold" style="width:auto;padding:8px 12px;font-size:14px" onclick="lpOn()">Turn on</button><button class="ghost" style="padding:6px 9px" onclick="localStorage.setItem('ct.pushNag','x');lpLabel()">✕</button></div>`}
 window.lpOn=async()=>{if(!window.PUSH)return;let st=PUSH.state();if(st==='on'){await PUSH.resync(lpSend);toast('🔔 Alerts are on');return}
  try{st=await PUSH.enable(lpSend)}catch(e){toast('Could not turn on alerts: '+e.message);return}
  if(st==='on'){toast('🔔 Alerts on');lpLabel()}else{$('sheetIn').innerHTML=PUSH.helpHTML(st)+'<div style="margin-top:14px"><button class="gold" onclick="closeSheet()">OK</button></div>';$('sheet').classList.add('on')}};
@@ -179,18 +184,44 @@ $('lPush').onclick=()=>lpOn();
 async function refresh(){if(!LG)return;try{const j=await api('lstate');apply(j.view)}catch(e){if(/Not in this league|League not found/.test(e.message)){LG=null;saveLG();$('main').style.display='none';$('start').style.display='';$('sErr').textContent=e.message}}}
 function colorOf(owner){if(!V)return '#56635c';if(owner===V.you)return '#e9c46a';if(String(owner).startsWith('bot:'))return '#3b4a43';const i=V.members.filter(m=>m.mid!==V.you).findIndex(m=>m.mid===owner);return PAL[(i<0?0:i)%PAL.length]}
 function apply(v){const prevLog=V?V.log.length&&V.log[V.log.length-1].t:0;V=v;$('start').style.display='none';$('main').style.display='';
- $('lName').textContent=v.name;lpLabel();if(window.PUSH&&PUSH.state()==='on'&&!window._lpSynced){window._lpSynced=1;PUSH.resync(lpSend)}$('lCode').textContent=v.code;const me=v.members.find(m=>m.mid===v.you);
- $('lSub').innerHTML=`${v.members.length} member${v.members.length>1?'s':''} · Duel: ${v.bank.toLocaleString()} bankroll, ${v.bet.toLocaleString()} bet${me?` · You hold <b style="color:var(--gold)">${me.land}</b> town${me.land===1?'':'s'}`:''}`;
+ $('lName').textContent=v.name;lpLabel();if(window.PUSH&&PUSH.state()==='on'&&!window._lpSynced){window._lpSynced=1;PUSH.resync(lpSend)}$('lCode').textContent='📤 Invite';const me=v.members.find(m=>m.mid===v.you);
+ $('lSub').innerHTML=`Code <b style="color:var(--gold);letter-spacing:1px">${v.code}</b> · ${v.members.length} player${v.members.length>1?'s':''}${me?` · You hold <b style="color:var(--gold)">${me.land}</b> station${me.land===1?'':'s'}`:''} · Season ${(v.season||{}).no||1}`;
  // duel banner
  const iv=v.invite;const ivLeft=iv?Math.max(0,Math.ceil((iv.until-v.now)/1000)):0;
  const E=v.eco;if(E){const fill=Math.min(100,Math.round(E.pending/Math.max(1,E.cap||E.rate)*100));const BN=E.bonus||{};const tot=E.pending+(BN.ready?BN.amt:0);
-  $('ecoBox').innerHTML=`<div class="eco"><div class="c">🪙 <b>${E.coins.toLocaleString()}</b> coins${E.army?` · ⚔️ Army <b>+$${E.army.toLocaleString()}</b>`:''}<div class="small">Stations make 🪙${E.rate.toLocaleString()}/day · storage ${fill}%${E.full?' — FULL':''} · ⚡ <b>${E.energy}/${E.energyMax}</b> attacks${E.energyNext?` · +1 in ${(()=>{const ms=Math.max(0,E.energyNext-v.now),h=Math.floor(ms/36e5),mm=Math.ceil(ms%36e5/6e4);return h?h+'h '+mm+'m':mm+'m'})()}`:''}</div>${BN.ready?`<div class="small" style="color:var(--gold)">🎁 Daily bonus +🪙${BN.amt.toLocaleString()} ready (day ${BN.streak} streak)</div>`:`<div class="small">🎁 Bonus claimed · 🔥 ${BN.streak||0}-day streak — come back tomorrow</div>`}<div class="stor"><i style="width:${fill}%"></i></div></div>
-  <button class="gold" style="width:auto;padding:9px 11px;font-size:14px" ${tot<1?'disabled style="opacity:.5;width:auto;padding:9px 11px"':''} onclick="collect()">Collect +${tot.toLocaleString()}</button><button class="ghost" style="padding:9px 10px" onclick="armySheet()">⚔️</button></div>`}
+  $('ecoBox').innerHTML=`<div class="eco"><div class="c">🪙 <b>${E.coins.toLocaleString()}</b>${E.army?` · ⚔️ <b>+$${E.army.toLocaleString()}</b>`:''} · ⚡ <b>${E.energy}/${E.energyMax}</b>${E.energyNext?`<span class="small"> +1 in ${(()=>{const ms=Math.max(0,E.energyNext-v.now),h=Math.floor(ms/36e5),mm=Math.ceil(ms%36e5/6e4);return h?h+'h '+mm+'m':mm+'m'})()}</span>`:''}<div class="small">+🪙${E.rate.toLocaleString()}/day · storage ${fill}%${E.full?' FULL':''}${BN.ready?` · <span style="color:var(--gold)">🎁 +${BN.amt.toLocaleString()} ready</span>`:` · 🔥 ${BN.streak||0}-day streak`}</div><div class="stor"><i style="width:${fill}%"></i></div></div>
+  <button class="gold ${BN.ready||fill>=50?'pulse':''}" style="width:auto;padding:9px 11px;font-size:14px" ${tot<1?'disabled style="opacity:.5;width:auto;padding:9px 11px"':''} onclick="collect()">${BN.ready?'🎁 ':''}Collect +${tot.toLocaleString()}</button><button class="ghost" style="padding:9px 10px;font-size:13px" onclick="armySheet()">⚔️ Army</button></div>`;drawNext()}
  $('duelBox').innerHTML=(v.rentReady?`<div class="duel" style="background:linear-gradient(90deg,#2a2208,#1d1806);border-color:#b8892c;margin-bottom:8px"><b style="font-weight:600">🏦 Today's rent from your towns</b><button class="gold" style="width:auto;padding:9px 14px" onclick="collectRent()">Collect +$${v.rentAmt.toLocaleString()}</button></div>`:'')+(iv?`<div class="duel" style="margin-bottom:8px;flex-wrap:wrap"><b>⚔️ ${esc(iv.fromName)} challenges you for ${esc(iv.town)}! <span class="small">${ivLeft}s</span></b><button class="gold" style="width:auto;padding:9px 14px" onclick="acceptInv()">Play live</button><button class="ghost" onclick="declineInv()">👻 Let ghost play</button></div>`:'')+(me&&me.duel?`<div class="duel"><b>⚔️ Duel in progress</b><button class="gold" style="width:auto;padding:9px 14px" onclick="resumeDuel()">Resume</button><button class="red" onclick="forfeit()">Forfeit</button></div>`:'');
  if(iv&&!window._ivBuzz){window._ivBuzz=1;try{navigator.vibrate&&navigator.vibrate([80,60,80])}catch(e){}toast('⚔️ '+iv.fromName+' is attacking '+iv.town+'!',3000)}if(!iv)window._ivBuzz=0;
- drawMap();drawBoard();drawLog();
+ drawMap();drawBoard();drawLog();drawNext();if(!window._firstApply){window._firstApply=1;if(!showDuelResult())showAway()}
  const last=v.log.length?v.log[v.log.length-1]:null;if(prevLog&&last&&last.t!==prevLog)toast(last.text,2600);
  clearInterval(pollT);pollT=setInterval(refresh,document.hidden?15000:4000)}
+
+/* ---- log helpers, next move, away digest, duel result ---- */
+function evInfo(x){if(x.k)return x;const m=/^⚔️ (.+) conquered (.+) from (.+?) \(/.exec(x.text||'');if(!m)return x;const f=n=>(V.members.find(q=>q.name===n)||{}).mid;return Object.assign({k:'conq',town:m[2],att:f(m[1]),def:f(m[3])},x)}
+const townOf=t=>V.towns.find(x=>x.t===t);const nameOf=mid=>(V.members.find(m=>m.mid===mid)||{}).name||'A rival';
+const chanceOf=T=>Math.round(100*myChips(T)/(myChips(T)+T.defBank));
+function lostTowns(){const seen={},out=[];for(const x of V.log.slice().reverse().map(evInfo)){if(x.k!=='conq'||seen[x.town])continue;seen[x.town]=1;const T=townOf(x.town);if(x.def===V.you&&T&&T.owner===x.att&&T.owner!==V.you)out.push({x,T})}return out}
+function drawNext(){const el=$('nextBox');if(!el||!V||!V.eco)return;const me=V.members.find(m=>m.mid===V.you);if(me&&me.duel){el.innerHTML='';return}
+ const E=V.eco,anyMine=V.towns.some(t=>t.owner===V.you);const row=(txt,btn,fn,cls)=>`<div class="next ${cls||''}"><div>${txt}</div>${btn?`<button class="gold" onclick="${fn}">${btn}</button>`:''}</div>`;
+ const rv=lostTowns().find(o=>o.T.reach||!anyMine);
+ if(rv&&(E.energy>0||E.coins>=V.bet))return el.innerHTML=row(`😤 <b>${esc(nameOf(rv.x.att))}</b> took your <b>${esc(rv.x.town)}</b>`,`Revenge · ${chanceOf(rv.T)}%`,`pick('${rv.x.town}')`,'rev');
+ if(E.energy<1&&E.coins<V.bet)return el.innerHTML=row(`⚡ Out of attacks${E.energyNext?` — next in ${(()=>{const ms=Math.max(0,E.energyNext-V.now),h=Math.floor(ms/36e5),mm=Math.ceil(ms%36e5/6e4);return h?h+'h '+mm+'m':mm+'m'})()}`:''}. Collect coins to buy one.`);
+ const c=V.towns.filter(t=>t.owner!==V.you&&(t.reach||!anyMine)).map(T=>({T,p:chanceOf(T),v:(T.inter?2.5:1)+(T.bot?0:.6)})).sort((a,b)=>(b.p*b.v)-(a.p*a.v))[0];
+ if(c)return el.innerHTML=row(`🎯 Best target: <b>${esc(c.T.t)}</b>${c.T.inter?' ⭐':''}${c.T.bot?'':` (${esc(c.T.ownerName)})`}`,`Attack · ${c.p}%`,`pick('${c.T.t}')`);
+ el.innerHTML=''}
+function showAway(){if(window._awayDone||!V)return;window._awayDone=1;const key='ct.lseen.'+V.code;const seen=+localStorage.getItem(key)||0;const last=V.log.length?V.log[V.log.length-1].t:0;try{localStorage.setItem(key,last||Date.now())}catch(e){}
+ if(!seen)return;const ev=V.log.map(evInfo).filter(x=>x.t>seen&&x.def===V.you&&x.att!==V.you);if(!ev.length)return;
+ const lost=ev.filter(x=>x.k==='conq'),held=ev.filter(x=>x.k==='def');
+ $('sheetIn').innerHTML=`<h2>While you were away…</h2>${held.length?`<div class="next" style="border-color:#2b8a5a"><div>🛡 Your ghost defended <b>${held.length}</b> attack${held.length>1?'s':''}${held.some(x=>x.loot)?` and looted 🪙${held.reduce((a,x)=>a+(x.loot||0),0).toLocaleString()}`:''}<div class="small">${held.map(x=>esc(nameOf(x.att))+' → '+esc(x.town)).join(' · ')}</div></div></div>`:''}
+  ${lost.map(x=>{const T=townOf(x.town);const can=T&&T.owner!==V.you;return `<div class="next rev"><div>💥 <b>${esc(nameOf(x.att))}</b> took <b>${esc(x.town)}</b>${x.loot?` and 🪙${x.loot.toLocaleString()}`:''}</div>${can?`<button class="gold" onclick="pick('${x.town}')">Revenge${T.reach?' · '+chanceOf(T)+'%':''}</button>`:''}</div>`}).join('')}
+  <div class="row" style="margin-top:10px"><button class="ghost" onclick="closeSheet()">Close</button></div>`;$('sheet').classList.add('on')}
+function showDuelResult(){let d=null;try{d=JSON.parse(localStorage.getItem('ct.duel')||'null')}catch(e){}if(!d||!V)return false;const me=V.members.find(m=>m.mid===V.you);if(me&&me.duel)return false;localStorage.removeItem('ct.duel');
+ const x=V.log.map(evInfo).reverse().find(x=>x.att===V.you&&(x.k==='conq'||x.k==='def')&&V.now-x.t<20*60e3);if(!x)return false;const won=x.k==='conq';const E=V.eco||{};
+ $('sheetIn').innerHTML=`<div style="text-align:center"><div style="font-size:54px;line-height:1.1">${won?'🏰':'🛡'}</div><h2 style="margin:6px 0">${won?`${esc(x.town)} is yours!`:`${esc(x.town)} held out`}</h2>
+  ${won?`<div class="rw">${x.bounty?`<span>💰 Bounty <b>+🪙${x.bounty.toLocaleString()}</b></span>`:''}${x.loot?`<span>🏴‍☠️ Loot <b>+🪙${x.loot.toLocaleString()}</b></span>`:''}<span>🚇 Now <b>${(me?me.land:0)}</b> station${me&&me.land===1?'':'s'}</span></div>`:`<div class="rw">${x.loot?`<span>They looted <b>🪙${x.loot.toLocaleString()}</b></span>`:''}<span>⚡ <b>${E.energy||0}</b> attack${E.energy===1?'':'s'} left</span></div>`}</div>
+  <div class="row" style="margin-top:14px">${won?`<button class="gold" onclick="pick('${x.town}')">🧱 Fortify it</button><button class="green" onclick="closeSheet();fitMine()">⚔️ Keep attacking</button>`:`<button class="gold" onclick="pick('${x.town}')">😤 Try again</button><button class="ghost" onclick="closeSheet()">Close</button>`}</div>`;
+ $('sheet').classList.add('on');try{navigator.vibrate&&navigator.vibrate(won?[60,40,120]:40)}catch(e){}return true}
 window.collect=async()=>{try{const j=await api('lcollect');apply(j.view);toast('🪙 +'+j.amt.toLocaleString()+' coins'+(j.bonus?` (incl. 🎁 +${j.bonus.toLocaleString()} day-${j.streak} bonus)`:''),3000);try{navigator.vibrate&&navigator.vibrate(50)}catch(e){}}catch(e){toast(e.message)}};
 window.buildWall=async t=>{try{const j=await api('lwall',{town:t});apply(j.view);toast('🛡 Wall upgraded at '+t);pick(t)}catch(e){toast(e.message)}};
 window.hire=async amt=>{try{const j=await api('larmy',{amt});apply(j.view);toast('⚔️ Army +$'+amt.toLocaleString());armySheet()}catch(e){toast(e.message)}};
@@ -223,7 +254,7 @@ window.pick=t=>{SEL=t;if(!MAP)drawMap();else if(GEO[t])MAP.panTo(GEO[t]);const T
  $('sheetIn').innerHTML=`<h2>${esc(t)}</h2>${linesHTML}<div class="small" style="margin-bottom:6px">🧱 Wall level <b>${T.wall}/3</b> · defender starts with <b>$${T.defBank.toLocaleString()}</b> chips</div><div class="small" style="margin-bottom:10px">Held by ${who}${T.def?` · defended ${T.def}×`:''}</div>
   ${mine?`<div class="small" style="margin:8px 0 10px">This is your station. Friends can attack it any time — your ghost defends it. Each wall level adds +10% to your starting chips.</div>${T.wallCost?`<button class="gold" style="margin-bottom:10px" ${(V.eco&&V.eco.coins<T.wallCost)?'disabled style="opacity:.5;margin-bottom:10px"':''} onclick="buildWall('${t}')">🛡 Upgrade wall to Lv${T.wall+1} · 🪙${T.wallCost.toLocaleString()}</button>`:'<div class="small" style="margin-bottom:10px">🧱 Max wall.</div>'}`:
   me&&me.duel?`<div class="small" style="margin:8px 0 14px">Finish your current duel first.</div>`:
-  `${oddsHTML(myChips(T),T.defBank)}${T.boost?`<div class="small" style="color:#7ee2a8;text-align:center;margin-bottom:4px">🐣 Underdog boost +${Math.round(T.boost*100)}% chips — they hold more stations than you</div>`:''}<div class="small" style="margin:8px 0 14px">Duel: you start with $${myChips(T).toLocaleString()}${V.eco&&V.eco.army?` (incl. ⚔️ army +$${V.eco.army.toLocaleString()})`:''}, the defender with $${T.defBank.toLocaleString()} chips. Win → ${T.defBank>V.bank?`<b style="color:var(--gold)">+🪙${(T.defBank-V.bank).toLocaleString()} bounty</b> + `:''}loot 20% of their 🪙 coins. Every game is a fixed ${V.bet.toLocaleString()} bet, banker alternates (defender banks first). First who can't cover a bet loses — win and ${esc(t)} is yours.</div>`}
+  `${oddsHTML(myChips(T),T.defBank)}${T.boost?`<div class="small" style="color:#7ee2a8;text-align:center;margin-bottom:4px">🐣 Underdog boost +${Math.round(T.boost*100)}% chips — they hold more stations than you</div>`:''}<div class="stk"><b>🏆 Win</b><span>${esc(t)}${T.defBank>V.bank?` + 🪙${(T.defBank-V.bank).toLocaleString()} bounty`:''}${T.bot?'':' + 20% of their 🪙'}</span></div><div class="stk"><b>💀 Lose</b><span>${T.bot?'nothing — just the ⚡':'they loot 20% of your 🪙'}</span></div><div class="small" style="margin:6px 0 12px">${V.eco&&V.eco.army?`Your chips include ⚔️ army +$${V.eco.army.toLocaleString()} · `:''}Fixed ${V.bet.toLocaleString()} bet per game · first to go broke loses</div>`}
   ${blocked?`<div class="small" style="margin:8px 0 14px;color:#ff9a90">🚇 Not connected to your land. Take a station next to it on an MRT line first (pulsing ⚔️ stations).</div>`:''}${!mine&&!blocked&&!(me&&me.duel)?(live?`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}',true)">⚔️ Challenge live</button><button class="green" onclick="attack('${t}')">👻 Fight ghost</button></div><div class="small" style="margin-bottom:10px">Live: ${esc(T.ownerName)} gets 45s to accept, else the ghost plays.</div>`:`<div class="row" style="margin-bottom:8px"><button class="gold" onclick="attack('${t}')">⚔️ Attack ${esc(t)}</button></div>`)+`<div class="small" style="text-align:center;margin-bottom:10px">${V.eco&&V.eco.energy>0?`Uses 1 ⚡ (${V.eco.energy} left)`:`No ⚡ left today — this attack costs 🪙${V.bet.toLocaleString()}`}</div>`:''}<div class="row"><button class="ghost" onclick="closeSheet()">Close</button></div>`;
  $('sheet').classList.add('on')};
 window.closeSheet=()=>{$('sheet').classList.remove('on');SEL=null;if(!MAP)drawMap()};
@@ -244,7 +275,7 @@ function drawBoard(){const v=V;const L=v.members.slice().sort((a,b)=>b.land-a.la
  $('titles').innerHTML=seH+(T.length?T.map(t=>`<div class="ttl"><b>${t[0]} ${t[1]}</b>${esc(t[2])}</div>`).join(''):'<div class="small">Titles appear after the first duels.</div>');
  $('board').innerHTML=`<tr><th>#</th><th>Player</th><th>🏙</th><th>W–L</th><th>Net</th></tr>`+L.map((m,i)=>`<tr class="${m.mid===v.you?'mine':''}"><td>${i===0&&m.land?'👑':i+1}</td><td>${esc(m.name)}${m.trophies?' '+'🏆'.repeat(Math.min(3,m.trophies))+(m.trophies>3?'×'+m.trophies:''):''}${m.online&&m.mid!==v.you?' 🟢':''}${m.duel?' ⚔️':''}</td><td>${m.land}</td><td>${m.w}–${m.l}</td><td class="${m.net+m.tnet+m.rent>0?'pos':m.net+m.tnet+m.rent<0?'neg':''}">${sgn(m.net+m.tnet+m.rent)}${m.tg?`<div class="small">${m.tg} table game${m.tg>1?'s':''}</div>`:''}</td></tr>`).join('')+`<tr><td colspan="5" class="small" style="text-align:left">Net = duels + league tables. 🪙 Coins: stations make 🪙${v.bet} a day (⭐ interchanges 🪙${Math.round(v.bet*2.5)}), storage holds 2 days, plus a 🎁 daily bonus. Spend on 🛡 walls and ⚔️ army. Win duels to loot 20% of the loser's coins. To count a friends' table, the host enters league code <b>${v.code}</b> in room settings.</td></tr>`}
 function ago(t){const s=Math.max(0,(V.now-t)/1000);return s<60?'now':s<3600?Math.floor(s/60)+'m':s<86400?Math.floor(s/3600)+'h':Math.floor(s/86400)+'d'}
-function drawLog(){$('log').innerHTML=V.log.length?V.log.slice().reverse().map(x=>`<div><small>${ago(x.t)}</small>${esc(x.text)}</div>`).join(''):'<div class="small">No activity yet.</div>'}
+function drawLog(){const lost=new Set(lostTowns().map(o=>o.x.t));$('log').innerHTML=V.log.length?V.log.slice().reverse().map(x=>{const e=evInfo(x);const mineEv=e.att===V.you||e.def===V.you;return `<div class="${mineEv?'mineev':''}" ${e.town?`onclick="pick('${e.town}')"`:''}><small>${ago(x.t)}</small>${esc(x.text)}${lost.has(x.t)?' <b style="color:#ff9a90">· 😤 Revenge ›</b>':''}</div>`}).join(''):'<div class="small">No activity yet. Attack a station to get things going.</div>'}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 if(LG)refresh();
 </script></body></html>

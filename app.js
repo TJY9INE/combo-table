@@ -370,7 +370,7 @@ function playEvents(evs){BRT={};let mineTot=0,any=false,bestM=0,worstM=0;const n
   if(e.t==='season'){toast('🏆 New season started');continue}
   if(e.t==='kick'){if(e.pid!==ME.pid)toast(`${e.name} was removed by the host`);continue}
   if(e.t==='timer'){if(V.host!==ME.pid)toast(e.timer?`⏱ Host set ${e.timer}s per decision`:'⏱ Host turned the timer off');continue}
-  if(e.t==='duelend'){const w=e.winner===ME.pid;if(w){FX.big&&FX.big('🏰 CONQUERED!','');FX.haptic(9)}else FX.big&&FX.big('🛡 DEFENDED','',true);continue}
+  if(e.t==='duelend'){const w=e.winner===ME.pid;const att=V.duel&&ME.pid===V.duel.attPid;if(w){FX.big&&FX.big(att?'🏰 CONQUERED!':'🛡 DEFENDED!','');FX.haptic(9)}else FX.big&&FX.big(att?'🛡 THEY HELD':'💥 STATION LOST','',true);continue}
   if(e.t==='emote'){const el=e.pid===ME.pid?$('me'):document.querySelector(`.seat[data-pid="${e.pid}"]`);if(el){const d=document.createElement('div');d.className='emo';d.textContent=e.e;el.appendChild(d);setTimeout(()=>d.remove(),1900)}continue}
   if(e.t==='settle'){any=true;const el=document.querySelector(`.seat[data-pid="${e.pid}"]`)||(e.pid===ME.pid?$('me'):null);const bEl=V.banker===ME.pid?($('btray')||$('me')):document.querySelector(`.seat[data-pid="${V.banker}"]`);
    if(el&&bEl){if(e.m>0)fly(bEl,el,Math.min(8,e.m+2));else if(e.m<0)fly(el,bEl,Math.min(8,-e.m+2));{const iB=V.banker===ME.pid,am=iB?-e.amt:e.amt;floatOn(el,e.m?FX.money(am)+(Math.abs(e.m)>1?`<span class="fm">×${Math.abs(e.m)}</span>`:''):'Push',am>0?'w':am<0?'l':'p')}if(V.banker!==ME.pid||true){BRT[e.ri]=(BRT[e.ri]||0)-e.amt}}
@@ -463,7 +463,7 @@ function duelBar(v){const el=$('duelBar');if(!el)return;const d=v.duel;if(!d){el
  el.style.display='flex';el.innerHTML=`<span>⚔️ <b>${esc(d.town)}</b> · game ${Math.min(30,(d.games||0)+(d.over?0:1))} · bet <b>${fmtc(d.stake||d.bet)}</b></span><span>You <b>${fmtc(A.chips)}</b> vs ${esc(D.name)} <b>${fmtc(D.chips)}</b></span>`}
 window.toLeague=()=>{ME=null;saveMe();location.href='/league'};
 function duelSummaryHTML(v){const d=v.duel;if(!d)return '';const A=v.players.find(p=>p.pid===d.attPid),D=v.players.find(p=>p.pid===d.defPid);
- if(d.over){const won=d.over.winner==='att';return `<div class="newach" style="${won?'':'background:#4a1d1d;color:#ffd0cc'}">${won?`🏰 You conquered ${esc(d.town)}!`:`🛡 ${esc(d.defName)} held ${esc(d.town)}`} · ${d.over.games} game${d.over.games>1?'s':''}</div>`}
+ if(d.over){const att=ME.pid===d.attPid,aw=d.over.winner==='att',won=att?aw:!aw;return `<div class="newach" style="${won?'':'background:#4a1d1d;color:#ffd0cc'}">${att?(aw?`🏰 You conquered ${esc(d.town)}!`:`🛡 ${esc(d.defName)} held ${esc(d.town)}`):(aw?`💥 You lost ${esc(d.town)} to ${esc(d.attName)}`:`🛡 You defended ${esc(d.town)}!`)} · ${d.over.games} game${d.over.games>1?'s':''}</div>`}
  return `<div class="small" style="text-align:center;margin:8px 0">⚔️ Duel for <b>${esc(d.town)}</b> — You ${fmtc(A.chips)} vs ${esc(D.name)} ${fmtc(D.chips)} · next game deals automatically…</div>`}
 window.showSummary=()=>{const v=V;if(!v.game)return;const d=delta(ME.pid),g=v.game,isB=v.banker===ME.pid,isHost=v.host===ME.pid;
  const amts=[0,1,2,3,4].map(i=>isB?-g.order.reduce((a,q)=>a+g.seats[q].r[i]*g.seats[q].bet,0):(g.seats[ME.pid]?g.seats[ME.pid].r[i]*g.seats[ME.pid].bet:0));
