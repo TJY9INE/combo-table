@@ -620,7 +620,7 @@ function floatOn(s,txt,cls){const f=document.createElement('div');f.className='f
 async function settle(p,m,ri){p.r[ri]=m;const amt=m*p.bet;
  if(G.me===p)G.bank+=amt;else if(G.me===G.B)G.bank-=amt;
  const bEl=(G.B.me&&$('btray'))||G.B.root,pEl=p.root;
- const iB=G.me===G.B,am=iB?-amt:amt,fc=am>0?'w':'l';
+ const am=amt,fc=am>0?'w':'l';
  if(m>0){flyChips(bEl,pEl,Math.min(5,m+1),chipsFor(p.bet)[0]);floatOn(p,FX.money(am)+(m>1?`<span class="fm">×${m}</span>`:''),fc)}
  else if(m<0){flyChips(pEl,bEl,Math.min(5,-m+1),chipsFor(p.bet)[0]);floatOn(p,FX.money(am)+(m<-1?`<span class="fm">×${-m}</span>`:''),fc)}
  else floatOn(p,'Push','p');
