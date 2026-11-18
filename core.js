@@ -58,7 +58,9 @@ function skBankerEV(D,P,M=300){const dset=new Set(D.hand);const ev=[0,0,0];
   const Ph=unk.slice(-4);const sp=skSplits(Ph);const ps=sp[skBestIdx(sp)];D.spl.forEach((ds,i)=>ev[i]-=hb*skSettle(Ph,ps,D.hand,ds)/M)}}
  return ev}
 function skRespond(){const D=S.dealer;S.players.forEach(p=>{p.ev=skEV(p,D.vis);if(!p.me)p.si=skEVBest(p.ev,p.spl)})}
-function skSettle(P,Ps,D,Ds){const pa=allPic(P),da=allPic(D);if(pa||da)return pa&&da?0:pa?7:-7;
+const twoPair=cs=>{const r=cs.map(rk).sort((a,b)=>a-b);return r[0]==r[1]&&r[2]==r[3]};
+function skSettle(P,Ps,D,Ds){const v=skSettle0(P,Ps,D,Ds);if(allPic(P)||allPic(D))return v;const pp=twoPair(P),dp=twoPair(D);if(pp&&!dp)return v>0?v:4;if(dp&&!pp)return v<0?v:-4;return v}
+function skSettle0(P,Ps,D,Ds){const pa=allPic(P),da=allPic(D);if(pa||da)return pa&&da?0:pa?7:-7;
  const h=cmpArr(Ps.kh,Ds.kh),l=cmpArr(Ps.kl,Ds.kl);if(h>0&&l>=0||h>=0&&l>0)return skMult(Ps.kl);if(h<0&&l<=0||h<=0&&l<0)return -skMult(Ds.kl);return 0}
 
 /* ---------- R4 Niu Niu ---------- */

@@ -190,7 +190,7 @@ function seatLabel(pid,s){const g=V.game,h=s.hand,vis=h.every(c=>c!=null)&&(pid!
  if(!vis&&g.round>=2)return g.round===3&&g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';
  if(g.round===1)return `${RN[rk(h[0])]}${SY[st(h[0])]}`;
  if(g.round===2)return bEval(h).lab;
- if(g.round===3){if(s.si==null)return g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';if(allPic(h))return '4 Picture ×7';const sp=skSplits(h)[s.si];return `${skLabN(sp.kh)} / ${skLab(sp.kl)}`}
+ if(g.round===3){if(s.si==null)return g.phase==='r3set'?(s.set?'Set ✓':'Arranging…'):'';if(allPic(h))return '4 Picture ×7';if(twoPair(h)&&s.si!=null)return '2 Pairs · auto-win';const sp=skSplits(h)[s.si];return `${skLabN(sp.kh)} / ${skLab(sp.kl)}`}
  if(g.round===4){const st_=g.seats[pid];if(g.phase==='r4set')return pid===ME.pid?'':(st_.nset?'✓ arranged':'arranging…');if(g.phase==='r4peek'&&pid!==ME.pid)return '';const a=niuAw(h);return niuLabEff(a,st_.np?niuKeyPick(h,st_.np):niuKey(h).k)}
  if(g.round===5){const st_=g.seats[pid];if(g.phase==='r5show')return pid===ME.pid?'':'…';if(g.phase==='r5set')return pid===ME.pid?'':(st_.cset?'✓ arranged':'arranging…');const c7=[...h,...g.comm];const cp=st_.cp||best7Pick(c7);const nc=cp.filter(i=>i>=5).length;return cLab(p5(cp.map(i=>c7[i])))+` · ${nc?'+'+nc+' comm':'own 5'}`}return ''}
 const PN=pid=>{const p=V.players.find(x=>x.pid===pid);return p?p.name:'?'};
@@ -400,7 +400,7 @@ function summaryTable(v){const g=v.game;const rows=g.order.map(pid=>{const s=g.s
 
 function roundHands(pid){const g=V.game,s=g.seats[pid];if(!s)return null;const h=s.hand;if(h.some(c=>c==null)||h.length<5)return null;const isBk=pid===V.banker;
  const bac=isBk?(s.vis&&s.vis.length>=2?s.vis:h.slice(0,2)):h.slice(0,s.drew?3:2);const sk=h.slice(0,4),nn=h.slice(0,5);
- let skt='?';if(allPic(sk))skt='4 Picture';else if(s.si!=null){const sp=skSplits(sk)[s.si];skt=`Bottom ${ctxt(sp.hi)} ${skLabN(sp.kh)} · Top ${ctxt(sp.lo)} <b>${skLab(sp.kl)}</b>`}
+ let skt='?';if(allPic(sk))skt='4 Picture';else if(twoPair(sk)&&s.si!=null)skt='2 Pairs (auto-win)';else if(s.si!=null){const sp=skSplits(sk)[s.si];skt=`Bottom ${ctxt(sp.hi)} ${skLabN(sp.kh)} · Top ${ctxt(sp.lo)} <b>${skLab(sp.kl)}</b>`}
  const a=niuAw(nn);
  return [`${ctxt([h[0]])}`,`${ctxt(bac)} ${bEval(bac).lab}`,skt,`${ctxt(nn)} ${niuLabEff(a,s.np?niuKeyPick(nn,s.np):niuKey(nn).k)}`,`${(()=>{const c7=[...nn,...g.comm];return s.cp?ctxt(s.cp.map(i=>c7[i]))+' '+cLab(p5(s.cp.map(i=>c7[i]))):cLab(best7(c7))})()}`]}
 const RN5=['High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'];

@@ -35,7 +35,7 @@ button{font:inherit;border-radius:12px;border:1px solid #2c3442;background:#161d
  <div class="emobar" id="emo" style="display:none"></div>
  <div class="small" style="text-align:center;margin-top:8px">You only see cards that are face-up on the table.</div>
 </div>
-<script src="core.js?v=2611181600"></script>
+<script src="core.js?v=2611190030"></script>
 <script>
 const SB_URL='https://zdikuwkuvnonlytaaera.supabase.co';
 const SB_KEY='sb_publishable_6z-CgA9sueQZ-mmN-nnG2w_5Xv2jOlp';
@@ -55,7 +55,7 @@ function handHTML(g,s){const h=s.hand;if(!h.length)return '';const C=c=>c==null?
 function labOf(g,s){const h=s.hand;if(!h.length||h.some(c=>c==null))return h.length?'🂠 face-down':'';try{
  if(g.round===1)return '';
  if(g.round===2)return bEval(h.slice(0,3)).lab;
- if(g.round===3){if(h.length<4)return '';if(allPic(h))return '4 Picture — auto ×7';if(s.si==null)return 'splitting…';const sp=skSplits(h)[s.si];return skLabN(sp.kh)+' / '+skLab(sp.kl)}
+ if(g.round===3){if(h.length<4)return '';if(allPic(h))return '4 Picture — auto ×7';if(twoPair(h)&&s.si!=null)return '2 Pairs — auto-win';if(s.si==null)return 'splitting…';const sp=skSplits(h)[s.si];return skLabN(sp.kh)+' / '+skLab(sp.kl)}
  if(g.round===4){if(h.length<5)return '';if(s.np==null)return 'arranging…';return niuLabEff(niuAw(h),niuKeyPick(h,s.np))}
  if(g.round===5){if(g.comm.length<2)return '';return cLab(best7([...h.slice(0,5),...g.comm]))}}catch(e){}return ''}
 function statusOf(g,d,nm){const p=g.phase;if(d.over)return 'Duel over';if(p==='bet')return 'Dealing…';if(p==='r2turn')return nm(g.actor)+' to draw or stand';if(p==='r2bank')return 'Banker deciding…';if(p==='r3set')return 'Splitting 4 cards…';if(p==='r4set')return 'Arranging 5 cards…';if(p==='summary')return 'Game finished — next game soon';return ''}
