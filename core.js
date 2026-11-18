@@ -89,7 +89,8 @@ function p5(cs){const r=cs.map(c=>hv(rk(c))).sort((a,b)=>b-a);const cnt={};r.for
 function best7(cs){let b=null;for(let a=0;a<7;a++)for(let c=a+1;c<7;c++){const h=cs.filter((_,i)=>i!=a&&i!=c);const k=p5(h);if(!b||cmpArr(k,b)>0)b=k}return b}
 const CN=['High card','Pair','Two pair','Trips','Straight','Flush','Full house','Quads','Straight flush'];
 const cMult=k=>k[0]==1?1:k[0]==2?2:k[0]==3?3:k[0]>=4?5:0;
-const cLab=k=>CN[k[0]]+(k[0]>=1?` ×${cMult(k)}`:' (no pay)');
+const cRk=v=>v==14?'A':v==13?'K':v==12?'Q':v==11?'J':String(v);const cName=k=>k[0]==1?`Pair of ${cRk(k[1])}s`:k[0]==2?`Two pair ${cRk(k[1])}s & ${cRk(k[2])}s`:k[0]==3?`Trip ${cRk(k[1])}s`:CN[k[0]];
+const cLab=k=>cName(k)+(k[0]>=1?` ×${cMult(k)}`:' (no pay)');
 function cSettle(Pk,Dk){if(Pk[0]==0&&Dk[0]==0)return 0;const c=cmpArr(Pk,Dk);return c>0?cMult(Pk):c<0?-cMult(Dk):0}
 
 
