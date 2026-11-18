@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Watch duel · Combo League</title><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0d1117">
+<style>
+:root{--gold:#e9c46a;--win:#7ee2a8;--lose:#ff8a80}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:#0d1117;color:#eee;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:520px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;gap:8px}.top h1{flex:1;font:italic 700 20px Georgia,serif;color:var(--gold);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button{font:inherit;border-radius:12px;border:1px solid #2c3442;background:#161d27;color:#eee;padding:9px 12px;cursor:pointer}
+.tag{font-size:11px;font-weight:700;letter-spacing:.5px;border-radius:999px;padding:3px 8px;background:#263245;color:#9fc4ff}.tag.live{background:#4a1d1d;color:#ffb0a8}
+.sub{font-size:13px;color:#aab;margin:6px 0 8px}
+.felt{flex:1;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(ellipse at center,#11683f,#0a4a2c);border:2px solid #0d3a23;border-radius:22px;padding:12px;position:relative;min-height:440px}
+.side{text-align:center}.nm{font-weight:700;font-size:16px}.nm small{font-weight:500;color:#cfe;opacity:.8}
+.chips{font-size:22px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}.dl{font-size:13px;font-weight:700}.pos{color:var(--win)}.neg{color:var(--lose)}
+.hand{display:flex;justify-content:center;gap:4px;min-height:62px;margin:6px 0 2px;flex-wrap:wrap}.grp{display:flex;gap:3px;padding:3px;border-radius:9px;background:rgba(0,0,0,.18)}
+.cd{width:40px;height:56px;border-radius:7px;background:#fff;color:#161616;font-weight:800;font-size:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 5px rgba(0,0,0,.4)}
+.cd small{font-size:15px}.cd.r{color:#c62828}.cd.back{background:repeating-linear-gradient(45deg,#7a1f2b,#7a1f2b 5px,#8f2a37 5px,#8f2a37 10px);border:2px solid #f3e6c8}
+.lab{font-size:13.5px;min-height:18px;color:#e8f5ec}
+.mid{text-align:center;padding:8px 0}.rnd{font:italic 700 19px Georgia,serif;color:#fff}.st{font-size:13px;color:#cfe;opacity:.85;min-height:17px}
+.pips{display:flex;justify-content:center;gap:5px;margin-top:6px}.pip{font-size:11.5px;font-weight:700;border-radius:8px;padding:4px 7px;background:rgba(0,0,0,.25);color:#bcd;min-width:44px}.pip.w{background:#14532d;color:#b9f6ca}.pip.l{background:#5a1a1a;color:#ffc9c4}.pip.cur{outline:2px solid var(--gold)}
+.over{background:#2a2208;border:1px solid #b8892c;border-radius:14px;padding:12px;text-align:center;margin-top:10px;font-weight:700}
+.emobar{display:flex;gap:6px;justify-content:center;margin-top:10px}.emobar button{font-size:22px;padding:8px 0;flex:1;max-width:60px}
+.fly{position:absolute;left:50%;bottom:30%;transform:translateX(-50%);font-size:40px;animation:up 1.8s ease-out forwards;pointer-events:none;text-align:center;z-index:5}.fly small{display:block;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px #000}
+@keyframes up{0%{opacity:0;transform:translate(-50%,20px) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}100%{opacity:0;transform:translate(-50%,-140px) scale(1)}}
+.small{font-size:12.5px;color:#9aa}.err{color:var(--lose);text-align:center;margin-top:40px}
+</style></head><body><div class="wrap">
+ <div class="top"><button onclick="location.href='/league'">‹ League</button><h1 id="ttl">Duel</h1><span class="tag live" id="tag">👀 WATCHING</span></div>
+ <div class="sub" id="sub">Connecting…</div>
+ <div class="felt" id="felt" style="display:none">
+  <div class="side" id="sA"></div>
+  <div class="mid"><div class="rnd" id="rnd"></div><div class="st" id="st"></div><div class="hand" id="comm" style="min-height:0"></div><div class="pips" id="pips"></div><div class="small" id="pcap" style="margin-top:3px"></div></div>
+  <div class="side" id="sB"></div>
+ </div>
+ <div id="over"></div>
+ <div class="emobar" id="emo" style="display:none"></div>
+ <div class="small" style="text-align:center;margin-top:8px">You only see cards that are face-up on the table.</div>
+</div>
+<script src="core.js?v=2611181600"></script>
+<script>
+const SB_URL='https://zdikuwkuvnonlytaaera.supabase.co';
+const SB_KEY='sb_publishable_6z-CgA9sueQZ-mmN-nnG2w_5Xv2jOlp';
+const FN=SB_URL+'/functions/v1/game';
+const $=id=>document.getElementById(id);const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let LG=null;try{LG=JSON.parse(localStorage.getItem('ct.league')||'null')}catch(e){}
+const ROOM=(new URLSearchParams(location.search).get('room')||'').toUpperCase();
+let V=null,SEQ=null,lastEmo=0,fails=0;
+async function api(extra){const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+SB_KEY},body:JSON.stringify(Object.assign({a:'watch',code:ROOM,league:LG.league,mid:LG.mid,token:LG.token},extra||{}))});const j=await r.json();if(j.error)throw new Error(j.error);return j}
+const RNAME=['','High Card','Thai Baccarat','Sikipi','Niu Niu','Combo Poker'],RSHORT=['HC','Bac','SKP','Niu','Cmb'];
+const money=n=>(n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString();
+function handHTML(g,s){const h=s.hand;if(!h.length)return '';const C=c=>c==null?cardHTML(0,{back:true}):cardHTML(c);
+ const all=h.every(c=>c!=null);
+ if(all&&g.round===3&&s.si!=null&&h.length===4){const sp=skSplits(h)[s.si];return `<div class="grp">${sp.hi.map(C).join('')}</div><div class="grp">${sp.lo.map(C).join('')}</div>`}
+ if(all&&g.round===4&&Array.isArray(s.np)&&s.np.length===3&&h.length===5){const a=s.np.map(i=>h[i]),b=[0,1,2,3,4].filter(i=>!s.np.includes(i)).map(i=>h[i]);return `<div class="grp">${a.map(C).join('')}</div><div class="grp">${b.map(C).join('')}</div>`}
+ return h.map(C).join('')}
+function labOf(g,s){const h=s.hand;if(!h.length||h.some(c=>c==null))return h.length?'🂠 face-down':'';try{
+ if(g.round===1)return '';
+ if(g.round===2)return bEval(h.slice(0,3)).lab;
+ if(g.round===3){if(h.length<4)return '';if(allPic(h))return '4 Picture — auto ×7';if(s.si==null)return 'splitting…';const sp=skSplits(h)[s.si];return skLabN(sp.kh)+' / '+skLab(sp.kl)}
+ if(g.round===4){if(h.length<5)return '';if(s.np==null)return 'arranging…';return niuLabEff(niuAw(h),niuKeyPick(h,s.np))}
+ if(g.round===5){if(g.comm.length<2)return '';return cLab(best7([...h.slice(0,5),...g.comm]))}}catch(e){}return ''}
+function statusOf(g,d,nm){const p=g.phase;if(d.over)return 'Duel over';if(p==='bet')return 'Dealing…';if(p==='r2turn')return nm(g.actor)+' to draw or stand';if(p==='r2bank')return 'Banker deciding…';if(p==='r3set')return 'Splitting 4 cards…';if(p==='r4set')return 'Arranging 5 cards…';if(p==='summary')return 'Game finished — next game soon';return ''}
+function render(){const v=V,d=v.duel,g=v.game;$('felt').style.display='';$('emo').style.display=d.over?'none':'';
+ const A=v.players.find(p=>p.pid===d.attPid),D=v.players.find(p=>p.pid===d.defPid);const nm=pid=>pid===d.attPid?d.attName:d.defName;
+ $('ttl').textContent='⚔️ '+d.town;$('tag').textContent=d.over?'FINISHED':'👀 WATCHING';$('tag').className='tag'+(d.over?'':' live');
+ $('sub').innerHTML=`<b>${esc(d.attName)}</b> attacks <b>${esc(d.defName)}</b>${d.ghost?' 👻':''} · game ${(d.games||0)+(g&&g.phase!=='summary'&&!d.over?1:0)||1} · bet ${d.bet.toLocaleString()}`;
+ if(!g){$('rnd').textContent=d.wait?'Waiting for '+d.defName+' to accept…':'Starting…';$('st').textContent='';$('sA').innerHTML=$('sB').innerHTML='';$('pips').innerHTML='';$('comm').innerHTML='';return}
+ const side=(P,pid,start,who)=>{const s=g.seats[pid]||{hand:[],r:[]};const isB=v.banker===pid;const dl=P.chips-start;
+  return `<div class="nm">${who==='def'?'🛡':'⚔️'} ${esc(nm(pid))} ${isB?'<span class="tag">🎩 BANKER</span>':''}</div><div class="chips">${money(P.chips)} <span class="dl ${dl>0?'pos':dl<0?'neg':''}">${dl>0?'+':''}${dl?money(dl):''}</span></div><div class="hand">${handHTML(g,s)}</div><div class="lab">${esc(labOf(g,s))}</div>`};
+ $('sA').innerHTML=side(D,d.defPid,d.defBank||d.bank,'def');$('sB').innerHTML=side(A,d.attPid,d.bank,'att');
+ $('rnd').textContent=g.round?('Round '+g.round+' · '+RNAME[g.round]):'New game';$('st').textContent=statusOf(g,d,nm);
+ $('comm').innerHTML=g.comm&&g.comm.length?`<div class="grp">${g.comm.map(c=>cardHTML(c)).join('')}</div>`:'';
+ const pl=g.order[0],ps=g.seats[pl],attIsPl=pl===d.attPid;
+ $('pips').innerHTML=ps?ps.r.map((m,i)=>{const am=(attIsPl?m:-m)*ps.bet;const done=g.round>i+1||(g.round===i+1&&/done|summary|^r1$/.test(g.phase));return `<div class="pip ${done&&am>0?'w':done&&am<0?'l':''} ${g.round===i+1?'cur':''}">${RSHORT[i]}<br>${done?(am?(am>0?'+':'')+money(am):'tie'):'·'}</div>`}).join(''):'';
+ $('pcap').textContent=ps?'This game, from '+d.attName+"'s side":'';
+ if(d.over){const aw=d.over.winner==='att';$('over').innerHTML=`<div class="over">${aw?`🏰 ${esc(d.attName)} conquered ${esc(d.town)}!`:`🛡 ${esc(d.defName)} held ${esc(d.town)}`}<div class="small" style="margin-top:4px">${d.over.games} game${d.over.games===1?'':'s'} · ${money(d.over.att)} vs ${money(d.over.def)}</div><button style="margin-top:10px;width:100%" onclick="location.href='/league'">Back to League</button></div>`}else $('over').innerHTML=''}
+function fly(e,from){const el=document.createElement('div');el.className='fly';el.style.left=(30+Math.random()*40)+'%';el.innerHTML=esc(e)+(from?`<small>${esc(from)}</small>`:'');$('felt').appendChild(el);setTimeout(()=>el.remove(),1900)}
+function events(v){const d=v.duel;const first=SEQ==null;for(const e of v.events){if(SEQ!=null&&e.seq<=SEQ)continue;if(first)continue;if(e.t==='emote')fly(e.e,e.from||(e.pid===d.attPid?d.attName:e.pid===d.defPid?d.defName:''))}
+ if(v.events.length)SEQ=Math.max(SEQ||0,...v.events.map(e=>e.seq))}
+async function tick(){try{const j=await api();fails=0;V=j.view;events(V);render()}catch(e){fails++;if(!V||fails>4){$('felt').style.display='none';$('emo').style.display='none';$('sub').innerHTML=`<div class="err">${esc(e.message)}</div>`}}
+ setTimeout(tick,V&&V.duel&&V.duel.over?6000:1500)}
+window.send=async e=>{if(Date.now()-lastEmo<1200)return;lastEmo=Date.now();try{const j=await api({e});V=j.view;events(V);render()}catch(x){}};
+$('emo').innerHTML=['😂','🔥','😱','👏','💀','🍀'].map(e=>`<button onclick="send('${e}')">${e}</button>`).join('');
+if(!LG||!ROOM){$('sub').innerHTML='<div class="err">Open this from your League page.</div>'}else tick();
+</script></body></html>
