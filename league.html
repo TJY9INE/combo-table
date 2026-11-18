@@ -66,6 +66,7 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
 .eco{display:flex;align-items:center;gap:8px;background:#121a16;border:1px solid #26302b;border-radius:14px;padding:9px 10px;margin:6px 0 8px}.eco .c{flex:1;font-size:13px;line-height:1.35}.eco .c b{color:#f6dc8f;font-size:15px}.stor{height:5px;background:#0b110e;border-radius:3px;margin-top:4px;overflow:hidden}.stor i{display:block;height:100%;background:linear-gradient(90deg,#b8892c,#f6dc8f)}
 .lm .wl{position:absolute;bottom:14px;right:-12px;font-size:10px;background:#0009;border-radius:6px;padding:0 3px;color:#fff}
 .mapbtns{display:flex;gap:6px;margin-top:8px}.mapbtns button{flex:1}
+.rules h3{margin:12px 0 4px;font-size:15px;color:var(--gold)}.rules h3:first-child{margin-top:0}.rules p{margin:4px 0}.rules ul{margin:4px 0;padding-left:20px}
 </style></head><body>
 <div class="wrap">
  <!-- start -->
@@ -89,12 +90,26 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
   <div class="top"><a href="/" class="ghost" style="text-decoration:none">☰</a><h1 id="lName">League</h1><button class="ghost" id="lPush" style="padding:7px 10px">🔕</button><span class="code" id="lCode" title="Tap to share">----</span></div>
   <div id="pushNag"></div>
   <div class="sub" id="lSub" style="text-align:left;margin:6px 0 4px"></div>
+  <button class="gold" id="shareBtn" style="width:100%;margin:4px 0 8px" onclick="share()">📤 Invite friends</button>
   <div id="ecoBox"></div>
   <div id="duelBox"></div>
-  <div class="tabs"><button class="on" data-t="map">🗺 Map</button><button data-t="board">🏆 Ranks</button><button data-t="log">📜 Activity</button></div>
+  <div class="tabs"><button class="on" data-t="map">🗺 Map</button><button data-t="board">🏆 Ranks</button><button data-t="log">📜 Activity</button><button data-t="rules">📖 Rules</button></div>
   <div id="tMap"><div class="lmap" id="lmap"></div><div class="map" id="map" style="display:none"></div><div class="mapbtns"><button class="ghost" onclick="fitAll()">🇸🇬 Whole island</button><button class="ghost" onclick="fitMine()">🏠 My land</button></div><div class="legend" id="legend"></div><div class="small" style="margin-top:8px">Pinch to zoom · ⚔️ pulsing stations are next to your land on an MRT line — attack those. ⭐ white-ring interchanges defend with 1.25× chips, 🧱 walls add +10% each. You duel the owner's 👻 ghost (it plays for them while they're away). House bots hold unclaimed towns.</div></div>
   <div id="tBoard" style="display:none"><div class="card"><div class="titles" id="titles"></div><table id="board"></table></div></div>
   <div id="tLog" style="display:none"><div class="card log" id="log"></div></div>
+  <div id="tRules" style="display:none"><div class="card rules" style="line-height:1.5;font-size:14px">
+   <h3>🎯 Goal</h3><p>Own the most MRT stations. 👑 Most stations at the end of the week (Sunday night) takes the weekly title.</p>
+   <h3>⚔️ Attacking</h3><p>Tap a pulsing ⚔️ station — it must be next to one of yours on an MRT line (if you own none, attack anywhere). You duel the owner's 👻 ghost, which plays for them while they're away. If they're online, you can send a ⚡ live challenge instead.</p>
+   <p>A duel = repeated 5-round games at a <b>fixed bet</b> every game; banker alternates (defender banks first). First side that can't cover the bet loses — or after 30 games, whoever has more chips wins. Win and the station is yours.</p>
+   <p>The attack screen shows your <b>win chance</b> before you go. Roughly: your chips ÷ (your chips + defender's chips).</p>
+   <h3>🛡 Defending</h3><p>You don't need to be online — your ghost defends every station automatically. Defenders start with extra chips:</p>
+   <ul><li>⭐ Interchange (2+ lines): ×1.25</li><li>🧱 Each wall level: +10% (max Lv3)</li></ul>
+   <p>Lose a station and its wall drops one level for the new owner.</p>
+   <h3>🪙 Coins</h3><ul><li>Each station makes 1× bet a day; ⭐ interchanges 2.5×. Storage holds 1 day — tap <b>Collect</b> daily or it stops filling.</li><li>🧱 <b>Walls</b> (your stations): Lv1/2/3 cost 2×/5×/10× bet.</li><li>⚔️ <b>Army</b>: 1 coin = 1 extra chip on your next attack, up to +1 bankroll.</li><li>💰 <b>Bounty</b>: capture a tougher station and earn coins = the defender's extra chips.</li><li>🏴‍☠️ <b>Loot</b>: duel winner takes 20% of the loser's coins.</li></ul>
+   <h3>🚇 Line Tycoon</h3><p>Own every station on a whole MRT line to earn its Tycoon title.</p>
+   <h3>🃏 Friends' tables</h3><p>Playing a normal online table together? The host enters league code in room settings and your results count on the Ranks tab.</p>
+   <p class="small">Play chips only. No real money.</p>
+  </div></div>
   <div style="text-align:center;margin-top:18px"><button class="ghost" id="leaveBtn" style="font-size:12px">Switch league</button></div>
  </div>
 </div>
@@ -143,10 +158,11 @@ $('jBtn').onclick=async()=>{const code=$('jCode').value.trim().toUpperCase(),nam
 $('cBtn').onclick=async()=>{const name=$('cName').value.trim();if(!name)return $('sErr').textContent='Enter your name';
  try{LG=null;const j=await api('lcreate',{lname:$('cLname').value.trim()||'Kopi Kakis',name,bank:+$('cBank').value,bet:+$('cBet').value,pin:$('cPin').value});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view);setTimeout(share,400)}catch(e){$('sErr').textContent=e.message}};
 $('leaveBtn').onclick=()=>{LG=null;saveLG();clearInterval(pollT);$('main').style.display='none';$('start').style.display=''};
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('tMap').style.display=tab==='map'?'':'none';$('tBoard').style.display=tab==='board'?'':'none';$('tLog').style.display=tab==='log'?'':'none';if(tab==='map'&&MAP)setTimeout(()=>MAP.invalidateSize(),30)});
-async function share(){const url=location.origin+'/league?code='+LG.league;const txt=`Join my Combo League "${V?V.name:''}" — code ${LG.league}\n${url}`;
- try{if(navigator.share){await navigator.share({title:'Combo League',text:txt,url});return}}catch(e){return}
- try{await navigator.clipboard.writeText(txt);toast('Invite link copied')}catch(e){toast('Code: '+LG.league)}}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('tMap').style.display=tab==='map'?'':'none';$('tBoard').style.display=tab==='board'?'':'none';$('tLog').style.display=tab==='log'?'':'none';$('tRules').style.display=tab==='rules'?'':'none';if(tab==='map'&&MAP)setTimeout(()=>MAP.invalidateSize(),30)});
+async function share(){const url=location.origin+'/league?code='+LG.league;const nm=V?V.name:'Combo League';
+ const txt=`⚔️ Join my Combo League "${nm}"!\n\nWe're fighting over Singapore MRT stations 🇸🇬🚇 — beat a friend's 👻 ghost in a 5-round card duel (High Card, Thai Baccarat, Sikipi, Niu Niu, Combo Poker) and their station is yours.\n\n🪙 Stations make coins daily — build 🧱 walls, hire ⚔️ army, win 💰 bounties.\n👑 Most stations by Sunday wins the week.\n\nPlay chips only, free, no app needed.\n👉 Tap to join: ${url}\nLeague code: ${LG.league}`;
+ try{if(navigator.share){await navigator.share({title:'Combo League',text:txt});return}}catch(e){return}
+ try{await navigator.clipboard.writeText(txt);toast('📋 Invite copied — paste it in WhatsApp')}catch(e){toast('Code: '+LG.league)}}
 $('lCode').onclick=share;
 const lpSend=sub=>api('lsub',{sub});
 function lpLabel(){const st=window.PUSH?PUSH.state():'unsupported';$('lPush').textContent=st==='on'?'🔔':'🔕';
