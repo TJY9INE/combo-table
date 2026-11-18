@@ -72,6 +72,7 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
  <!-- start -->
  <div id="start">
   <h1>Combo League</h1><div class="sub">Conquer Singapore with your kakis · play chips only</div>
+  <div class="err" id="sErr" style="margin:8px 0;font-size:15px;font-weight:700"></div>
   <div class="card"><b>Join a league</b>
    <label>League code</label><input id="jCode" maxlength="4" autocapitalize="characters" placeholder="ABCD">
    <div class="row"><div><label>Your name</label><input id="jName" maxlength="16" placeholder="Name"></div><div style="flex:.6"><label>PIN (if set)</label><input id="jPin" maxlength="6" inputmode="numeric" type="password" placeholder="••••"></div></div>
@@ -82,7 +83,6 @@ td{padding:7px 4px;border-top:1px solid #1d2622;text-align:right}td:nth-child(2)
    <div class="row"><div><label>Duel bankroll</label><input id="cBank" type="number" inputmode="numeric" value="1000"></div><div><label>Fixed bet</label><input id="cBet" type="number" inputmode="numeric" value="100"></div></div>
    <div class="small" style="margin-top:6px">Each duel: both sides start with the bankroll, the bet stays the same every game, banker alternates — play until someone can't cover a bet.</div>
    <div style="margin-top:12px"><button class="green" id="cBtn">Create league</button></div></div>
-  <div class="err" id="sErr"></div>
   <div style="text-align:center;margin-top:10px"><a href="/" style="color:#a89a7a;font-size:13px">← Back to tables</a></div>
  </div>
  <!-- main -->
@@ -150,13 +150,16 @@ let LG=null,V=null,SEL=null,pollT=null,tab='map';
 try{LG=JSON.parse(localStorage.getItem('ct.league')||'null')}catch(e){}
 function toast(t,ms=2000){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),ms)}
 async function api(a,extra={}){const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY},body:JSON.stringify(Object.assign({a},LG?{league:LG.league,mid:LG.mid,token:LG.token}:{},extra))});let j;try{j=await r.json()}catch(e){throw new Error('Server busy — try again')}if(j.error||j.message&&!j.view)throw new Error(j.error||j.message);return j}
-function saveLG(){try{localStorage.setItem('ct.league',JSON.stringify(LG))}catch(e){}}
+function saveLG(){try{localStorage.setItem('ct.league',JSON.stringify(LG));if(LG)localStorage.setItem('ct.lastLeague',LG.league)}catch(e){}}
 const qs=new URLSearchParams(location.search);if(qs.get('code')){$('jCode').value=qs.get('code').toUpperCase();if(LG&&LG.league!==qs.get('code').toUpperCase())LG=null}
+function sErr(m){$('sErr').textContent=m||'';if(m){toast('⚠️ '+m,3500);$('sErr').scrollIntoView({behavior:'smooth',block:'center'})}}
+async function busy(btn,fn){const t=btn.textContent;btn.disabled=true;btn.textContent='Connecting…';try{await fn()}finally{btn.disabled=false;btn.textContent=t}}
+$('jCode').value=$('jCode').value||localStorage.getItem('ct.lastLeague')||'';
 $('jName').value=$('cName').value=localStorage.getItem('ct.name')||'';
-$('jBtn').onclick=async()=>{const code=$('jCode').value.trim().toUpperCase(),name=$('jName').value.trim();if(!code||!name)return $('sErr').textContent='Enter code and name';
- try{LG=null;const j=await api('ljoin',{league:code,name,pin:$('jPin').value});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view)}catch(e){$('sErr').textContent=e.message}};
-$('cBtn').onclick=async()=>{const name=$('cName').value.trim();if(!name)return $('sErr').textContent='Enter your name';
- try{LG=null;const j=await api('lcreate',{lname:$('cLname').value.trim()||'Kopi Kakis',name,bank:+$('cBank').value,bet:+$('cBet').value,pin:$('cPin').value});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view);setTimeout(share,400)}catch(e){$('sErr').textContent=e.message}};
+$('jBtn').onclick=()=>busy($('jBtn'),async()=>{const code=$('jCode').value.trim().toUpperCase(),name=$('jName').value.trim();if(!code||!name)return sErr('Enter league code and your name');
+ try{sErr('');LG=null;const j=await api('ljoin',{league:code,name,pin:$('jPin').value});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view)}catch(e){sErr(e.message)}});
+$('cBtn').onclick=()=>busy($('cBtn'),async()=>{const name=$('cName').value.trim();if(!name)return sErr('Enter your name');
+ try{LG=null;const j=await api('lcreate',{lname:$('cLname').value.trim()||'Kopi Kakis',name,bank:+$('cBank').value,bet:+$('cBet').value,pin:$('cPin').value});LG={league:j.league,mid:j.mid,token:j.token,name};saveLG();localStorage.setItem('ct.name',name);apply(j.view);setTimeout(share,400)}catch(e){sErr(e.message)}});
 $('leaveBtn').onclick=()=>{LG=null;saveLG();clearInterval(pollT);$('main').style.display='none';$('start').style.display=''};
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('tMap').style.display=tab==='map'?'':'none';$('tBoard').style.display=tab==='board'?'':'none';$('tLog').style.display=tab==='log'?'':'none';$('tRules').style.display=tab==='rules'?'':'none';if(tab==='map'&&MAP)setTimeout(()=>MAP.invalidateSize(),30)});
 async function share(){const url=location.origin+'/league?code='+LG.league;const nm=V?V.name:'Combo League';
