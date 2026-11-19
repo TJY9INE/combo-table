@@ -519,7 +519,7 @@ $('goPlayer').onclick=()=>{readSettings();G.role='player';startTable()};
 $('goBanker').onclick=()=>{readSettings();G.role='banker';startTable()};
 $('homeBtn').onclick=()=>{G.token={};$('sheet').classList.remove('on');G.abort=true;show('lobby');renderLobby()};
 function confirmLeave(){return true}
-G.autoRev=localStorage.getItem('ct.auto')==='1';$('rulesBtn').onclick=()=>FX.rules(G.round||0);$('autoBtn').classList.toggle('on',G.autoRev);$('autoBtn').onclick=()=>{G.autoRev=!G.autoRev;localStorage.setItem('ct.auto',G.autoRev?'1':'0');$('autoBtn').classList.toggle('on',G.autoRev);toast(G.autoRev?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON')};
+G.autoRev=localStorage.getItem('ct.auto2')!=='0';$('rulesBtn').onclick=()=>FX.rules(G.round||0);$('autoBtn').classList.toggle('on',G.autoRev);$('autoBtn').onclick=()=>{G.autoRev=!G.autoRev;localStorage.setItem('ct.auto2',G.autoRev?'1':'0');$('autoBtn').classList.toggle('on',G.autoRev);toast(G.autoRev?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON')};
 function setSpeed(n){G.speed=Math.max(0,Math.min(2,n|0));document.body.classList.toggle('fast',G.speed===1);document.body.classList.toggle('turbo',G.speed===2);$('quickBtn').classList.toggle('on',G.speed>0);$('quickBtn').textContent=G.speed===2?'⚡⚡':'⚡';$('sQuick').value=String(G.speed);try{localStorage.setItem('ct.speed',String(G.speed))}catch(e){}}
 setSpeed(+(localStorage.getItem('ct.speed')||(localStorage.getItem('ct.quick')==='1'?1:0)));
 $('quickBtn').onclick=()=>{setSpeed((G.speed+1)%3);toast(['Normal speed','⚡ Fast (2×)','⚡⚡ Turbo (4×)'][G.speed])};

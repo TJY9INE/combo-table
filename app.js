@@ -24,7 +24,7 @@ const fmtc=v=>(v<0?'-':'')+Math.abs(Math.round(v)).toLocaleString();
 const sgn=v=>(v>0?'+':v<0?'-':'')+Math.abs(Math.round(v)).toLocaleString();
 let ME=null;            // {code,pid,token,name}
 let V=null;             // latest view
-let autoReveal=localStorage.getItem('ct.auto')==='1';let lastSeq=0,busy=false,pollT=null,chan=null,hints=true,mute=false,peeked=new Set(),peekGame=0;
+let autoReveal=localStorage.getItem('ct.auto2')!=='0';let lastSeq=0,busy=false,pollT=null,chan=null,hints=true,mute=false,peeked=new Set(),peekGame=0;
 try{const s=JSON.parse(localStorage.getItem('ct.session')||'null');if(s)ME=s;hints=localStorage.getItem('ct.hints')!=='0';mute=localStorage.getItem('ct.mute')==='1'}catch(e){}
 function saveMe(){try{localStorage.setItem('ct.session',JSON.stringify(ME))}catch(e){}}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==id));if(id==='table')setTimeout(()=>fitTable(true),30)}
@@ -478,7 +478,7 @@ window.showSummary=()=>{const v=V;if(!v.game)return;const d=delta(ME.pid),g=v.ga
 window.playAgain=async()=>{try{$('sheet').classList.remove('on');await api('start',{banker:V.banker})}catch(e){toast(e.message);renderRoom(true)}};
 
 /* ================= toggles & boot ================= */
-$('histBtn').onclick=()=>showHistory('cur');$('rPushBtn').onclick=()=>pushOn();$('seasonBtn').onclick=()=>showSeason();$('rSeasonBtn').onclick=()=>showSeason();$('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classList.toggle('on',autoReveal);$('autoBtn').onclick=()=>{autoReveal=!autoReveal;localStorage.setItem('ct.auto',autoReveal?'1':'0');$('autoBtn').classList.toggle('on',autoReveal);toast(autoReveal?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON');if(V&&V.game)renderTable()};
+$('histBtn').onclick=()=>showHistory('cur');$('rPushBtn').onclick=()=>pushOn();$('seasonBtn').onclick=()=>showSeason();$('rSeasonBtn').onclick=()=>showSeason();$('rulesBtn').onclick=()=>FX.rules(V&&V.game?V.game.round:0);$('autoBtn').classList.toggle('on',autoReveal);$('autoBtn').onclick=()=>{autoReveal=!autoReveal;localStorage.setItem('ct.auto2',autoReveal?'1':'0');$('autoBtn').classList.toggle('on',autoReveal);toast(autoReveal?'👁 Auto-reveal my cards: ON':'Squeeze my own cards: ON');if(V&&V.game)renderTable()};
 $('hintBtn').onclick=()=>{hints=!hints;localStorage.setItem('ct.hints',hints?'1':'0');toast(hints?'💡 Hints on':'Hints off');renderTable()};
 $('muteBtn').onclick=()=>{mute=!mute;localStorage.setItem('ct.mute',mute?'1':'0');$('muteBtn').textContent=mute?'🔇':'🔊'};
 if(ME){if(qs.get('room')&&qs.get('room').toUpperCase()!==ME.code){/* invited elsewhere */ME=null;saveMe()}else{subscribe();refresh()}}
