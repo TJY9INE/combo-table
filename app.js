@@ -177,8 +177,8 @@ let SEEN=new Map();let LOG=[],LOGR=null;
 function cardFace(c){const red=(st(c)==0||st(c)==2);return `<div class="fc ${red?'red':''}"><span class="ix">${RN[rk(c)]}<br>${SY[st(c)]}</span><span class="pip">${SY[st(c)]}</span><span class="ix2">${RN[rk(c)]}<br>${SY[st(c)]}</span></div>`}
 function cardEl(key,c,showFace,slot,tap){const prev=SEEN.get(key);let cls='';
  if(prev===undefined)cls='deal';SEEN.set(key,showFace?c:null);
- const flipNow=prev===null&&showFace;
- return `<div class="slot ${cls}" style="${cls?`animation:dealIn ${FASTD()?'.22s':'.4s'} ${slot*(FASTD()?35:70)}ms both`:''}" ${tap?`data-peek="${c}"`:''}><div class="cd ${showFace&&!flipNow?'up':''} ${tap?'tap':''}" ${flipNow?'data-flip="1"':''}><div class="bc"></div>${c!=null?cardFace(c):'<div class="fc"></div>'}</div></div>`}
+ const dealt=prev===undefined&&showFace,flipNow=(prev===null&&showFace)||dealt;const fd=dealt?(FASTD()?220:400)+slot*(FASTD()?35:70)+120:0;
+ return `<div class="slot ${cls}" style="${cls?`animation:dealIn ${FASTD()?'.22s':'.4s'} ${slot*(FASTD()?35:70)}ms both`:''}" ${tap?`data-peek="${c}"`:''}><div class="cd ${showFace&&!flipNow?'up':''} ${tap?'tap':''}" ${flipNow?`data-flip="${fd||1}"`:''}><div class="bc"></div>${c!=null?cardFace(c):'<div class="fc"></div>'}</div></div>`}
 function seatHand(pid,s,size,mine){const g=V.game;let groups=[s.hand.map((c,i)=>i)];
  // regroup when splits/niu revealed
  if(g.round===3&&s.si!=null&&s.hand.every(c=>c!=null)&&(g.phase==='r3done'||mine)){const sp=skSplits(s.hand)[s.si];groups=[sp.hi.map(c=>s.hand.indexOf(c)),sp.lo.map(c=>s.hand.indexOf(c))]}
@@ -229,7 +229,7 @@ function trayHTML(b){b=Math.round(b);if(b<=0)return `<div class="iou">IOU ${fmtc
 function bindPeek(){document.querySelectorAll('#meHand [data-peek]').forEach(el=>FX.squeeze(el,()=>{const c=+el.dataset.peek;peeked.add(c);const hi=V.game.seats[ME.pid].hand.indexOf(c);SEEN.set(ME.pid+':'+hi,c);snd('flip');const big=b2like(c);$('meLab').textContent=seatLabel(ME.pid,V.game.seats[ME.pid]);renderActions()}))}
 function b2like(c){return 0}
 function peekAll(){V.game.seats[ME.pid].hand.forEach(c=>{if(c!=null)peeked.add(c)});renderTable()}
-function doFlips(){let n=0,f=0;document.querySelectorAll('[data-flip]').forEach(el=>{f++;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('up')))});
+function doFlips(){let n=0,f=0;let late=0;document.querySelectorAll('[data-flip]').forEach(el=>{const d=+el.dataset.flip||0;el.removeAttribute('data-flip');if(d>1){late=Math.max(late,d);setTimeout(()=>el.classList.add('up'),d)}else{f++;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('up')))}});if(late&&!f)setTimeout(()=>snd('flip'),late);
  document.querySelectorAll('.slot.deal').forEach(()=>n++);if(n)snd('deal',n);else if(f)snd('flip')}
 
 /* ================= actions panel ================= */
